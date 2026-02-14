@@ -9,12 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Mail, School, GraduationCap, Save, LogOut } from 'lucide-react';
+import { User, School, Save, LogOut, Copy, CheckCircle, Users as UsersIcon, BookOpen } from 'lucide-react';
+import { getClassroomsForTeacher } from '@/lib/services/classrooms';
 
 export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [userProfile, setUserProfile] = useState<any>(null);
+    const [classrooms, setClassrooms] = useState<any[]>([]);
+    const [copiedCode, setCopiedCode] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         full_name: '',
         email: '',
@@ -47,6 +50,16 @@ export default function SettingsPage() {
                     school_name: profile.school_name || '',
                     grade_level: profile.grade_level || '',
                 });
+
+                // Load classrooms if teacher
+                if (profile.role === 'teacher') {
+                    try {
+                        const classroomData = await getClassroomsForTeacher(supabase, user.id);
+                        setClassrooms(classroomData);
+                    } catch (error) {
+                        console.error('Error loading classrooms:', error);
+                    }
+                }
             }
             setLoading(false);
         };
@@ -83,6 +96,12 @@ export default function SettingsPage() {
     const handleLogout = async () => {
         await supabase.auth.signOut();
         router.push('/auth/login');
+    };
+
+    const copyJoinCode = (code: string) => {
+        navigator.clipboard.writeText(code);
+        setCopiedCode(code);
+        setTimeout(() => setCopiedCode(null), 2000);
     };
 
     if (loading) {
@@ -201,6 +220,69 @@ export default function SettingsPage() {
                                 </div>
                             </CardContent>
                         </Card>
+
+                        {/* Classroom Join Codes - Only for Teachers */}
+                        {userProfile?.role === 'teacher' && classrooms.length > 0 && (
+                            <Card className="bg-[#0d281e] border-emerald-500/20">
+                                <CardHeader>
+                                    <CardTitle className="text-white flex items-center gap-2">
+                                        <UsersIcon size={20} className="text-emerald-400" />
+                                        Classroom Join Codes
+                                    </CardTitle>
+                                    <CardDescription className="text-slate-400">
+                                        Share these codes with your students to let them join your classrooms
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                    {classrooms.map((classroom) => (
+                                        <div
+                                            key={classroom.id}
+                                            className="flex items-center justify-between p-4 bg-black/20 rounded-lg border border-emerald-500/10 hover:border-emerald-500/30 transition-colors"
+                                        >
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h4 className="text-white font-semibold">{classroom.name}</h4>
+                                                    {classroom.is_active && (
+                                                        <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-500/20 text-emerald-400">
+                                                            Active
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-4 text-xs text-slate-400">
+                                                    <span className="flex items-center gap-1">
+                                                        <UsersIcon size={12} />
+                                                        {classroom.member_count || 0} students
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        <BookOpen size={12} />
+                                                        {classroom.lesson_count || 0} lessons
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="text-right">
+                                                    <p className="text-xs text-slate-500 mb-1">Join Code</p>
+                                                    <span className="text-2xl font-bold font-pixel text-emerald-400 tracking-wider">
+                                                        {classroom.join_code}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    onClick={() => copyJoinCode(classroom.join_code)}
+                                                    className="p-3 hover:bg-white/5 rounded-lg transition-colors"
+                                                    title="Copy join code"
+                                                >
+                                                    {copiedCode === classroom.join_code ? (
+                                                        <CheckCircle size={20} className="text-emerald-400" />
+                                                    ) : (
+                                                        <Copy size={20} className="text-slate-400" />
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        )}
 
                         {/* Actions */}
                         <div className="flex gap-4">
