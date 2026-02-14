@@ -38,9 +38,9 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
         { agent: "MIYAMOTO", msg: "Selected core mechanic: Resource Management / Puzzle", time: 7000 },
         { agent: "PICASSO", msg: "Generating pixel art assets for 'Chloroplast Factory'...", time: 9000 },
         { agent: "PICASSO", msg: "Assets generated: pipes, sun_icon, water_molecule", time: 12000 },
-        { agent: "CARMACK", msg: "Writing C# Scripts: GameManager.cs, PipeController.cs...", time: 15000 },
+        { agent: "CARMACK", msg: "Writing Phaser.js Scripts: MainScene.js, Physics.js...", time: 15000 },
         { agent: "KOJIMA", msg: "Designing Level 1: Intro to Light", time: 18000 },
-        { agent: "DIRECTOR", msg: "Compiling Unity Project...", time: 22000 }
+        { agent: "DIRECTOR", msg: "Bundling Web Assets...", time: 22000 }
     ];
 
     let stepIndex = 0;

@@ -32,8 +32,8 @@ class Director extends EventEmitter {
         // Step 5: Level Design (Kojima)
         const levels = await this.agents.kojima.createLevels(gameDesign, gameCode);
 
-        // Final Assembly (Unity build simulation or actual file generation)
-        console.log("[DIRECTOR] Compiling final build...");
+        // Final Assembly (Web bundle simulation)
+        console.log("[DIRECTOR] Bundling final web game...");
 
         return {
             title: gameDesign.title,
