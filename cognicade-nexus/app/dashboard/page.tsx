@@ -12,19 +12,27 @@ import {
     Star,
     ArrowRight,
     BarChart3,
-    Target
+    Target,
+    Edit
 } from 'lucide-react';
 import Link from 'next/link';
 import Sidebar from '@/components/sidebar';
 import DashboardNavbar from '@/components/ui/dashboard-navbar';
 import { createClient } from '@/lib/supabase/client';
-import { getDashboardStats, getRecentLessons } from '@/lib/services/classrooms';
+import { getDashboardStats, getRecentLessons, getStudentDashboardStats, getStudentRecentLessons } from '@/lib/services/classrooms';
 
-const QUICK_ACTIONS = [
+const TEACHER_QUICK_ACTIONS = [
     { label: 'Create New Lesson', icon: Plus, href: '/create', color: 'emerald', glow: 'rgba(52,211,153,0.3)' },
-    { label: 'View Analytics', icon: BarChart3, href: '#', color: 'blue', glow: 'rgba(59,130,246,0.3)' },
-    { label: 'Student Progress', icon: Target, href: '#', color: 'purple', glow: 'rgba(168,85,247,0.3)' },
-    { label: 'Settings', icon: Settings, href: '#', color: 'slate', glow: 'rgba(148,163,184,0.3)' },
+    { label: 'View Analytics', icon: BarChart3, href: '/analytics', color: 'blue', glow: 'rgba(59,130,246,0.3)' },
+    { label: 'Manage Students', icon: Users, href: '/students', color: 'purple', glow: 'rgba(168,85,247,0.3)' },
+    { label: 'Settings', icon: Settings, href: '/settings', color: 'slate', glow: 'rgba(148,163,184,0.3)' },
+];
+
+const STUDENT_QUICK_ACTIONS = [
+    { label: 'My Classrooms', icon: Users, href: '/classrooms', color: 'emerald', glow: 'rgba(52,211,153,0.3)' },
+    { label: 'My Progress', icon: Target, href: '/progress', color: 'blue', glow: 'rgba(59,130,246,0.3)' },
+    { label: 'Achievements', icon: Trophy, href: '/achievements', color: 'purple', glow: 'rgba(168,85,247,0.3)' },
+    { label: 'Settings', icon: Settings, href: '/settings', color: 'slate', glow: 'rgba(148,163,184,0.3)' },
 ];
 
 export default function Dashboard() {
@@ -37,6 +45,8 @@ export default function Dashboard() {
     });
     const [recentLessons, setRecentLessons] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [userRole, setUserRole] = useState<'student' | 'teacher' | null>(null);
+    const [userProfile, setUserProfile] = useState<any>(null);
 
     useEffect(() => {
         const loadDashboardData = async () => {
@@ -55,31 +65,63 @@ export default function Dashboard() {
                     .single();
 
                 if (!profile) {
-                    console.log("No profile found, creating one...");
-                    const pendingRole = typeof window !== 'undefined' ? localStorage.getItem('pending_signup_role') : 'student';
+                    const pendingRole = typeof window !== 'undefined' ? localStorage.getItem('pending_signup_role') : null;
 
-                    // Attempt to create profile
-                    const { error: insertError } = await supabase.from('user_profiles').insert({
-                        id: user.id,
-                        role: pendingRole || 'student', // Default to student
-                        email: user.email,
-                        full_name: user.user_metadata.full_name,
-                        avatar_url: user.user_metadata.avatar_url,
-                        created_at: new Date().toISOString(),
-                    });
+                    if (pendingRole) {
+                        console.log("Creating profile with pending role:", pendingRole);
+                        // User came from Sign Up flow + Google, create/update profile with selected role
+                        const { error: upsertError } = await supabase.from('user_profiles').upsert({
+                            id: user.id,
+                            role: pendingRole,
+                            email: user.email,
+                            full_name: user.user_metadata.full_name,
+                            avatar_url: user.user_metadata.avatar_url,
+                            updated_at: new Date().toISOString(),
+                        }, {
+                            onConflict: 'id'
+                        });
 
-                    if (insertError) {
-                        console.error("Error creating profile:", insertError);
+                        if (upsertError) {
+                            console.error("Error creating profile:", upsertError);
+                        } else {
+                            localStorage.removeItem('pending_signup_role');
+                            // Fetch the profile again
+                            const { data: newProfile } = await supabase
+                                .from('user_profiles')
+                                .select('*')
+                                .eq('id', user.id)
+                                .single();
+                            setUserProfile(newProfile);
+                            setUserRole(newProfile?.role || null);
+                        }
+                    } else {
+                        // User logged in directly (e.g., Google Login on login page) without sign up flow
+                        // No pending role exists so we must force them to choose.
+                        window.location.href = '/onboarding';
+                        return;
                     }
-
-                    localStorage.removeItem('pending_signup_role');
+                } else {
+                    setUserProfile(profile);
+                    setUserRole(profile.role);
                 }
                 // --- PROFILE HANDLING END ---
 
-                const [statsData, lessonsData] = await Promise.all([
-                    getDashboardStats(supabase, user.id),
-                    getRecentLessons(supabase, user.id)
-                ]);
+                // Fetch role-specific data
+                const currentRole = profile?.role || userRole;
+
+                let statsData, lessonsData;
+                if (currentRole === 'teacher') {
+                    [statsData, lessonsData] = await Promise.all([
+                        getDashboardStats(supabase, user.id),
+                        getRecentLessons(supabase, user.id)
+                    ]);
+                } else {
+                    // Student
+                    [statsData, lessonsData] = await Promise.all([
+                        getStudentDashboardStats(supabase, user.id),
+                        getStudentRecentLessons(supabase, user.id)
+                    ]);
+                }
 
                 setStats(statsData);
                 setRecentLessons(lessonsData);
@@ -93,11 +135,16 @@ export default function Dashboard() {
         loadDashboardData();
     }, []);
 
-    const dynamicStats = [
+    const dynamicStats = userRole === 'teacher' ? [
         { label: 'Lessons Created', value: stats.lessonCount.toString(), icon: BookOpen, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', trend: '+12%' },
         { label: 'Students Engaged', value: stats.studentCount.toString(), icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', trend: '+23%' },
         { label: 'Total Playtime', value: `${(stats.totalPlaytimeMinutes / 60).toFixed(1)}h`, icon: Clock, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', trend: '+18%' },
         { label: 'Avg. Score', value: `${stats.avgScore}%`, icon: Trophy, color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', trend: '+5%' },
+    ] : [
+        { label: 'Lessons Assigned', value: stats.lessonCount.toString(), icon: BookOpen, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', trend: '+8%' },
+        { label: 'Classrooms Joined', value: stats.studentCount.toString(), icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', trend: '+2%' },
+        { label: 'Total Playtime', value: `${(stats.totalPlaytimeMinutes / 60).toFixed(1)}h`, icon: Clock, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', trend: '+25%' },
+        { label: 'Avg. Score', value: `${stats.avgScore}%`, icon: Trophy, color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', trend: '+15%' },
     ];
 
     return (
@@ -142,9 +189,15 @@ export default function Dashboard() {
                     <div className="mb-12">
                         <div className="flex items-center gap-3 mb-4">
                             <h1 className="text-5xl font-serif-display text-white">Welcome back,</h1>
-                            <span className="text-5xl font-serif-display text-emerald-400 italic">Educator</span>
+                            <span className="text-5xl font-serif-display text-emerald-400 italic">
+                                {userRole === 'teacher' ? 'Educator' : 'Student'}
+                            </span>
                         </div>
-                        <p className="text-slate-400 text-lg font-sans-clean">Here's what's happening with your lessons today.</p>
+                        <p className="text-slate-400 text-lg font-sans-clean">
+                            {userRole === 'teacher'
+                                ? "Here's what's happening with your lessons today."
+                                : "Here are your assigned lessons and progress."}
+                        </p>
                     </div>
 
                     {loading ? (
@@ -188,7 +241,7 @@ export default function Dashboard() {
                             <div className="mb-12">
                                 <h2 className="text-2xl font-serif-display text-white mb-6">Quick Actions</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    {QUICK_ACTIONS.map((action, idx) => {
+                                    {(userRole === 'teacher' ? TEACHER_QUICK_ACTIONS : STUDENT_QUICK_ACTIONS).map((action, idx) => {
                                         const Icon = action.icon;
                                         const colorMap: Record<string, string> = {
                                             emerald: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20',
@@ -216,9 +269,11 @@ export default function Dashboard() {
                             <div>
                                 <div className="flex justify-between items-center mb-6">
                                     <h2 className="text-2xl font-serif-display text-white">Recent Lessons</h2>
-                                    <button className="text-emerald-400 text-sm font-medium hover:text-emerald-300 transition-colors flex items-center gap-2 font-sans-clean">
-                                        View All <ArrowRight size={16} />
-                                    </button>
+                                    <Link href="/lessons">
+                                        <button className="text-emerald-400 text-sm font-medium hover:text-emerald-300 transition-colors flex items-center gap-2 font-sans-clean">
+                                            View All <ArrowRight size={16} />
+                                        </button>
+                                    </Link>
                                 </div>
                                 {recentLessons.length === 0 ? (
                                     <div className="text-center py-12 bg-[#0d281e] border border-emerald-500/20 rounded-2xl">
@@ -273,13 +328,19 @@ export default function Dashboard() {
                                                         </div>
                                                         {/* Action Button */}
                                                         <div className="mt-4 flex gap-3">
-                                                            <button className={`flex items-center gap-2 px-4 py-2 ${colors.bg} ${colors.text} rounded-lg hover:bg-opacity-80 transition-all text-sm font-medium font-sans-clean border ${colors.border}`}>
-                                                                <Play size={16} />
-                                                                Launch
-                                                            </button>
-                                                            <button className="px-4 py-2 bg-slate-500/10 text-slate-400 rounded-lg hover:bg-slate-500/20 transition-all text-sm font-medium font-sans-clean border border-slate-500/20">
-                                                                Edit
-                                                            </button>
+                                                            <Link href={`/lessons/${lesson.id}`} className="flex-1">
+                                                                <button className={`w-full flex items-center justify-center gap-2 px-4 py-2 ${colors.bg} ${colors.text} rounded-lg hover:bg-opacity-80 transition-all text-sm font-medium font-sans-clean border ${colors.border}`}>
+                                                                    <Play size={16} />
+                                                                    {userRole === 'teacher' ? 'View' : 'Launch'}
+                                                                </button>
+                                                            </Link>
+                                                            {userRole === 'teacher' && (
+                                                                <Link href={`/create?id=${lesson.id}`}>
+                                                                    <button className="px-4 py-2 bg-slate-500/10 text-slate-400 rounded-lg hover:bg-slate-500/20 transition-all text-sm font-medium font-sans-clean border border-slate-500/20">
+                                                                        <Edit size={16} />
+                                                                    </button>
+                                                                </Link>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>

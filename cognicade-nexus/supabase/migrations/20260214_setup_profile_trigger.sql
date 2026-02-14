@@ -1,15 +1,21 @@
 -- Trigger function to create a user_profile on new user signup
+-- ONLY creates profile if role is explicitly provided in metadata
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.user_profiles (id, role, full_name, email, avatar_url)
-  VALUES (
-    NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'role', 'student'), -- Default to student if not provided
-    NEW.raw_user_meta_data->>'full_name',
-    NEW.email,
-    NEW.raw_user_meta_data->>'avatar_url'
-  );
+  -- Only create profile if role is explicitly provided in metadata
+  -- This prevents auto-creating student profiles for OAuth users who haven't chosen a role yet
+  IF NEW.raw_user_meta_data->>'role' IS NOT NULL THEN
+    INSERT INTO public.user_profiles (id, role, full_name, email, avatar_url)
+    VALUES (
+      NEW.id,
+      NEW.raw_user_meta_data->>'role',
+      NEW.raw_user_meta_data->>'full_name',
+      NEW.email,
+      NEW.raw_user_meta_data->>'avatar_url'
+    )
+    ON CONFLICT (id) DO NOTHING; -- Prevent duplicate inserts
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

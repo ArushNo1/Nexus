@@ -145,15 +145,36 @@ CREATE POLICY "Students can view classrooms they're in"
 
 CREATE POLICY "Teachers can create classrooms"
     ON classrooms FOR INSERT
-    WITH CHECK (teacher_id = auth.uid());
+    WITH CHECK (
+        teacher_id = auth.uid() AND
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE user_profiles.id = auth.uid()
+            AND user_profiles.role = 'teacher'
+        )
+    );
 
 CREATE POLICY "Teachers can update their own classrooms"
     ON classrooms FOR UPDATE
-    USING (teacher_id = auth.uid());
+    USING (
+        teacher_id = auth.uid() AND
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE user_profiles.id = auth.uid()
+            AND user_profiles.role = 'teacher'
+        )
+    );
 
 CREATE POLICY "Teachers can delete their own classrooms"
     ON classrooms FOR DELETE
-    USING (teacher_id = auth.uid());
+    USING (
+        teacher_id = auth.uid() AND
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE user_profiles.id = auth.uid()
+            AND user_profiles.role = 'teacher'
+        )
+    );
 
 -- RLS Policies for classroom_members
 CREATE POLICY "Teachers can view members of their classrooms"

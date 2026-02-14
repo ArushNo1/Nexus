@@ -233,3 +233,107 @@ export async function getRecentLessons(supabase: SupabaseClient, teacherId: stri
 
     return recentLessons;
 }
+
+// Student-specific dashboard stats
+export async function getStudentDashboardStats(supabase: SupabaseClient, studentId: string) {
+    // 1. Get classrooms the student is in
+    const { data: classrooms } = await supabase
+        .from('classroom_members')
+        .select('classroom_id')
+        .eq('student_id', studentId);
+
+    const classroomIds = classrooms?.map(c => c.classroom_id) || [];
+
+    // 2. Get total lessons assigned
+    let lessonCount = 0;
+    if (classroomIds.length > 0) {
+        const { count } = await supabase
+            .from('lesson_assignments')
+            .select('*', { count: 'exact', head: true })
+            .in('classroom_id', classroomIds)
+            .eq('is_published', true);
+        lessonCount = count || 0;
+    }
+
+    // 3. Get student progress data
+    const { data: progressData } = await supabase
+        .from('student_progress')
+        .select('time_spent_seconds, score, status')
+        .eq('student_id', studentId);
+
+    let totalPlaytime = 0;
+    let avgScore = 0;
+    let completedCount = 0;
+
+    if (progressData && progressData.length > 0) {
+        totalPlaytime = progressData.reduce((acc, curr) => acc + (curr.time_spent_seconds || 0), 0);
+        const scores = progressData.filter(p => p.score !== null).map(p => p.score as number);
+        if (scores.length > 0) {
+            avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+        }
+        completedCount = progressData.filter(p => p.status === 'completed').length;
+    }
+
+    return {
+        lessonCount, // Total assigned lessons
+        studentCount: classroomIds.length, // Number of classrooms (renamed for consistency)
+        totalPlaytimeMinutes: Math.round(totalPlaytime / 60),
+        avgScore: Math.round(avgScore),
+        completedCount
+    };
+}
+
+// Student-specific recent lessons
+export async function getStudentRecentLessons(supabase: SupabaseClient, studentId: string, limit = 4): Promise<any[]> {
+    // Get classrooms the student is in
+    const { data: classrooms } = await supabase
+        .from('classroom_members')
+        .select('classroom_id')
+        .eq('student_id', studentId);
+
+    const classroomIds = classrooms?.map(c => c.classroom_id) || [];
+
+    if (classroomIds.length === 0) {
+        return [];
+    }
+
+    // Get lesson assignments for these classrooms
+    const { data: assignments, error } = await supabase
+        .from('lesson_assignments')
+        .select(`
+            lesson_id,
+            classroom_id,
+            lessons:lesson_id (*)
+        `)
+        .in('classroom_id', classroomIds)
+        .eq('is_published', true)
+        .order('assigned_at', { ascending: false })
+        .limit(limit);
+
+    if (error) throw error;
+
+    // Enrich with student progress
+    const recentLessons = await Promise.all((assignments || []).map(async (assignment: any) => {
+        const lesson = assignment.lessons;
+
+        // Get student progress for this lesson
+        const { data: progress } = await supabase
+            .from('student_progress')
+            .select('*')
+            .eq('student_id', studentId)
+            .eq('lesson_id', assignment.lesson_id)
+            .eq('classroom_id', assignment.classroom_id)
+            .single();
+
+        return {
+            ...lesson,
+            students: 0, // Not relevant for students
+            completion: progress?.completion_percentage || 0,
+            status: progress?.status || 'not_started',
+            score: progress?.score || null,
+            color: ['emerald', 'red', 'blue', 'purple'][Math.floor(Math.random() * 4)]
+        };
+    }));
+
+    return recentLessons;
+}
