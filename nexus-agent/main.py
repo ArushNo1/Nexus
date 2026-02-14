@@ -28,14 +28,19 @@ def load_lesson_plan(path: str) -> dict:
         return json.load(f)
 
 
-def save_output(phaser_code: str, title: str, output_dir: str = "output") -> Path:
-    """Save the generated HTML game to the output directory."""
+def save_output(phaser_code: str, game_design_doc: str, title: str, output_dir: str = "output") -> tuple[Path, Path]:
+    """Save the generated HTML game and design document to the output directory."""
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     slug = title.lower().replace(" ", "_").replace("-", "_")
-    filename = out / f"{slug}_game.html"
-    filename.write_text(phaser_code)
-    return filename
+
+    game_path = out / f"{slug}_game.html"
+    game_path.write_text(phaser_code)
+
+    doc_path = out / f"{slug}_design.md"
+    doc_path.write_text(game_design_doc)
+
+    return game_path, doc_path
 
 
 async def run(input_path: str, verbose: bool = False) -> None:
@@ -66,8 +71,13 @@ async def run(input_path: str, verbose: bool = False) -> None:
     final_state = await graph.ainvoke(initial_state)
 
     if final_state.get("phaser_code"):
-        output_path = save_output(final_state["phaser_code"], title)
-        console.print(f"\n[green]Game saved to:[/green] {output_path}")
+        game_path, doc_path = save_output(
+            final_state["phaser_code"],
+            final_state.get("game_design_doc", ""),
+            title,
+        )
+        console.print(f"\n[green]Game saved to:[/green] {game_path}")
+        console.print(f"[green]Design doc saved to:[/green] {doc_path}")
     else:
         console.print("\n[red]No game code was generated.[/red]")
         sys.exit(1)

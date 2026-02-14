@@ -6,7 +6,10 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 from state import AgentState
 from utils.llm import get_llm
+from utils.logger import get_logger
 from utils.prompts import load_prompt, render_template
+
+log = get_logger("game_player")
 
 
 async def game_player_node(state: AgentState) -> dict:
@@ -17,6 +20,8 @@ async def game_player_node(state: AgentState) -> dict:
 
     Future: integrate Puppeteer for headless browser runtime testing.
     """
+    log.info(f"[bold red]Node 5 — Game Player[/bold red] | status: {state.get('status')} | code iteration: {state['code_iteration'] + 1}")
+
     system = load_prompt("player_system.md")
     user = render_template("player_user.md", {
         "phaser_code": state["phaser_code"],
@@ -38,6 +43,10 @@ async def game_player_node(state: AgentState) -> dict:
     if "ERRORS:" in content.upper():
         error_section = content.upper().split("ERRORS:")[-1].split("\n\n")[0]
         errors = [line.strip("- ").strip() for line in error_section.strip().split("\n") if line.strip()]
+
+    verdict = "SHIP" if approved else "FIX"
+    error_count = len(errors)
+    log.info(f"[bold red]Node 5 — Game Player[/bold red] | done → verdict: {verdict} | errors: {error_count}")
 
     return {
         "playtest_report": content,

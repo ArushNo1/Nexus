@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photosynthesis Factory</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #87CEEB, #98FB98);
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        /**
+         * PHOTOSYNTHESIS FACTORY GAME
+         * 
+         * Learning Objectives Mapping:
+         * - Define Photosynthesis: Tutorial scene explains the process through gameplay
+         * - Identify Inputs/Outputs: Core gameplay requires collecting CO₂, H₂O, sunlight → producing glucose + O₂
+         * - Explain Importance: Score system shows plant health depending on photosynthesis success
+         * - Equation Understanding: Quiz gates test knowledge of the chemical equation
+         * - Real-world Application: Factory metaphor connects abstract concept to familiar systems
+         * 
+         * Game Mechanics:
+         * - Resource Collection: Players must identify and collect correct input materials
+         * - Factory Operation: Convert inputs to outputs using photosynthesis reactor
+         * - Knowledge Gates: Quiz questions block progress until answered correctly
+         * - Health System: Plant vitality depends on successful photosynthesis
+         * - Progressive Difficulty: Levels increase in complexity and time pressure
+         */
+
+        /**
+         * Asset Creation Helper Functions
+         */
+        class AssetGenerator {
+            /**
+             * Generate Chloro character sprite
+             */
+            static createChloroSprite(scene, x, y) {
+                const graphics = scene.add.graphics();
+                
+                // Body (green rectangle)
+                graphics.fillStyle(0x32CD32);
+                graphics.fillRect(-10, -10, 20, 20);
+                
+                // Hard hat
+                graphics.fillStyle(0xFFD700);
+                graphics.fillRect(-8, -12, 16, 4);
+                
+                // Eyes
+                graphics.fillStyle(0x000000);
+                graphics.fillCircle(-5, -5, 2);
+                graphics.fillCircle(5, -5, 2);
+                
+                // Create texture from graphics
+                graphics.generateTexture('chloro', 20, 20);
+                graphics.destroy();
+                
+                return scene.add.sprite(x, y, 'chloro');
+            }
+
+            /**
+             * Generate sunlight beam sprite
+             */
+            static createSunlightSprite(scene, x, y) {
+                const graphics = scene.add.graphics();
+                
+                // Gradient beam effect
+                graphics.fillGradientStyle(0xFFD700, 0xFFD700, 0xFFA500, 0xFFA500);
+                graphics.fillRect(-7, -15, 14, 30);
+                
+                // Sparkle effect
+                graphics.fillStyle(0xFFFFFF);
+                graphics.fillCircle(-3, -8, 1);
+                graphics.fillCircle(4, -2, 1);
+                graphics.fillCircle(0, 5, 1);
+                
+                graphics.generateTexture('sunlight', 15, 30);
+                graphics.destroy();
+                
+                return scene.add.sprite(x, y, 'sunlight');
+            }
+
+            /**
+             * Generate water droplet sprite
+             */
+            static createWaterSprite(scene, x, y) {
+                const graphics = scene.add.graphics();
+                
+                // Water droplet shape
+                graphics.fillStyle(0x0066FF);
+                graphics.fillCircle(0, 2, 6);
+                graphics.fillTriangle(-3, -4, 3, -4, 0, -8);
+                
+                // Highlight
+                graphics.fillStyle(0x66CCFF);
+                graphics.fillCircle(-2, 0, 2);
+                
+                graphics.generateTexture('water', 16, 16);
+                graphics.destroy();
+                
+                return scene.add.sprite(x, y, 'water');
+            }
+
+            /**
+             * Generate CO2 bubble sprite
+             */
+            static createCO2Sprite(scene, x, y) {
+                const graphics = scene.add.graphics();
+                
+                // Main bubble
+                graphics.fillStyle(0x696969);
+                graphics.fillCircle(0, 0, 8);
+                
+                // Smaller bubbles
+                graphics.fillStyle(0x808080);
+                graphics.fillCircle(-3, -2, 3);
+                graphics.fillCircle(4, 3, 2);
+                
+                // CO2 label
+                graphics.fillStyle(0xFFFFFF);
+                // Simple pixel text representation
+                graphics.fillRect(-4, -1, 1, 3); // C
+                graphics.fillRect(-3, -1, 2, 1);
+                graphics.fillRect(-3, 1, 2, 1);
+                graphics.fillRect(0, -1, 2, 1); // O
+                graphics.fillRect(0, 1, 2, 1);
+                graphics.fillRect(-1, 0, 1, 1);
+                graphics.fillRect(1, 0, 1, 1);
+                graphics.fillRect(3, -1, 1, 2); // 2
+                graphics.fillRect(2, 1, 2, 1);
+                
+                graphics.generateTexture('co2', 16, 16);
+                graphics.destroy();
+                
+                return scene.add.sprite(x, y, 'co2');
+            }
+
+            /**
+             * Generate glucose crystal sprite
+             */
+            static createGlucoseSprite(scene, x, y) {
+                const graphics = scene.add.graphics();
+                
+                // Crystal shape
+                graphics.fillStyle(0xFFA500);
+                graphics.fillRect(-6, -6, 12, 12);
+                
+                // Crystal facets
+                graphics.fillStyle(0xFFD700);
+                graphics.fillTriangle(-6, -6, 0, 0, -6, 6);
+                graphics.fillTriangle(6, -6, 0, 0, 6, 6);
+                
+                // Sparkle
+                graphics.fillStyle(0xFFFFFF);
+                graphics.fillCircle(0, 0, 1);
+                
+                graphics.generateTexture('glucose', 12, 12);
+                graphics.destroy();
+                
+                return scene.add.sprite(x, y, 'glucose');
+            }
+
+            /**
+             * Generate oxygen bubble sprite
+             */
+            static createOxygenSprite(scene, x, y) {
+                const graphics = scene.add.graphics();
+                
+                // Main bubble
+                graphics.fillStyle(0x87CEEB);
+                graphics.fillCircle(0, 0, 6);
+                
+                // Highlight
+                graphics.fillStyle(0xE0FFFF);
+                graphics.fillCircle(-2, -2, 2);
+                
+                // O2 label
+                graphics.fillStyle(0x000080);
+                graphics.fillRect(-3, -1, 2, 1); // O
+                graphics.fillRect(-3, 1, 2, 1);
+                graphics.fillRect(-2, 0, 1, 1);
+                graphics.fillRect(1, -1, 1, 2); // 2
+                graphics.fillRect(0, 1, 2, 1);
+                
+                graphics.generateTexture('oxygen', 12, 12);
+                graphics.destroy();
+                
+                return scene.add.sprite(x, y, 'oxygen');
+            }
+
+            /**
+             * Create leaf background texture
+             */
+            static createLeafBackground(scene) {
+                const canvas = scene.textures.createCanvas('leafBg', 800, 600);
+                const ctx = canvas.getContext();
+                
+                // Base leaf green
+                const gradient = ctx.createLinearGradient(0, 0, 800, 600);
+                gradient.addColorStop(0, '#98FB98');
+                gradient.addColorStop(0.5, '#90EE90');
+                gradient.addColorStop(1, '#7CFC00');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 800, 600);
+                
+                // Leaf veins
+                ctx.strokeStyle = '#228B22';
+                ctx.lineWidth = 3;
+                
+                // Main vein
+                ctx.beginPath();
+                ctx.moveTo(100, 300);
+                ctx.lineTo(700, 300);
+                ctx.stroke();
+                
+                // Side veins
+                for (let i = 150; i < 650; i += 100) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, 200);
+                    ctx.lineTo(400, 300);
+                    ctx.lineTo(i, 400);
+                    ctx.stroke();
+                }
+                
+                // Cell structure pattern
+                ctx.strokeStyle = '#32CD32';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < 800; x += 40) {
+                    for (let y = 0; y < 600; y += 30) {
+                        ctx.strokeRect(x, y, 40, 30);
+                    }
+                }
+                
+                canvas.refresh();
+                return canvas;
+            }
+
+            /**
+             * Create factory machinery
+             */
+            static createReactor(scene, x, y, width, height) {
+                const graphics = scene.add.graphics();
+                
+                // Main body
+                graphics.fillStyle(0x808080);
+                graphics.fillRect(x - width/2, y - height/2, width, height);
+                
+                // Control panel
+                graphics.fillStyle(0x333333);
+                graphics.fillRect(x - width/2 + 5, y - height/2 + 5, width - 10, 20);
+                
+                // Lights
+                graphics.fillStyle(0x00FF00);
+                graphics.fillCircle(x - width/4, y - height/2 + 15, 3);
+                graphics.fillStyle(0xFF0000);
+                graphics.fillCircle(x + width/4, y - height/2 + 15, 3);
+                
+                // Pipes
+                graphics.lineStyle(4, 0x666666);
+                graphics.beginPath();
+                graphics.moveTo(x - width/2, y);
+                graphics.lineTo(x - width/2 - 20, y);
+                graphics.moveTo(x + width/2, y);
+                graphics.lineTo(x + width/2 + 20, y);
+                graphics.strokePath();
+                
+                return graphics;
+            }
+        }
+
+        /**
+         * Sound Effects Generator
+         */
+        class SoundGenerator {
+            /**
+             * Generate collection sound using Web Audio API
+             */
+            static playCollectionSound() {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                oscillator.frequency.exponentialRampToValueAtTime(783.99, audioContext.currentTime + 0.1); // G5
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            }
+
+            /**
+             * Generate success sound
+             */
+            static playSuccessSound() {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+                oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+
+            /**
+             * Generate error sound
+             */
+            static playErrorSound() {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(110, audioContext.currentTime + 0.3);
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+        }
+
+        /**
+         * Game configuration object
+         */
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 0 },
+                    debug: false
+                }
+            },
+            scene: [BootScene, TutorialScene, Level1Scene, QuizScene, Level2Scene, ResultsScene]
+        };
+
+        /**
+         * Boot Scene - Initial loading and setup
+         */
+        class BootScene extends Phaser.Scene {
+            constructor() {
+                super({ key: 'BootScene' });
+            }
+
+            /**
+             * Create programmatic assets and show main menu
+             */
+            create() {
+                // Create leaf background
+                AssetGenerator.createLeafBackground(this);
+                this.add.image(400, 300, 'leafBg');
+                
+                // Create animated title
+                const titleGraphics = this.add.graphics();
+                titleGraphics.fillStyle(0x2F4F2F);
+                titleGraphics.fillRect(50, 120, 700, 60);
+                titleGraphics.setAlpha(0.8);
+
+                // Title with glow effect
+                const titleText = this.add.text(400, 150, 'PHOTOSYNTHESIS FACTORY', {
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    fill: '#FFFFFF',
+                    stroke: '#32CD32',
+                    strokeThickness: 2,
+                    align: 'center'
+                }).setOrigin(0.5);
+
+                // Animated subtitle
+                const subtitle = this.add.text(400, 200, 'Help Chloro run the leaf factory!', {
+                    fontSize: '18px',
+                    fill: '#FFFF00',
+                    align: 'center'
+                }).setOrigin(0.5);
+
+                // Floating particles animation
+                this.createFloatingParticles();
+
+                // Instructions with visual icons
+                const instructionsBox = this.add.graphics();
+                instructionsBox.fillStyle(0x90EE90);
+                instructionsBox.fillRoundedRect(100, 280, 600, 180, 20);
+                instructionsBox.setAlpha(0.9);
+
+                this.add.text(400, 370, 'Learn how plants make food from sunlight!\n\nCollect: Sunlight ☀️ + Water 💧 + CO₂ 💨\nProduce: Glucose 🍯 + Oxygen 💨\n\nPress SPACE to start your adventure!', {
+                    fontSize: '16px',
+                    fill: '#2F4F2F',
+                    align: 'center',
+                    lineSpacing: 8
+                }).setOrigin(0.5);
+
+                // Animated start prompt
+                const startPrompt = this.add.text(400, 520, '🌱 PRESS SPACE TO BEGIN 🌱', {
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    fill: '#FF6347',
+                    align: 'center'
+                }).setOrigin(0.5);
+
+                // Pulsing animation
+                this.tweens.add({
+                    targets: startPrompt,
+                    scaleX: 1.1,
+                    scaleY: 1.1,
+                    duration: 1000,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+
+                // Input handling
+                this.input.keyboard.on('keydown-SPACE', () => {
+                    SoundGenerator.playCollectionSound();
+                    this.scene.start('TutorialScene');
+                });
+
+                this.input.on('pointerdown', () => {
+                    SoundGenerator.playCollectionSound();
+                    this.scene.start('TutorialScene');
+                });
+            }
+
+            /**
+             * Create floating particle effects
+             */
+            createFloatingParticles() {
+                for (let i = 0; i < 10; i++) {
+                    const particle = this.add.circle(
+                        Phaser.Math.Between(0, 800),
+                        Phaser.Math.Between(0, 600),
+                        Phaser.Math.Between(2, 5),
+                        0xFFD700
+                    );
+                    
+                    this.tweens.add({
+                        targets: particle,
+                        y: particle.y - 100,
+                        alpha: 0,
+                        duration: Phaser.Math.Between(3000, 6000),
+                        ease: 'Sine.easeOut',
+                        repeat: -1,
+                        yoyo: false,
+                        onComplete: () => {
+                            particle.y = 650;
+                            particle.alpha = 1;
+                        }
+                    });
+                }
+            }
+        }
+
+        /**
+         * Tutorial Scene - Teaches basic photosynthesis concept
+         */
+        class TutorialScene extends Phaser.Scene {
+            constructor() {
+                super({ key: 'TutorialScene' });
+            }
+
+            /**
+             * Initialize tutorial variables
+             */
+            init() {
+                this.plantHealth = 100;
+                this.collectedSunlight = 0;
+                this.collectedWater = 0;
+                this.collectedCO2 = 0;
+                this.tutorialStep = 0;
+                this.tutorialMessages = [
+                    'Welcome to the Photosynthesis Factory!',
+                    'You are Chloro, working inside a leaf!',
+                    'Plants need 3 things to make food...',
+                    'Collect SUNLIGHT (yellow beams) ☀️',
+                    'Collect WATER (blue drops) 💧',
+                    'Collect CO₂ (gray bubbles) 💨',
+                    'Great! Now you understand the inputs!'
+                ];
+            }
+
+            /**
+             * Create tutorial scene elements
+             */
+            create() {
+                // Background
+                this.add.image(400, 300, 'leafBg');
+                this.createFactoryElements();
+                
+                // Create Chloro character
+                this.player = AssetGenerator.createChloroSprite(this, 100, 300);
+                this.physics.add.existing(this.player);
+                this.player.body.setCollideWorldBounds(true);
+
+                // Create resource groups
+                this.sunlightGroup = this.physics.add.group();
+                this.waterGroup = this.physics.add.group();
+                this.co2Group = this.physics.add.group();
+
+                // UI Elements with enhanced styling
+                this.createUI();
+
+                // Input handling
+                this.cursors = this.input.keyboard.createCursorKeys();
+                this.wasd = this.input.keyboard.addKeys('W,S,A,D');
+
+                // Spawn initial resources
+                this.resourceSpawner = this.time.addEvent({
+                    delay: 2000,
+                    callback: this.spawnResources,
+                    callbackScope: this,
+                    loop: true
+                });
+
+                // Tutorial progression
+                this.tutorialTimer = this.time.addEvent({
+                    delay: 3000,
+                    callback: this.advanceTutorial,
+                    callbackScope: this,
+                    loop: true
+                });
+
+                // Set up collisions
+                this.physics.add.overlap(this.player, this.sunlightGroup, this.collectSunlight, null, this);
+                this.physics.add.overlap(this.player, this.waterGroup, this.collectWater, null, this);
+                this.physics.add.overlap(this.player, this.co2Group, this.collectCO2, null, this);
+            }
+
+            /**
+             * Create factory elements
+             */
+            createFactoryElements() {
+                // Main reactor
+                AssetGenerator.createReactor(this, 700, 300, 80, 60);
+                this.add.text(660, 270, 'PHOTOSYNTHESIS\nREACTOR', { 
+                    fontSize: '10px', 
+                    fill: '#000',
+                    align: 'center'
+                });
+                
+                // Stomata (CO2 entry) with animation
+                const stomata = this.add.graphics();
+                stomata.fillStyle(0x654321);
+                stomata.fillEllipse(50, 200, 30, 20);
+                this.add.text(15, 180, 'CO₂ ENTRY', { fontSize: '10px', fill: '#000' });
+                
+                // Animate stomata opening/closing
+                this.tweens.add({
+                    targets: stomata,
+                    scaleY: 0.5,
+                    duration: 2000,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+                
+                // Root connection (water entry)
+                this.add.rectangle(400, 550, 60, 30, 0x8B4513);
+                this.add.text(370, 570, 'H₂O TRANSPORT', { fontSize: '10px', fill: '#FFF' });
+            }
+
+            /**
+             * Create enhanced UI
+             */
+            createUI() {
+                // Health bar with gradient
+                const healthBg = this.add.graphics();
+                healthBg.fillStyle(0x333333);
+                healthBg.fillRoundedRect(20, 20, 204, 24, 5);
+                
+                this.healthBar = this.add.graphics();
+                this.updateHealthBar();
+                
+                this.healthText = this.add.text(20, 10, 'Plant Health: 100%', {
+                    fontSize: '16px',
+                    fill: '#000000',
+                    fontWeight: 'bold'
+                });
+
+                // Tutorial message box
+                const messageBox = this.add.graphics();
+                messageBox.fillStyle(0xFFFFFF);
+                messageBox.fillRoundedRect(50, 80, 700, 60, 10);
+                messageBox.setStrokeStyle(2, 0x32CD32);
+                messageBox.strokeRoundedRect(50, 80, 700, 60, 10);
+
+                this.tutorialText = this.add.text(400, 110, this.tutorialMessages[0], {
+                    fontSize: '18px',
+                    fill: '#2F4F2F',
+                    align: 'center',
+                    wordWrap: { width: 680 }
+                }).setOrigin(0.5);
+
+                this.collectionText = this.add.text(400, 550, 'Use ARROW KEYS to move. Collect resources by touching them!', {
+                    fontSize: '14px',
+                    fill: '#000000',
+                    align: 'center',
+                    backgroundColor: '#FFFFFF',
+                    padding: { x: 10, y: 5 }
+                }).setOrigin(0.5);
+            }
+
+            /**
+             * Update health bar with gradient
+             */
+            updateHealthBar() {
+                this.healthBar.clear();
+                
+                // Health gradient from green to red
+                const healthRatio = this.plantHealth / 100;
+                const red = Math.floor(255 * (1 - healthRatio));
+                const green = Math.floor(255 * healthRatio);
+                const color = (red << 16) | (green << 8) | 0;
+                
+                this.healthBar.fillStyle(color);
+                this.healthBar.fillRoundedRect(22, 22, healthRatio * 200, 20, 3);
+            }
+
+            /**
+             * Spawn tutorial resources based on current step
+             */
+            spawnResources() {
+                if (this.tutorialStep === 3) {
+                    // Spawn sunlight with enhanced visuals
+                    const sunlight = AssetGenerator.createSunlightSprite(this, 
+                        Phaser.Math.Between(200, 600),
+                        Phaser.Math.Between(150, 200)
+                    );
+                    this.physics.add.existing(sunlight);
+                    this.sunlightGroup.add(sunlight);
+                    
+                    // Add glow effect
+                    this.tweens.add({
+                        targets: sunlight,
+                        alpha: 0.7,
+                        duration: 500,
+                        yoyo: true,
+                        repeat: -1
+                    });
+                    
+                } else if (this.tutorialStep === 4) {
+                    // Spawn water with physics
+                    const water = AssetGenerator.createWaterSprite(this,
+                        Phaser.Math.Between(300, 500),
+                        500
+                    );
+                    this.physics.add.existing(water);
+                    water.body.setVelocityY(-50);
+                    water.body.setBounce(0.8);
+                    this.waterGroup.add(water);
+                    
+                } else if (this.tutorialStep === 5) {
+                    // Spawn CO2 with floating motion
+                    const co2 = AssetGenerator.createCO2Sprite(this,
+                        100,
+                        Phaser.Math.Between(200, 400)
+                    );
+                    this.physics.add.existing(co2);
+                    co2.body.setVelocityX(30);
+                    
+                    // Add floating motion
+                    this.tweens.add({
+                        targets: co2,
+                        y: co2.y + Phaser.Math.Between(-20, 20),
+                        duration: 2000,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut'
+                    });
+                    
+                    this.co2Group.add(co2);
+                }
+            }
+
+            /**
+             * Advance tutorial step and update message
+             */
+            advanceTutorial() {
+                if (this.tutorialStep < this.tutorialMessages.length - 1) {
+                    this.tutorialStep++;
+                    this.tutorialText.setText(this.tutorialMessages[this.tutorialStep]);
+                    
+                    // Add text animation
+                    this.tweens.add({
+                        targets: this.tutorialText,
+                        scaleX: 1.1,
+                        scaleY: 1.1,
+                        duration: 300,
+                        yoyo: true,
+                        ease: 'Back.easeOut'
+                    });
+                }
+
+                if (this.tutorialStep === 6 && this.collectedSunlight > 0 && 
+                    this.collectedWater > 0 && this.collectedCO2 > 0) {
+                    this.time.delayedCall(2000, () => {
+                        SoundGenerator.playSuccessSound();
+                        this.scene.start('Level1Scene');
+                    });
+                }
+            }
+
+            /**
+             * Handle sunlight collection with enhanced effects
+             */
+            collectSunlight(player, sunlight) {
+                SoundGenerator.playCollectionSound();
+                
+                // Create collection particle effect
+                this.createCollectionEffect(sunlight.x, sunlight.y, 0xFFD700);
+                
+                sunlight.destroy();
+                this.collectedSunlight++;
+                this.updateCollectionDisplay();
+                this.plantHealth = Math.min(100, this.plantHealth + 2);
+                this.updateHealthBar();
+            }
+
+            /**
+             * Handle water collection
+             */
+            collectWater(player, water) {
+                SoundGenerator.playCollectionSound();
+                this.createCollectionEffect(water.x, water.y, 0x0066FF);
+                
+                water.destroy();
+                this.collectedWater++;
+                this.updateCollectionDisplay();
+                this.plantHealth = Math.min(100, this.plantHealth + 2);
+                this.updateHealthBar();
+            }
+
+            /**
+             * Handle CO2 collection
+             */
+            collectCO2(player, co2) {
+                SoundGenerator.playCollectionSound();
+                this.createCollectionEffect(co2.x, co2.y, 0x696969);
+                
+                co2.destroy();
+                this.collectedCO2++;
+                this.updateCollectionDisplay();
+                this.plantHealth = Math.min(100, this.plantHealth + 2);
+                this.updateHealthBar();
+            }
+
+            /**
+             * Create visual collection effect
+             */
+            createCollectionEffect(x, y, color) {
+                for (let i = 0; i < 8; i++) {
+                    const particle = this.add.circle(x, y, 3, color);
+                    this.tweens.add({
+                        targets: particle,
+                        x: x + Phaser.Math.Between(-30, 30),
+                        y: y + Phaser.Math.Between(-30, 30),
+                        alpha: 0,
+                        scale: 2,
+                        duration: 500,
+                        ease: 'Power2',
+                        onComplete: () => particle.destroy()
+                    });
+                }
+            }
+
+            /**
+             * Update collection status display
+             */
+            updateCollectionDisplay() {
+                this.collectionText.setText(
+                    `Collected - Sunlight: ${this.collectedSunlight} | Water: ${this.collectedWater} | CO₂: ${this.collectedCO2}`
+                );
+            }
+
+            /**
+             * Update game state each frame
+             */
+            update() {
+                // Player movement with smooth animation
+                this.player.body.setVelocity(0);
+                let moving = false;
+
+                if (this.cursors.left.isDown || this.wasd.A.isDown) {
+                    this.player.body.setVelocityX(-160);
+                    this.player.setFlipX(true);
+                    moving = true;
+                } else if (this.cursors.right.isDown || this.wasd.D.isDown) {
+                    this.player.body.setVelocityX(160);
+                    this.player.setFlipX(false);
+                    moving = true;
+                }
+
+                if (this.cursors.up
