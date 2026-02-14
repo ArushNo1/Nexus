@@ -298,6 +298,9 @@ export default function NexusLanding() {
                     <div className="hidden md:flex items-center space-x-12 text-sm font-medium text-slate-300">
                         <a href="#" className="hover:text-white transition-colors">Features</a>
                         <a href="#" className="hover:text-white transition-colors">Pricing</a>
+                        <Link href="/dashboard">
+                            <span className="hover:text-white transition-colors cursor-pointer">Dashboard</span>
+                        </Link>
                         {/* White Button (Chalk style) */}
                         <Link href="/auth/login">
                             <button className="px-6 py-2.5 bg-white text-[#0d281e] font-bold rounded-lg hover:bg-slate-200 transition-all shadow-md">
