@@ -28,14 +28,23 @@
         //  MAZE / CHASE GAME TEMPLATE — Kaplay.js
         //  Arrow keys / WASD to move
         //  Collect all dots, avoid ghosts
+        //
+        //  ARCHITECTURE:
+        //    Three scenes: "game" (main), "gameover", "win".
+        //    Maze is defined as an ASCII string array in MAZES[]. Parsed char-by-char into Kaplay entities.
+        //    Tags used: "wall", "dot", "power", "player", "ghost".
+        //    Movement is continuous (not snapped to grid) but uses tile-based collision checks via canMove().
+        //    Ghost AI: 60% chase/flee bias, 40% random. Ghosts slow down + flee when player is powered up.
+        //    Win condition: collect ALL dots + power pellets (totalDots). Lose condition: lives reach 0.
         // =============================================
 
+        // -- CONFIG: All tunable gameplay constants --
         const C = {
-            tile: 32,
+            tile: 32,              // tile size in pixels — maze dimensions derive from this
             playerSpeed: 160,
-            ghostSpeed: 100,
+            ghostSpeed: 100,       // base speed; each ghost gets +15 per index (ghost 0=100, ghost 1=115, etc.)
             ghostCount: 3,
-            powerUpTime: 6,
+            powerUpTime: 6,        // seconds the power-up lasts
             bg: [5, 5, 15],
             wallCol: [30, 50, 140],
             dotCol: [255, 220, 100],
@@ -45,8 +54,10 @@
             scaredCol: [60, 60, 200],
         };
 
-        // ---- MAZE LAYOUT ----
-        // # = wall, . = dot, o = power pellet, @ = player spawn, G = ghost spawn, _ = empty
+        // -- MAZE LAYOUT --
+        // # = wall (static body), . = dot (10 pts), o = power pellet (50 pts + activates power mode)
+        // @ = player spawn (also places a dot), G = ghost spawn (also places a dot), _ = empty
+        // To add levels: append more string arrays to MAZES[]. Currently only one level.
         const MAZES = [
             [
                 "#####################",
@@ -68,9 +79,10 @@
         ];
 
         const T = C.tile;
-        const mapW = MAZES[0][0].length;
-        const mapH = MAZES[0].length;
+        const mapW = MAZES[0][0].length; // maze width in tiles
+        const mapH = MAZES[0].length;    // maze height in tiles
 
+        // Canvas is maze size + 48px bottom strip for HUD
         kaplay({
             width: mapW * T,
             height: mapH * T + 48,
@@ -80,20 +92,23 @@
         });
         loadBean();
 
-        // ---- GAME SCENE ----
+        // ==================
+        //  GAME SCENE
+        // ==================
         scene("game", (levelIdx = 0) => {
             const maze = MAZES[levelIdx];
             let score = 0;
-            let totalDots = 0;
-            let collected = 0;
+            let totalDots = 0;   // total collectibles (dots + power pellets + dots under @ and G)
+            let collected = 0;   // tracks progress toward win condition
             let lives = 3;
-            let powered = false;
+            let powered = false; // true while power pellet effect is active
             let powerTimer = 0;
             let gameOver = false;
             let playerSpawn = vec2(1, 1);
             const ghostSpawns = [];
 
-            // -- Build maze --
+            // -- MAZE BUILDER: iterate ASCII grid, spawn entities per character --
+            // Note: '@' and 'G' tiles also spawn a dot underneath, so they count toward totalDots.
             for (let row = 0; row < maze.length; row++) {
                 for (let col = 0; col < maze[row].length; col++) {
                     const ch = maze[row][col];
@@ -102,6 +117,7 @@
 
                     switch (ch) {
                         case "#":
+                            // Wall: static body that blocks movement
                             add([
                                 rect(T, T),
                                 pos(x, y),
@@ -113,18 +129,20 @@
                             ]);
                             break;
                         case ".":
+                            // Dot: small collectible worth 10 pts
                             totalDots++;
                             add([
                                 circle(3),
                                 pos(x + T / 2, y + T / 2),
                                 anchor("center"),
                                 color(...C.dotCol),
-                                area({ shape: new Rect(vec2(-4, -4), 8, 8) }),
+                                area({ shape: new Rect(vec2(-4, -4), 8, 8) }), // explicit hitbox for tiny circle
                                 z(1),
                                 "dot",
                             ]);
                             break;
                         case "o":
+                            // Power pellet: activates power mode for C.powerUpTime seconds, worth 50 pts
                             totalDots++;
                             const pellet = add([
                                 circle(7),
@@ -135,14 +153,14 @@
                                 z(1),
                                 "power",
                             ]);
-                            // Pulsing effect
+                            // Pulsing scale animation to distinguish from regular dots
                             pellet.onUpdate(() => {
                                 pellet.scale = vec2(wave(0.8, 1.2, time() * 4));
                             });
                             break;
                         case "@":
+                            // Player spawn position — also places a dot here
                             playerSpawn = vec2(x + T / 2, y + T / 2);
-                            // Also place a dot here
                             totalDots++;
                             add([
                                 circle(3),
@@ -155,8 +173,8 @@
                             ]);
                             break;
                         case "G":
+                            // Ghost spawn position — also places a dot here
                             ghostSpawns.push(vec2(x + T / 2, y + T / 2));
-                            // Also place a dot here
                             totalDots++;
                             add([
                                 circle(3),
@@ -172,7 +190,8 @@
                 }
             }
 
-            // -- Player --
+            // -- PLAYER: bean sprite with queued direction input --
+            // Uses dir (current movement) and nextDir (buffered input) for smooth cornering.
             const player = add([
                 sprite("bean"),
                 pos(playerSpawn),
@@ -184,16 +203,18 @@
                 "player",
             ]);
 
-            // -- Grid-based movement --
+            // -- TILE COLLISION CHECK --
+            // Looks half a tile ahead in the given direction and checks the ASCII maze for walls.
+            // This is NOT physics-based — it reads the original maze string directly.
             function canMove(from, direction) {
                 const target = from.add(direction.scale(T * 0.5));
-                // Raycast-style: check if a wall exists at target
                 const col = Math.floor(target.x / T);
                 const row = Math.floor(target.y / T);
                 if (row < 0 || row >= mapH || col < 0 || col >= mapW) return false;
                 return maze[row][col] !== "#";
             }
 
+            // -- INPUT: arrow keys and WASD both set the queued direction --
             onKeyDown("left", () => player.nextDir = vec2(-1, 0));
             onKeyDown("right", () => player.nextDir = vec2(1, 0));
             onKeyDown("up", () => player.nextDir = vec2(0, -1));
@@ -203,24 +224,25 @@
             onKeyDown("w", () => player.nextDir = vec2(0, -1));
             onKeyDown("s", () => player.nextDir = vec2(0, 1));
 
+            // -- PLAYER UPDATE: apply queued direction if valid, then move --
             player.onUpdate(() => {
                 if (gameOver) return;
 
-                // Try switching to queued direction
+                // If queued direction is traversable, switch to it immediately (allows pre-turning)
                 if (canMove(player.pos, player.nextDir)) {
                     player.dir = player.nextDir;
                 }
-                // Move in current direction if possible
+                // Continue moving in current direction if not blocked
                 if (canMove(player.pos, player.dir)) {
                     player.move(player.dir.scale(C.playerSpeed));
                 }
 
-                // Flip sprite to face direction
+                // Flip sprite horizontally to face movement direction
                 if (player.dir.x < 0) player.flipX = true;
                 if (player.dir.x > 0) player.flipX = false;
             });
 
-            // -- Dot collection --
+            // -- DOT COLLECTION: destroy dot, increment score, check win --
             player.onCollide("dot", (d) => {
                 destroy(d);
                 score += 10;
@@ -232,7 +254,7 @@
                 }
             });
 
-            // -- Power pellet --
+            // -- POWER PELLET: same as dot but also activates powered state --
             player.onCollide("power", (p) => {
                 destroy(p);
                 score += 50;
@@ -246,7 +268,7 @@
                 }
             });
 
-            // Power timer
+            // -- POWER TIMER: counts down each frame, disables power when expired --
             onUpdate(() => {
                 if (powered) {
                     powerTimer -= dt();
@@ -254,11 +276,13 @@
                 }
             });
 
-            // -- Ghosts --
+            // -- GHOST SPAWNING + AI --
+            // Each ghost gets a unique color (cycling ghostCols) and slightly increasing speed.
+            // Ghosts spawn staggered by 1.5s intervals via wait().
             function spawnGhost(idx) {
                 const sp = ghostSpawns.length > 0
                     ? ghostSpawns[idx % ghostSpawns.length]
-                    : vec2(mapW * T / 2, mapH * T / 2);
+                    : vec2(mapW * T / 2, mapH * T / 2); // fallback to center if no G tiles
                 const col = C.ghostCols[idx % C.ghostCols.length];
 
                 const ghost = add([
@@ -271,18 +295,19 @@
                     z(9),
                     {
                         baseCol: col,
-                        dir: choose([vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1)]),
-                        turnTimer: 0,
+                        dir: choose([vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1)]), // random initial direction
+                        turnTimer: 0,      // cooldown before next direction change
                         spd: C.ghostSpeed + idx * 15,
                     },
                     "ghost",
                 ]);
 
-                // Ghost AI: move in a direction, pick new direction at intersections
+                // -- GHOST AI UPDATE (runs every frame) --
                 ghost.onUpdate(() => {
                     if (gameOver) return;
 
-                    // Scared color
+                    // Visual: change color to scared blue when player is powered.
+                    // Flashes white when power is about to expire (<2s remaining).
                     if (powered) {
                         ghost.color = powerTimer < 2
                             ? (Math.floor(time() * 8) % 2 === 0 ? rgb(...C.scaredCol) : rgb(255, 255, 255))
@@ -293,23 +318,24 @@
 
                     ghost.turnTimer -= dt();
 
-                    // Bias toward player (simple chase)
+                    // Compute chase/flee vector toward/away from player
                     const toPlayer = player.pos.sub(ghost.pos);
                     const chaseDir = powered
-                        ? toPlayer.unit().scale(-1) // run away when powered
-                        : toPlayer.unit();
+                        ? toPlayer.unit().scale(-1) // FLEE when player is powered
+                        : toPlayer.unit();           // CHASE otherwise
 
-                    // At intervals, pick a new direction
+                    // Direction change: triggers on timer expiry OR when current direction is blocked
                     if (ghost.turnTimer <= 0 || !canMove(ghost.pos, ghost.dir)) {
                         ghost.turnTimer = rand(0.3, 0.8);
 
+                        // Get all traversable cardinal directions from current position
                         const dirs = [vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1)]
                             .filter(d => canMove(ghost.pos, d));
 
                         if (dirs.length > 0) {
-                            // 60% chance chase/flee, 40% random
+                            // 60% chance: pick direction closest to chase/flee vector
+                            // 40% chance: pick random valid direction (adds unpredictability)
                             if (rand() < 0.6) {
-                                // Pick direction closest to chase direction
                                 dirs.sort((a, b) =>
                                     a.sub(chaseDir).len() - b.sub(chaseDir).len()
                                 );
@@ -320,35 +346,37 @@
                         }
                     }
 
+                    // Apply movement — ghosts move 30% slower while player is powered
                     if (canMove(ghost.pos, ghost.dir)) {
                         const spd = powered ? ghost.spd * 0.7 : ghost.spd;
                         ghost.move(ghost.dir.scale(spd));
                     }
 
-                    // Clamp inside maze
+                    // Safety clamp to keep ghosts inside maze bounds
                     ghost.pos.x = clamp(ghost.pos.x, T * 0.5, (mapW - 0.5) * T);
                     ghost.pos.y = clamp(ghost.pos.y, T * 0.5, (mapH - 0.5) * T);
                 });
             }
 
+            // Stagger ghost spawns: ghost 0 at 0s, ghost 1 at 1.5s, ghost 2 at 3s, etc.
             for (let i = 0; i < C.ghostCount; i++) {
                 wait(i * 1.5, () => spawnGhost(i));
             }
 
-            // -- Ghost collision --
+            // -- GHOST-PLAYER COLLISION --
+            // Powered: eat ghost (200 pts, explosion, respawn after 3s delay)
+            // Not powered: lose a life, reset player to spawn, or game over if lives depleted
             player.onCollide("ghost", (g) => {
                 if (gameOver) return;
                 if (powered) {
-                    // Eat ghost
                     score += 200;
                     addKaboom(g.pos);
                     destroy(g);
                     updateHUD();
-                    // Respawn ghost after delay
+                    // Respawn a new ghost after delay (random index for color variety)
                     const idx = Math.floor(rand(0, C.ghostCount));
                     wait(3, () => { if (!gameOver) spawnGhost(idx); });
                 } else {
-                    // Lose a life
                     lives--;
                     shake(10);
                     flash(rgb(255, 60, 60), 0.15);
@@ -357,7 +385,7 @@
                         gameOver = true;
                         wait(0.5, () => go("gameover", score));
                     } else {
-                        // Reset position
+                        // Soft reset: reposition player, clear momentum
                         player.pos = playerSpawn.clone();
                         player.dir = vec2(0, 0);
                         player.nextDir = vec2(0, 0);
@@ -365,7 +393,7 @@
                 }
             });
 
-            // -- HUD (below maze) --
+            // -- HUD: positioned in the 48px strip below the maze --
             const hudY = mapH * T + 8;
             const scoreTxt = add([
                 text("Score: 0", { size: 16 }),
@@ -388,7 +416,7 @@
             }
             updateHUD();
 
-            // Power timer display
+            // Power timer countdown display (center of HUD, only visible while powered)
             onUpdate(() => {
                 if (powered) {
                     powerTxt.text = `POWER ${Math.ceil(powerTimer)}s`;
@@ -405,7 +433,10 @@
             ]);
         });
 
-        // ---- GAME OVER ----
+        // ==================
+        //  GAME OVER SCENE
+        // ==================
+        // Displays final score. Press Space or click to restart.
         scene("gameover", (finalScore) => {
             add([text("GAME OVER", { size: 48 }), pos(center()), anchor("center"), color(255, 70, 70)]);
             add([text(`Score: ${finalScore}`, { size: 24 }), pos(center().x, center().y + 50), anchor("center"), color(255, 220, 100)]);
@@ -414,7 +445,10 @@
             onClick(() => go("game"));
         });
 
-        // ---- WIN ----
+        // ==================
+        //  WIN SCENE
+        // ==================
+        // Shown when all dots + power pellets are collected. Displays score and remaining lives.
         scene("win", ({ score, lives }) => {
             add([text("MAZE CLEAR", { size: 48 }), pos(center()), anchor("center"), color(100, 255, 150)]);
             add([text(`Score: ${score}  |  Lives: ${lives}`, { size: 22 }), pos(center().x, center().y + 50), anchor("center"), color(255, 220, 100)]);
@@ -423,6 +457,7 @@
             onClick(() => go("game"));
         });
 
+        // -- ENTRY POINT --
         go("game");
     </script>
 </body>

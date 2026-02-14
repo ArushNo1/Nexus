@@ -33,21 +33,24 @@
         // ============================================================
 
         // ----- 1. GAME CONFIG (tweak these!) -----
+        // This object holds all user-tweakable constants.
+        // Keeping them in one place makes it easy to balance gameplay without hunting through code.
         const CONFIG = {
             // Physics
-            gravity: 1600,
-            jumpForce: 650,
-            moveSpeed: 300,
-            maxFallSpeed: 800,
+            gravity: 1600, // Gravity force applied to all bodies (pixels/sec^2)
+            jumpForce: 650,  // Initial velocity for jumps
+            moveSpeed: 300,  // Horizontal movement speed
+            maxFallSpeed: 800,  // Cap on downward velocity to prevent "tunneling" through floors
 
             // Player
-            playerStartPos: { x: 50, y: 0 },
-            playerHealth: 3,
+            playerStartPos: { x: 50, y: 0 }, // Default spawn point if level data is missing '@'
+            playerHealth: 3,    // Starting HP
 
             // Camera
-            cameraFollow: true,
+            cameraFollow: true, // Whether the camera tracks the player
 
             // Visuals
+            // Using a designated palette keeps the game looking consistent.
             bgColor: [18, 18, 42],
             floorColor: [60, 180, 120],
             platformColor: [80, 140, 200],
@@ -57,13 +60,13 @@
         };
 
         // ----- 2. LEVEL MAPS -----
+        // Levels are defined as arrays of strings. This "ASCII art" style is very visual and easy to edit.
+        // Each character represents a 32x32 tile.
         // Symbols:
-        //   = : solid ground/wall       - : platform (one-way)
+        //   = : solid ground/wall       - : platform (one-way, jump through from below)
         //   @ : player spawn             $ : coin / collectible
         //   ^ : spike / hazard           > : portal / level exit
-        //   # : moving platform anchor
-        //
-        // Each row is a tile row; each character is one tile (32×32).
+        //   # : moving platform anchor (not implemented in this base template but reserved)
         const LEVELS = [
             // --- Level 1 ---
             [
@@ -100,14 +103,16 @@
         ];
 
         // ----- 3. INITIALIZE KAPLAY -----
+        // Configure the game canvas and context.
         kaplay({
             background: CONFIG.bgColor,
             width: 800,
             height: 480,
             scale: 1,
-            crisp: true,
-            global: true,
-            letterbox: true,
+            crisp: true, // Pixel-perfect rendering for retro look
+            global: true, // Exposes functions like add(), pos(), etc. globally
+            letterbox: true, // Scales game to fit window while preserving aspect ratio
+            // Define input mappings here for reusability
             buttons: {
                 jump: { keyboard: ["space", "w", "up"], gamepad: ["south"] },
                 left: { keyboard: ["a", "left"], gamepad: ["dpad-left"] },
@@ -116,12 +121,13 @@
         });
 
         // ----- 4. LOAD ASSETS (built-in) -----
-        loadBean();   // built-in "bean" sprite for the player
+        loadBean();   // "Bean" is Kaplay's default mascot sprite. Replace with loadSprite() for custom art.
 
         // ----- 5. TILE SIZE -----
-        const TILE = 32;
+        const TILE = 32; // Size of grid cells in pixels
 
         // ----- 6. HELPER: Build a level from a map -----
+        // Parses the level array and spawns appropriate game objects for each character.
         function buildLevel(mapData) {
             const objects = { coins: [], hazards: [], platforms: [], portals: [] };
             let spawnPos = vec2(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y);
@@ -133,59 +139,66 @@
                     const y = row * TILE;
 
                     switch (ch) {
-                        case "=": // solid block
+                        // Ground Block
+                        case "=":
                             add([
                                 rect(TILE, TILE),
                                 pos(x, y),
-                                area(),
-                                body({ isStatic: true }),
+                                area(),             // Adds collision collider
+                                body({ isStatic: true }), // Static physics body (immovable)
                                 color(...CONFIG.floorColor),
                                 outline(2, rgb(0, 0, 0)),
-                                "ground",
+                                "ground",           // Tag for collision handling
                             ]);
                             break;
 
-                        case "-": // one-way platform
+                        // One-way Platform
+                        case "-":
                             add([
                                 rect(TILE, TILE / 2),
                                 pos(x, y + TILE / 2),
                                 area(),
-                                body({ isStatic: true }),
+                                body({ isStatic: true }), // Platforms are also static physics bodies
                                 color(...CONFIG.platformColor),
                                 outline(2, rgb(0, 0, 0)),
                                 "platform",
                             ]);
                             break;
 
-                        case "@": // player spawn
+                        // Player Spawn Point
+                        case "@":
                             spawnPos = vec2(x, y);
                             break;
 
-                        case "$": // coin
+                        // Collectible Coin
+                        case "$":
                             const coin = add([
                                 circle(10),
                                 pos(x + TILE / 2, y + TILE / 2),
-                                area({ shape: new Rect(vec2(-10, -10), 20, 20) }),
+                                area({ shape: new Rect(vec2(-10, -10), 20, 20) }), // Custom hitbox
                                 anchor("center"),
                                 color(...CONFIG.coinColor),
                                 outline(2, rgb(180, 140, 0)),
-                                z(5),
+                                z(5), // Z-index to draw above background
                                 "coin",
                             ]);
                             objects.coins.push(coin);
                             break;
 
-                        case "^": // spike hazard
+                        // Spikes / Hazards
+                        case "^":
                             add([
+                                // Polygon shape for a spike visual
                                 polygon([vec2(0, TILE), vec2(TILE / 2, 4), vec2(TILE, TILE)]),
                                 pos(x, y),
-                                area({ shape: new Rect(vec2(4, 8), TILE - 8, TILE - 8) }),
+                                area({ shape: new Rect(vec2(4, 8), TILE - 8, TILE - 8) }), // Smaller hitbox for "forgiving" gameplay
                                 color(...CONFIG.hazardColor),
                                 "hazard",
                             ]);
                             break;
 
-                        case ">": // portal / exit
+                        // Exit Portal
+                        case ">":
                             const portal = add([
                                 rect(TILE, TILE * 1.5),
                                 pos(x, y - TILE * 0.5),
@@ -206,35 +219,37 @@
         }
 
         // ----- 7. MAIN GAME SCENE -----
+        // Scenes organize unrelated parts of the game (menu, game, gameover).
         scene("game", (levelIdx = 0) => {
-            setGravity(CONFIG.gravity);
+            setGravity(CONFIG.gravity); // Enable physics engine globally for this scene
 
-            // Build current level
+            // Build current level geometry
             const { spawnPos, objects } = buildLevel(LEVELS[levelIdx]);
 
             // Score & health state
             let score = 0;
             let hp = CONFIG.playerHealth;
 
-            // --- Player ---
+            // --- Player Object ---
             const player = add([
                 sprite("bean"),
                 pos(spawnPos),
-                area(),
-                body(),
+                area(),       // Generates collider from sprite size
+                body(),       // Enables physics (gravity, collision response)
                 anchor("botleft"),
                 scale(1),
                 z(10),
-                { facing: 1 },
-                "player",
+                { facing: 1 }, // Custom component properties
+                "player",     // Tag for collision handling
             ]);
 
             // --- HUD (fixed to camera) ---
+            // 'fixed()' component keeps these elements in screen space, ignoring camera movement.
             const hpLabel = add([
                 text(`HP: ${hp}`, { size: 18 }),
                 pos(16, 12),
                 fixed(),
-                z(100),
+                z(100), // Draw on top of everything
                 color(255, 255, 255),
             ]);
 
@@ -255,11 +270,12 @@
                 color(200, 200, 255),
             ]);
 
-            // --- Movement ---
+            // --- Movement Logic ---
+            // Using onButtonDown for continuous movement
             onButtonDown("left", () => {
-                player.move(-CONFIG.moveSpeed, 0);
+                player.move(-CONFIG.moveSpeed, 0); // .move() handles collision checking automatically
                 player.facing = -1;
-                player.flipX = true;
+                player.flipX = true; // Visual flip
             });
 
             onButtonDown("right", () => {
@@ -269,21 +285,23 @@
             });
 
             onButtonPress("jump", () => {
+                // Can only jump if standing on something solid
                 if (player.isGrounded()) {
                     player.jump(CONFIG.jumpForce);
                 }
             });
 
-            // Clamp fall speed
+            // Clamp fall speed to prevent glitches (tunneling) through floors at high speeds
             player.onUpdate(() => {
                 if (player.vel && player.vel.y > CONFIG.maxFallSpeed) {
                     player.vel.y = CONFIG.maxFallSpeed;
                 }
             });
 
-            // --- Camera follow ---
+            // --- Camera Follow ---
             if (CONFIG.cameraFollow) {
                 player.onUpdate(() => {
+                    // Smoothly interpolate camera position towards player
                     camPos(
                         lerp(camPos().x, player.pos.x + 100, 0.05),
                         lerp(camPos().y, player.pos.y - 50, 0.05),
@@ -291,41 +309,42 @@
                 });
             }
 
-            // --- Coin collection ---
+            // --- Coin Collection ---
             player.onCollide("coin", (coin) => {
-                destroy(coin);
+                destroy(coin); // Remove coin from scene
                 score++;
                 scoreLabel.text = `Coins: ${score}`;
-                addKaboom(coin.pos);   // built-in particle burst
+                addKaboom(coin.pos);   // Spawn built-in particle explosion
             });
 
-            // --- Hazard damage ---
+            // --- Hazard Damage ---
             player.onCollide("hazard", () => {
                 hp--;
                 hpLabel.text = `HP: ${hp}`;
-                flash(rgb(...CONFIG.hazardColor), 0.15);
-                shake(6);
+                flash(rgb(...CONFIG.hazardColor), 0.15); // Screen flash effect
+                shake(6); // Screen shake effect
                 if (hp <= 0) {
                     go("gameover", { score, level: levelIdx });
                 } else {
-                    // Respawn at level start
+                    // Respawn at level start (simple checkpoint system)
                     player.pos = spawnPos.clone();
-                    player.vel = vec2(0, 0);
+                    player.vel = vec2(0, 0); // Reset velocity to stop falling
                 }
             });
 
-            // --- Portal / next level ---
+            // --- Portal / Next Level ---
             player.onCollide("portal", () => {
                 const nextLevel = levelIdx + 1;
                 if (nextLevel < LEVELS.length) {
-                    go("game", nextLevel);
+                    go("game", nextLevel); // Load next level
                 } else {
-                    go("win", { score });
+                    go("win", { score }); // Game complete
                 }
             });
 
             // --- Fall off screen ---
             player.onUpdate(() => {
+                // Simple death plane check
                 if (player.pos.y > LEVELS[levelIdx].length * TILE + 200) {
                     hp--;
                     hpLabel.text = `HP: ${hp}`;
@@ -338,7 +357,8 @@
                 }
             });
 
-            // --- Parallax background decoration ---
+            // --- Parallax Background ---
+            // Simple parallax effect by moving stars slower than camera (handled by engine if added to cam, but here fixed z-index works too)
             const stars = [];
             for (let i = 0; i < 50; i++) {
                 stars.push(add([
@@ -346,7 +366,7 @@
                     pos(rand(0, width() * 3), rand(-200, height())),
                     color(255, 255, 255),
                     opacity(rand(0.2, 0.6)),
-                    z(-10),
+                    z(-10), // Draw behind everything
                     "star",
                 ]));
             }

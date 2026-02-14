@@ -27,30 +27,37 @@
         // =============================================
         //  SHOOT 'EM UP TEMPLATE — Kaplay.js
         //  Arrow keys / WASD move, Z / Space to shoot
+        //
+        //  ARCHITECTURE:
+        //    Two scenes: "game" (main gameplay) and "gameover" (score display + retry).
+        //    Tags used: "star", "player", "pbullet" (player bullets), "enemy", "ebullet" (enemy bullets).
+        //    Difficulty scales with score — spawn rate increases over time.
+        //    Player has HP + invulnerability frames on hit. Three enemy types: basic, fast (zigzag), tank (shoots back).
         // =============================================
 
+        // -- CONFIG: All tunable gameplay constants live here --
         const C = {
             playerSpeed: 280,
             bulletSpeed: 600,
-            fireRate: 0.12,
+            fireRate: 0.12,       // seconds between player shots (lower = faster)
             playerHP: 5,
-            // Enemies
-            spawnRate: 1.2,
-            enemySpeed: [80, 200],
+            spawnRate: 1.2,       // base seconds between enemy spawns (divided by difficulty multiplier)
+            enemySpeed: [80, 200],  // [min, max] for rand()
             enemyHP: [1, 3],
-            enemyFireRate: 1.5,
+            enemyFireRate: 1.5,   // seconds between tank enemy shots
             enemyBulletSpd: 250,
-            // Colors
             bg: [6, 6, 18],
             playerCol: [80, 220, 255],
             bulletCol: [255, 255, 120],
             enemyBulletCol: [255, 100, 100],
         };
 
+        // -- INIT: 480x700 portrait canvas, letterboxed to fit window --
         kaplay({ width: 480, height: 700, background: C.bg, crisp: true, letterbox: true });
-        loadBean();
+        loadBean(); // loads the built-in "bean" sprite used for the player
 
-        // ---- Starfield background ----
+        // -- STARFIELD: Decorative scrolling background stars --
+        // Stars move downward and wrap to top when off-screen. Called once per scene.
         function makeStars() {
             for (let i = 0; i < 60; i++) {
                 const s = rand(0.5, 2.5);
@@ -61,12 +68,12 @@
                     opacity(rand(0.15, 0.5)),
                     z(-10),
                     move(DOWN, rand(20, 80)),
-                    offscreen({ destroy: false }),
+                    offscreen({ destroy: false }), // keep alive when off-screen
                     { speed: rand(20, 80) },
                     "star",
                 ]);
             }
-            // recycle stars
+            // Recycle stars: wrap from bottom to top instead of destroying
             onUpdate("star", (s) => {
                 if (s.pos.y > height() + 10) {
                     s.pos.y = -10;
@@ -75,28 +82,30 @@
             });
         }
 
-        // ---- GAME SCENE ----
+        // ==================
+        //  GAME SCENE
+        // ==================
         scene("game", () => {
             makeStars();
             let score = 0;
-            let fireTimer = 0;
-            let gameOver = false;
-            let spawnTimer = 0;
-            let difficulty = 1;
+            let fireTimer = 0;    // cooldown tracker for player shooting
+            let gameOver = false;  // flag to freeze input/spawning on death
+            let spawnTimer = 0;    // cooldown tracker for enemy spawns
+            let difficulty = 1;    // multiplier that increases with score
 
-            // -- Player --
+            // -- PLAYER: bean sprite with custom hp and invulnerability timer --
             const player = add([
                 sprite("bean"),
-                pos(width() / 2, height() - 80),
-                area(),
+                pos(width() / 2, height() - 80), // starts near bottom center
+                area(),          // enables collision detection
                 anchor("center"),
                 scale(1.2),
                 z(10),
-                { hp: C.playerHP, invuln: 0 },
+                { hp: C.playerHP, invuln: 0 }, // custom state: invuln = seconds of iframes remaining
                 "player",
             ]);
 
-            // -- HUD --
+            // -- HUD: score (top center) and health hearts (top left) --
             const scoreTxt = add([
                 text("0", { size: 22 }),
                 pos(width() / 2, 14), anchor("top"), color(255, 220, 80), fixed(), z(50),
@@ -113,7 +122,7 @@
             }
             updateHUD();
 
-            // -- Movement --
+            // -- MOVEMENT: 8-directional via arrow keys and WASD --
             onKeyDown("left", () => { if (!gameOver) player.move(-C.playerSpeed, 0); });
             onKeyDown("right", () => { if (!gameOver) player.move(C.playerSpeed, 0); });
             onKeyDown("up", () => { if (!gameOver) player.move(0, -C.playerSpeed); });
@@ -123,26 +132,26 @@
             onKeyDown("w", () => { if (!gameOver) player.move(0, -C.playerSpeed); });
             onKeyDown("s", () => { if (!gameOver) player.move(0, C.playerSpeed); });
 
-            // Clamp to screen
+            // Clamp player to screen bounds + handle invulnerability flicker
             player.onUpdate(() => {
                 player.pos.x = clamp(player.pos.x, 20, width() - 20);
                 player.pos.y = clamp(player.pos.y, 40, height() - 20);
                 if (player.invuln > 0) {
                     player.invuln -= dt();
-                    player.opacity = wave(0.3, 1, time() * 16);
+                    player.opacity = wave(0.3, 1, time() * 16); // rapid flicker effect
                 } else {
                     player.opacity = 1;
                 }
             });
 
-            // -- Shooting (hold Z or Space) --
+            // -- PLAYER SHOOTING: hold Z or Space for continuous fire --
+            // Spawns twin bullets (offset -10px and +10px from player center)
             onUpdate(() => {
                 if (gameOver) return;
                 fireTimer -= dt();
                 const shooting = isKeyDown("z") || isKeyDown("space");
                 if (shooting && fireTimer <= 0) {
                     fireTimer = C.fireRate;
-                    // Twin bullets
                     for (const ox of [-10, 10]) {
                         add([
                             rect(4, 14, { radius: 2 }),
@@ -151,15 +160,20 @@
                             anchor("center"),
                             color(...C.bulletCol),
                             move(UP, C.bulletSpeed),
-                            offscreen({ destroy: true }),
+                            offscreen({ destroy: true }), // auto-cleanup when off-screen
                             z(8),
-                            "pbullet",
+                            "pbullet", // tag for collision detection
                         ]);
                     }
                 }
             });
 
-            // -- Enemy spawning --
+            // -- ENEMY SPAWNING --
+            // Three types:
+            //   "basic" — moves straight down, 1 HP
+            //   "fast"  — zigzags via sin(time()), 1 HP, higher speed
+            //   "tank"  — slow, 3 HP, shoots bullets downward at player
+            // Weighted random: basic appears 2x as often as fast/tank
             function spawnEnemy() {
                 if (gameOver) return;
                 const type = choose(["basic", "basic", "fast", "tank"]);
@@ -171,7 +185,7 @@
 
                 const e = add([
                     rect(conf.w, conf.h, { radius: 4 }),
-                    pos(rand(30, width() - 30), -30),
+                    pos(rand(30, width() - 30), -30), // spawn above screen
                     area(),
                     anchor("center"),
                     color(...conf.col),
@@ -181,9 +195,8 @@
                     "enemy",
                 ]);
 
-                // Movement pattern
+                // Movement: fast enemies zigzag, others go straight down
                 if (type === "fast") {
-                    // Zigzag
                     e.onUpdate(() => {
                         e.move(Math.sin(time() * 4 + e.pos.x) * 120, conf.spd);
                     });
@@ -191,7 +204,7 @@
                     e.onUpdate(() => { e.move(0, conf.spd); });
                 }
 
-                // Shooting enemies
+                // Tank shooting: fires a circle bullet straight down on a cooldown
                 if (conf.shoots) {
                     e.onUpdate(() => {
                         if (gameOver) return;
@@ -201,20 +214,21 @@
                             add([
                                 circle(5),
                                 pos(e.pos),
-                                area({ shape: new Rect(vec2(-5, -5), 10, 10) }),
+                                area({ shape: new Rect(vec2(-5, -5), 10, 10) }), // explicit hitbox for circle
                                 anchor("center"),
                                 color(...C.enemyBulletCol),
                                 move(DOWN, C.enemyBulletSpd),
                                 offscreen({ destroy: true }),
                                 z(8),
-                                "ebullet",
+                                "ebullet", // tag for collision with player
                             ]);
                         }
                     });
                 }
             }
 
-            // Spawn loop with increasing difficulty
+            // -- DIFFICULTY SCALING: spawn interval shrinks as score grows --
+            // difficulty = 1 + score/2000, so at 2000 pts enemies spawn 2x as fast
             onUpdate(() => {
                 if (gameOver) return;
                 difficulty = 1 + score / 2000;
@@ -225,25 +239,27 @@
                 }
             });
 
-            // -- Collisions: player bullets hit enemies --
+            // -- COLLISION: player bullets → enemies --
+            // Bullet is destroyed on contact. Enemy loses 1 HP; destroyed + scored if HP reaches 0.
             onCollide("pbullet", "enemy", (b, e) => {
                 destroy(b);
                 e.hp--;
                 if (e.hp <= 0) {
                     score += e.pts;
-                    addKaboom(e.pos);
+                    addKaboom(e.pos); // built-in explosion effect
                     destroy(e);
                     updateHUD();
                 }
             });
 
-            // -- Collisions: enemy bullets hit player --
+            // -- COLLISION: enemy bullets → player --
             onCollide("ebullet", "player", (b) => {
                 destroy(b);
                 hurtPlayer();
             });
 
-            // -- Collisions: enemies hit player --
+            // -- COLLISION: enemy body → player (kamikaze) --
+            // Enemy is destroyed and scored even on body collision
             onCollide("enemy", "player", (e) => {
                 score += e.pts;
                 addKaboom(e.pos);
@@ -252,27 +268,28 @@
                 updateHUD();
             });
 
+            // -- DAMAGE HANDLER: reduces HP, triggers iframes, checks for death --
             function hurtPlayer() {
-                if (player.invuln > 0 || gameOver) return;
+                if (player.invuln > 0 || gameOver) return; // ignore hits during iframes
                 player.hp--;
-                player.invuln = 1.5;
-                shake(8);
-                flash(rgb(255, 80, 80), 0.12);
+                player.invuln = 1.5; // 1.5 seconds of invulnerability
+                shake(8);                          // screen shake
+                flash(rgb(255, 80, 80), 0.12);     // red screen flash
                 updateHUD();
                 if (player.hp <= 0) {
                     gameOver = true;
                     addKaboom(player.pos);
-                    player.opacity = 0;
-                    wait(1, () => go("gameover", score));
+                    player.opacity = 0; // hide player sprite
+                    wait(1, () => go("gameover", score)); // transition after 1s delay
                 }
             }
 
-            // Cleanup off-screen enemies
+            // Cleanup enemies that drift past the bottom of the screen
             onUpdate("enemy", (e) => {
                 if (e.pos.y > height() + 60) destroy(e);
             });
 
-            // Controls hint
+            // Controls hint (bottom center, subtle)
             add([
                 text("WASD move | Z/SPACE shoot", { size: 12 }),
                 pos(width() / 2, height() - 10), anchor("bot"),
@@ -280,7 +297,10 @@
             ]);
         });
 
-        // ---- GAME OVER ----
+        // ==================
+        //  GAME OVER SCENE
+        // ==================
+        // Displays final score. Press Space or click anywhere to restart.
         scene("gameover", (finalScore) => {
             makeStars();
             add([text("GAME OVER", { size: 48 }), pos(center()), anchor("center"), color(220, 60, 80)]);
@@ -290,6 +310,7 @@
             onClick(() => go("game"));
         });
 
+        // -- ENTRY POINT: start on the game scene --
         go("game");
     </script>
 </body>
