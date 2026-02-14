@@ -5,13 +5,28 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from utils.config import settings
 
 MODEL_MAP: dict[str, str] = {
-    "game_planner": "gemini-2.5-flash",
-    "design_evaluator": "gemini-2.5-flash",
-    "implementation_planner": "gemini-2.5-flash",
-    "game_coder": "gemini-2.5-pro",
-    "asset_generator": "gemini-2.5-flash",
-    "game_player": "gemini-2.5-flash",
+    "game_planner": "gemini-3-flash-preview",
+    "design_evaluator": "gemini-3-flash-preview",
+    "implementation_planner": "gemini-3-flash-preview",
+    "game_coder": "gemini-3-pro-preview",
+    "asset_generator": "gemini-3-flash-preview",
+    "game_player": "gemini-3-flash-preview",
 }
+
+
+def extract_text(content) -> str:
+    """Normalize LLM response content to a plain string.
+
+    Gemini models may return a list of content blocks instead of a string.
+    """
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(
+            block if isinstance(block, str) else block.get("text", "")
+            for block in content
+        )
+    return str(content)
 
 
 def get_llm(node_name: str) -> ChatGoogleGenerativeAI:

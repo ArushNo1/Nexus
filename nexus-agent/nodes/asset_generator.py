@@ -3,7 +3,7 @@
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from state import AgentState
-from utils.llm import get_llm
+from utils.llm import get_llm, extract_text
 from utils.logger import get_logger
 from utils.debug import dump_debug_state
 from utils.prompts import load_prompt, render_template
@@ -31,7 +31,7 @@ async def asset_generator_node(state: AgentState) -> dict:
         HumanMessage(content=user),
     ])
 
-    updated_code = response.content
+    updated_code = extract_text(response.content)
     if "```html" in updated_code:
         updated_code = updated_code.split("```html", 1)[1].rsplit("```", 1)[0].strip()
     elif "```" in updated_code:

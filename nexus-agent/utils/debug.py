@@ -26,7 +26,10 @@ def dump_debug_state(node_name: str, state: dict) -> None:
     md_field = MARKDOWN_FIELDS.get(node_name)
     if md_field and state.get(md_field):
         md_path = DEBUG_DIR / f"{node_name}_{iteration}.md"
-        md_path.write_text(state[md_field])
+        content = state[md_field]
+        if not isinstance(content, str):
+            content = str(content)
+        md_path.write_text(content)
     else:
         filename = DEBUG_DIR / f"{node_name}_{iteration}.json"
 

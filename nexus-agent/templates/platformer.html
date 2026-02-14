@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaplay Platformer Template</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1a1a2e; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://unpkg.com/kaplay@3001.0.19/dist/kaplay.js"></script>
+    <script>
+// ============================================================
+//  KAPLAY.JS PLATFORMER TEMPLATE
+//  A simple, customizable foundation for any 2D platformer.
+//  Uses built-in Kaplay sprites & shapes — no external assets.
+// ============================================================
+
+// ----- 1. GAME CONFIG (tweak these!) -----
+const CONFIG = {
+    // Physics
+    gravity:        1600,
+    jumpForce:      650,
+    moveSpeed:      300,
+    maxFallSpeed:   800,
+
+    // Player
+    playerStartPos: { x: 50, y: 0 },
+    playerHealth:   3,
+
+    // Camera
+    cameraFollow:   true,
+
+    // Visuals
+    bgColor:        [18, 18, 42],
+    floorColor:     [60, 180, 120],
+    platformColor:  [80, 140, 200],
+    hazardColor:    [220, 60, 80],
+    coinColor:      [255, 210, 50],
+    portalColor:    [180, 80, 255],
+};
+
+// ----- 2. LEVEL MAPS -----
+// Symbols:
+//   = : solid ground/wall       - : platform (one-way)
+//   @ : player spawn             $ : coin / collectible
+//   ^ : spike / hazard           > : portal / level exit
+//   # : moving platform anchor
+//
+// Each row is a tile row; each character is one tile (32×32).
+const LEVELS = [
+    // --- Level 1 ---
+    [
+        "                                        ",
+        "                                        ",
+        "                                        ",
+        "                         $   $          ",
+        "                        ------          ",
+        "            $  $                        ",
+        "           ------           $  $        ",
+        "                           ------    >  ",
+        "    $  $                           ====  ",
+        "   ------                               ",
+        "                   $                    ",
+        "  @              =====     ===          ",
+        "========   ^^^  ========  ======  ======",
+    ],
+    // --- Level 2 ---
+    [
+        "                                        ",
+        "                                   >    ",
+        "                                  ===   ",
+        "                       $  $             ",
+        "                      ------            ",
+        "           $                   $        ",
+        "          ---              ------       ",
+        "                                        ",
+        "    $         $     $                   ",
+        "   ---    ------  -----                 ",
+        "                                        ",
+        "  @                          ===        ",
+        "=====  ^^^  ====  ^^^  ====  ^^^^^^  ===",
+    ],
+];
+
+// ----- 3. INITIALIZE KAPLAY -----
+kaplay({
+    background: CONFIG.bgColor,
+    width:      800,
+    height:     480,
+    scale:      1,
+    crisp:      true,
+    global:     true,
+    buttons: {
+        jump:  { keyboard: ["space", "w", "up"],  gamepad: ["south"] },
+        left:  { keyboard: ["a", "left"],         gamepad: ["dpad-left"] },
+        right: { keyboard: ["d", "right"],        gamepad: ["dpad-right"] },
+    },
+});
+
+// ----- 4. LOAD ASSETS (built-in) -----
+loadBean();   // built-in "bean" sprite for the player
+
+// ----- 5. TILE SIZE -----
+const TILE = 32;
+
+// ----- 6. HELPER: Build a level from a map -----
+function buildLevel(mapData) {
+    const objects = { coins: [], hazards: [], platforms: [], portals: [] };
+    let spawnPos = vec2(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y);
+
+    for (let row = 0; row < mapData.length; row++) {
+        for (let col = 0; col < mapData[row].length; col++) {
+            const ch = mapData[row][col];
+            const x = col * TILE;
+            const y = row * TILE;
+
+            switch (ch) {
+                case "=": // solid block
+                    add([
+                        rect(TILE, TILE),
+                        pos(x, y),
+                        area(),
+                        body({ isStatic: true }),
+                        color(...CONFIG.floorColor),
+                        outline(2, rgb(0, 0, 0)),
+                        "ground",
+                    ]);
+                    break;
+
+                case "-": // one-way platform
+                    add([
+                        rect(TILE, TILE / 2),
+                        pos(x, y + TILE / 2),
+                        area(),
+                        body({ isStatic: true }),
+                        color(...CONFIG.platformColor),
+                        outline(2, rgb(0, 0, 0)),
+                        "platform",
+                    ]);
+                    break;
+
+                case "@": // player spawn
+                    spawnPos = vec2(x, y);
+                    break;
+
+                case "$": // coin
+                    const coin = add([
+                        circle(10),
+                        pos(x + TILE / 2, y + TILE / 2),
+                        area({ shape: new Rect(vec2(-10, -10), 20, 20) }),
+                        anchor("center"),
+                        color(...CONFIG.coinColor),
+                        outline(2, rgb(180, 140, 0)),
+                        z(5),
+                        "coin",
+                    ]);
+                    objects.coins.push(coin);
+                    break;
+
+                case "^": // spike hazard
+                    add([
+                        polygon([vec2(0, TILE), vec2(TILE / 2, 4), vec2(TILE, TILE)]),
+                        pos(x, y),
+                        area({ shape: new Rect(vec2(4, 8), TILE - 8, TILE - 8) }),
+                        color(...CONFIG.hazardColor),
+                        "hazard",
+                    ]);
+                    break;
+
+                case ">": // portal / exit
+                    const portal = add([
+                        rect(TILE, TILE * 1.5),
+                        pos(x, y - TILE * 0.5),
+                        area(),
+                        anchor("top"),
+                        color(...CONFIG.portalColor),
+                        opacity(0.7),
+                        z(1),
+                        "portal",
+                    ]);
+                    objects.portals.push(portal);
+                    break;
+            }
+        }
+    }
+
+    return { spawnPos, objects };
+}
+
+// ----- 7. MAIN GAME SCENE -----
+scene("game", (levelIdx = 0) => {
+    setGravity(CONFIG.gravity);
+
+    // Build current level
+    const { spawnPos, objects } = buildLevel(LEVELS[levelIdx]);
+
+    // Score & health state
+    let score = 0;
+    let hp = CONFIG.playerHealth;
+
+    // --- Player ---
+    const player = add([
+        sprite("bean"),
+        pos(spawnPos),
+        area(),
+        body(),
+        anchor("botleft"),
+        scale(1),
+        z(10),
+        { facing: 1 },
+        "player",
+    ]);
+
+    // --- HUD (fixed to camera) ---
+    const hpLabel = add([
+        text(`HP: ${hp}`, { size: 18 }),
+        pos(16, 12),
+        fixed(),
+        z(100),
+        color(255, 255, 255),
+    ]);
+
+    const scoreLabel = add([
+        text(`Coins: ${score}`, { size: 18 }),
+        pos(16, 36),
+        fixed(),
+        z(100),
+        color(...CONFIG.coinColor),
+    ]);
+
+    const levelLabel = add([
+        text(`Level ${levelIdx + 1}`, { size: 18 }),
+        pos(width() - 16, 12),
+        anchor("topright"),
+        fixed(),
+        z(100),
+        color(200, 200, 255),
+    ]);
+
+    // --- Movement ---
+    onButtonDown("left", () => {
+        player.move(-CONFIG.moveSpeed, 0);
+        player.facing = -1;
+        player.flipX = true;
+    });
+
+    onButtonDown("right", () => {
+        player.move(CONFIG.moveSpeed, 0);
+        player.facing = 1;
+        player.flipX = false;
+    });
+
+    onButtonPress("jump", () => {
+        if (player.isGrounded()) {
+            player.jump(CONFIG.jumpForce);
+        }
+    });
+
+    // Clamp fall speed
+    player.onUpdate(() => {
+        if (player.vel && player.vel.y > CONFIG.maxFallSpeed) {
+            player.vel.y = CONFIG.maxFallSpeed;
+        }
+    });
+
+    // --- Camera follow ---
+    if (CONFIG.cameraFollow) {
+        player.onUpdate(() => {
+            camPos(
+                lerp(camPos().x, player.pos.x + 100, 0.05),
+                lerp(camPos().y, player.pos.y - 50, 0.05),
+            );
+        });
+    }
+
+    // --- Coin collection ---
+    player.onCollide("coin", (coin) => {
+        destroy(coin);
+        score++;
+        scoreLabel.text = `Coins: ${score}`;
+        addKaboom(coin.pos);   // built-in particle burst
+    });
+
+    // --- Hazard damage ---
+    player.onCollide("hazard", () => {
+        hp--;
+        hpLabel.text = `HP: ${hp}`;
+        flash(rgb(...CONFIG.hazardColor), 0.15);
+        shake(6);
+        if (hp <= 0) {
+            go("gameover", { score, level: levelIdx });
+        } else {
+            // Respawn at level start
+            player.pos = spawnPos.clone();
+            player.vel = vec2(0, 0);
+        }
+    });
+
+    // --- Portal / next level ---
+    player.onCollide("portal", () => {
+        const nextLevel = levelIdx + 1;
+        if (nextLevel < LEVELS.length) {
+            go("game", nextLevel);
+        } else {
+            go("win", { score });
+        }
+    });
+
+    // --- Fall off screen ---
+    player.onUpdate(() => {
+        if (player.pos.y > LEVELS[levelIdx].length * TILE + 200) {
+            hp--;
+            hpLabel.text = `HP: ${hp}`;
+            if (hp <= 0) {
+                go("gameover", { score, level: levelIdx });
+            } else {
+                player.pos = spawnPos.clone();
+                player.vel = vec2(0, 0);
+            }
+        }
+    });
+
+    // --- Parallax background decoration ---
+    const stars = [];
+    for (let i = 0; i < 50; i++) {
+        stars.push(add([
+            circle(rand(1, 3)),
+            pos(rand(0, width() * 3), rand(-200, height())),
+            color(255, 255, 255),
+            opacity(rand(0.2, 0.6)),
+            z(-10),
+            "star",
+        ]));
+    }
+});
+
+// ----- 8. GAME OVER SCENE -----
+scene("gameover", ({ score, level }) => {
+    add([
+        text("GAME OVER", { size: 48 }),
+        pos(center()),
+        anchor("center"),
+        color(220, 60, 80),
+    ]);
+
+    add([
+        text(`Score: ${score}  |  Level: ${level + 1}`, { size: 22 }),
+        pos(center().x, center().y + 60),
+        anchor("center"),
+        color(200, 200, 200),
+    ]);
+
+    add([
+        text("Press SPACE to retry", { size: 18 }),
+        pos(center().x, center().y + 110),
+        anchor("center"),
+        color(150, 150, 180),
+    ]);
+
+    onKeyPress("space", () => go("game", level));
+    onClick(() => go("game", level));
+});
+
+// ----- 9. WIN SCENE -----
+scene("win", ({ score }) => {
+    add([
+        text("YOU WIN!", { size: 48 }),
+        pos(center()),
+        anchor("center"),
+        color(100, 255, 150),
+    ]);
+
+    add([
+        text(`Total Coins: ${score}`, { size: 22 }),
+        pos(center().x, center().y + 60),
+        anchor("center"),
+        color(255, 210, 50),
+    ]);
+
+    add([
+        text("Press SPACE to play again", { size: 18 }),
+        pos(center().x, center().y + 110),
+        anchor("center"),
+        color(150, 150, 180),
+    ]);
+
+    onKeyPress("space", () => go("game", 0));
+    onClick(() => go("game", 0));
+});
+
+// ----- 10. START THE GAME -----
+go("game", 0);
+
+    </script>
+</body>
+</html>

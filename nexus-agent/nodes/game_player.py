@@ -5,7 +5,7 @@ import json
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from state import AgentState
-from utils.llm import get_llm
+from utils.llm import get_llm, extract_text
 from utils.logger import get_logger
 from utils.debug import dump_debug_state
 from utils.prompts import load_prompt, render_template
@@ -36,7 +36,7 @@ async def game_player_node(state: AgentState) -> dict:
         HumanMessage(content=user),
     ])
 
-    content = response.content
+    content = extract_text(response.content)
     approved = "SHIP" in content.upper()
     errors = []
 
