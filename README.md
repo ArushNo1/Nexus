@@ -32,7 +32,6 @@ Nexus is a multi-agent AI system that generates complete educational video games
 - **Skinner** - Implements adaptive learning analytics
 - **Director** - Orchestrates agents and bundles final web build
 
-<<<<<<< HEAD
 ##  Key Features
 - Fully autonomous game generation (no human intervention)
 - Playable .exe or WebGL builds in minutes
@@ -41,7 +40,7 @@ Nexus is a multi-agent AI system that generates complete educational video games
 - Works for any educational concept (math, science, history, languages)
 - Real-time learning analytics
 - Progressive level design that scaffolds learning
-=======
+
 ## 🎯 Key Features
 - ✅ Fully autonomous game generation (no human intervention)
 - ✅ Playable in any web browser immediately
@@ -52,9 +51,4 @@ Nexus is a multi-agent AI system that generates complete educational video games
 - ✅ Progressive level design that scaffolds learning
 >>>>>>> 1dd5c11 (Switch engine from Unity to Phaser (HTML5))
 
-##  demo Scenario
 A student struggles with photosynthesis. They input this into Nexus. Within 3 minutes, they're playing "Photosynthesis Factory" - a puzzle game where they build chloroplast factories, connect water/CO2/light inputs, and produce glucose. The game teaches light reactions (Level 1), dark reactions (Level 2), and the full cycle (Level 3). After 15 minutes of play, analytics show 85% concept retention. The system suggests learning cellular respiration next (the reverse process).
-
-## Why This Wins
-- **Novel approach** - No one else is generating actual games with AI
-- **Live demo** - Judges can watch a game being generated and play it in the browser
