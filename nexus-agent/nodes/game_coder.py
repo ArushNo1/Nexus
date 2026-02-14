@@ -74,10 +74,17 @@ async def game_coder_node(state: AgentState) -> dict:
     result = {
         "game_code": code,
         "documentation": code,
-        "status": "generating_assets",
+        "status": "playtesting",
     }
 
-    log.info(f"[bold green]Node 3 — Game Coder[/bold green] | done → generated {len(code)} chars | status: generating_assets")
+    log.info(f"[bold green]Node 3 — Game Coder[/bold green] | done → generated {len(code)} chars | status: playtesting")
     dump_debug_state("game_coder", {**state, **result})
+
+    # Save raw HTML for inspection
+    from pathlib import Path
+    debug_dir = Path("output/.debug")
+    debug_dir.mkdir(parents=True, exist_ok=True)
+    iteration = state.get("code_iteration", 0)
+    (debug_dir / f"game_coder_{iteration}.html").write_text(code)
 
     return result

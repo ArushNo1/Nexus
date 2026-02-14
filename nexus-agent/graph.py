@@ -6,7 +6,6 @@ from state import AgentState
 from nodes.game_planner import game_planner_node
 from nodes.design_evaluator import design_evaluator_node
 from nodes.game_coder import game_coder_node
-from nodes.asset_generator import asset_generator_node
 from nodes.implementation_planner import implementation_planner_node
 from nodes.game_player import game_player_node
 
@@ -43,7 +42,6 @@ def build_graph():
     workflow.add_node("implementation_planner", implementation_planner_node)
     
     workflow.add_node("game_coder", game_coder_node)
-    workflow.add_node("asset_generator", asset_generator_node)
     workflow.add_node("game_player", game_player_node)
 
     # ── Set entry point ──
@@ -52,8 +50,7 @@ def build_graph():
     # ── Linear edges ──
     workflow.add_edge("game_planner", "design_evaluator")
     workflow.add_edge("implementation_planner", "game_coder")
-    workflow.add_edge("game_coder", "asset_generator")
-    workflow.add_edge("asset_generator", "game_player")
+    workflow.add_edge("game_coder", "game_player")
 
     # ── Conditional edges ──
     workflow.add_conditional_edges("design_evaluator", design_gate)

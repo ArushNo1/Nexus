@@ -9,7 +9,6 @@ MODEL_MAP: dict[str, str] = {
     "design_evaluator": "gemini-3-flash-preview",
     "implementation_planner": "gemini-3-flash-preview",
     "game_coder": "gemini-3-pro-preview",
-    "asset_generator": "gemini-3-flash-preview",
     "game_player": "gemini-3-flash-preview",
 }
 

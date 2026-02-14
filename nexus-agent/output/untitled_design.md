@@ -1,8 +1,8 @@
-GAME_TYPE: maze
+GAME_TYPE: shootemup
 
-RATIONALE: The maze template is ideal for photosynthesis because it mirrors the process of a plant searching for and absorbing specific nutrients. The navigation-based gameplay simulates how a plant must "gather" its necessary components (sunlight, water, CO2) from its environment to survive and grow.
+RATIONALE: The shootemup genre is ideal for photosynthesis because it mirrors the constant, rapid bombardment of molecules and energy a leaf experiences. It requires students to perform rapid identification and categorization of "Inputs" versus "Outputs" in a high-energy environment.
 
-ADDON FEATURE: The Photosynthesis Formula Bar
-In this mechanic, the player's primary goal is to fill a "Formula Bar" at the top of the screen by collecting three specific types of items in any order: a Water Drop, a Sunlight Spark, and a Carbon Dioxide Bubble. Once all three inputs are collected, the bar flashes, and the player releases an "Oxygen Blast" (functioning like a power pellet) that turns enemies into "Glucose" points for 10 seconds. This reinforces the specific inputs required for photosynthesis and the resulting outputs of oxygen and sugar.
+ADDON FEATURE: The Photosynthesis Recipe Meter
+A UI meter tracks three specific "Input" slots: Sunlight, Water, and Carbon Dioxide. The player must fly into these specific items as they fall down the screen to fill the slots; however, "Output" items (Oxygen and Glucose) also fall and must be avoided. Once all three inputs are collected, the player’s ship (the Chloroplast) automatically emits a "Growth Pulse" that clears all "Pollution" enemies on screen and earns a point, reinforcing that these three specific ingredients are required to produce a result.
 
-VISUAL THEME: The game is set inside the microscopic world of a "Leaf Cell," with walls made of green plant cell structures. The player controls "Sunny the Seedling," while the "ghosts" are re-themed as "Pollution Clouds" and "Thirsty Aphids." The small dots usually found in a maze are replaced with "Nutrient Pellets," and the four power-ups are represented by large glowing "Chlorophyll" molecules.
+VISUAL THEME: The player controls a "Super Chloroplast" craft navigating the microscopic interior of a leaf cell. Enemies are dark "Smog Clouds" and "Pests," while the items to collect or avoid are bright yellow Suns, blue Water droplets, grey CO2 molecules, and hexagonal Glucose sugars.

@@ -85,8 +85,6 @@ def build_test_state():
         "implementation_plan": "",
         "game_code": "",
         "documentation": "",
-        "assets": {},
-        "assets_embedded": False,
         "playtest_report": "",
         "ship_approved": False,
         "errors": [],
