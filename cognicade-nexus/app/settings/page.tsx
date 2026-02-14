@@ -111,7 +111,7 @@ export default function SettingsPage() {
                 <div className="ml-64 min-h-screen">
                     <DashboardNavbar />
                     <div className="px-8 py-12 flex items-center justify-center">
-                        <p className="text-slate-400">Loading settings...</p>
+                        <p className="text-slate-400 font-sans-clean">Loading settings...</p>
                     </div>
                 </div>
             </div>
@@ -120,6 +120,15 @@ export default function SettingsPage() {
 
     return (
         <div className="min-h-screen bg-[#0a1f18] text-slate-100">
+            {/* Global Styles */}
+            <style jsx global>{`
+                @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
+                
+                .font-pixel { font-family: 'Press Start 2P', cursive; }
+                .font-serif-display { font-family: 'DM Serif Display', serif; }
+                .font-sans-clean { font-family: 'Inter', sans-serif; }
+            `}</style>
+
             <Sidebar />
 
             <div className="ml-64 min-h-screen">
@@ -128,65 +137,65 @@ export default function SettingsPage() {
                 <div className="px-8 py-12">
                     <div className="mb-8">
                         <h1 className="text-4xl font-serif-display text-white mb-2">Settings</h1>
-                        <p className="text-slate-400">Manage your account settings and preferences</p>
+                        <p className="text-slate-400 font-sans-clean">Manage your account settings and preferences</p>
                     </div>
 
                     <div className="max-w-3xl space-y-6">
                         {/* Profile Information */}
-                        <Card className="bg-[#0d281e] border-emerald-500/20">
+                        <Card className="bg-[#0d281e] border-emerald-500/20 rounded-2xl hover:scale-[1.01] transition-all">
                             <CardHeader>
-                                <CardTitle className="text-white flex items-center gap-2">
+                                <CardTitle className="text-white flex items-center gap-2 font-sans-clean">
                                     <User size={20} className="text-emerald-400" />
                                     Profile Information
                                 </CardTitle>
-                                <CardDescription className="text-slate-400">
+                                <CardDescription className="text-slate-400 font-sans-clean">
                                     Update your personal information
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="full_name" className="text-slate-300">Full Name</Label>
+                                    <Label htmlFor="full_name" className="text-slate-300 font-sans-clean">Full Name</Label>
                                     <Input
                                         id="full_name"
                                         value={formData.full_name}
                                         onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                                        className="bg-[#0a1f18] border-emerald-500/20 text-white"
+                                        className="bg-[#0a1f18] border-emerald-500/20 text-white font-sans-clean"
                                     />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="email" className="text-slate-300">Email</Label>
+                                    <Label htmlFor="email" className="text-slate-300 font-sans-clean">Email</Label>
                                     <Input
                                         id="email"
                                         type="email"
                                         value={formData.email}
                                         disabled
-                                        className="bg-[#0a1f18] border-emerald-500/20 text-slate-400 cursor-not-allowed"
+                                        className="bg-[#0a1f18] border-emerald-500/20 text-slate-400 cursor-not-allowed font-sans-clean"
                                     />
-                                    <p className="text-xs text-slate-500">Email cannot be changed</p>
+                                    <p className="text-xs text-slate-500 font-sans-clean">Email cannot be changed</p>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="role" className="text-slate-300">Role</Label>
+                                    <Label htmlFor="role" className="text-slate-300 font-sans-clean">Role</Label>
                                     <Input
                                         id="role"
                                         value={userProfile?.role === 'teacher' ? 'Teacher' : 'Student'}
                                         disabled
-                                        className="bg-[#0a1f18] border-emerald-500/20 text-slate-400 cursor-not-allowed capitalize"
+                                        className="bg-[#0a1f18] border-emerald-500/20 text-slate-400 cursor-not-allowed capitalize font-sans-clean"
                                     />
-                                    <p className="text-xs text-slate-500">Role cannot be changed</p>
+                                    <p className="text-xs text-slate-500 font-sans-clean">Role cannot be changed</p>
                                 </div>
                             </CardContent>
                         </Card>
 
                         {/* School Information */}
-                        <Card className="bg-[#0d281e] border-emerald-500/20">
+                        <Card className="bg-[#0d281e] border-emerald-500/20 rounded-2xl hover:scale-[1.01] transition-all">
                             <CardHeader>
-                                <CardTitle className="text-white flex items-center gap-2">
+                                <CardTitle className="text-white flex items-center gap-2 font-sans-clean">
                                     <School size={20} className="text-emerald-400" />
                                     {userProfile?.role === 'teacher' ? 'School Information' : 'Academic Information'}
                                 </CardTitle>
-                                <CardDescription className="text-slate-400">
+                                <CardDescription className="text-slate-400 font-sans-clean">
                                     {userProfile?.role === 'teacher'
                                         ? 'Information about your school'
                                         : 'Your academic details'}
@@ -194,7 +203,7 @@ export default function SettingsPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="school_name" className="text-slate-300">
+                                    <Label htmlFor="school_name" className="text-slate-300 font-sans-clean">
                                         {userProfile?.role === 'teacher' ? 'School Name' : 'School/Institution'}
                                     </Label>
                                     <Input
@@ -202,12 +211,12 @@ export default function SettingsPage() {
                                         value={formData.school_name}
                                         onChange={(e) => setFormData({ ...formData, school_name: e.target.value })}
                                         placeholder={userProfile?.role === 'teacher' ? 'Lincoln High School' : 'Your school name'}
-                                        className="bg-[#0a1f18] border-emerald-500/20 text-white"
+                                        className="bg-[#0a1f18] border-emerald-500/20 text-white font-sans-clean"
                                     />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="grade_level" className="text-slate-300">
+                                    <Label htmlFor="grade_level" className="text-slate-300 font-sans-clean">
                                         {userProfile?.role === 'teacher' ? 'Grades Taught' : 'Grade Level'}
                                     </Label>
                                     <Input
@@ -215,7 +224,7 @@ export default function SettingsPage() {
                                         value={formData.grade_level}
                                         onChange={(e) => setFormData({ ...formData, grade_level: e.target.value })}
                                         placeholder={userProfile?.role === 'teacher' ? '9-12' : '10th Grade'}
-                                        className="bg-[#0a1f18] border-emerald-500/20 text-white"
+                                        className="bg-[#0a1f18] border-emerald-500/20 text-white font-sans-clean"
                                     />
                                 </div>
                             </CardContent>
@@ -223,13 +232,13 @@ export default function SettingsPage() {
 
                         {/* Classroom Join Codes - Only for Teachers */}
                         {userProfile?.role === 'teacher' && classrooms.length > 0 && (
-                            <Card className="bg-[#0d281e] border-emerald-500/20">
+                            <Card className="bg-[#0d281e] border-emerald-500/20 rounded-2xl hover:scale-[1.01] transition-all">
                                 <CardHeader>
-                                    <CardTitle className="text-white flex items-center gap-2">
+                                    <CardTitle className="text-white flex items-center gap-2 font-sans-clean">
                                         <UsersIcon size={20} className="text-emerald-400" />
                                         Classroom Join Codes
                                     </CardTitle>
-                                    <CardDescription className="text-slate-400">
+                                    <CardDescription className="text-slate-400 font-sans-clean">
                                         Share these codes with your students to let them join your classrooms
                                     </CardDescription>
                                 </CardHeader>
@@ -241,14 +250,14 @@ export default function SettingsPage() {
                                         >
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <h4 className="text-white font-semibold">{classroom.name}</h4>
+                                                    <h4 className="text-white font-semibold font-sans-clean">{classroom.name}</h4>
                                                     {classroom.is_active && (
-                                                        <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-500/20 text-emerald-400">
+                                                        <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-500/20 text-emerald-400 font-sans-clean">
                                                             Active
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-4 text-xs text-slate-400">
+                                                <div className="flex items-center gap-4 text-xs text-slate-400 font-sans-clean">
                                                     <span className="flex items-center gap-1">
                                                         <UsersIcon size={12} />
                                                         {classroom.member_count || 0} students
@@ -261,7 +270,7 @@ export default function SettingsPage() {
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <div className="text-right">
-                                                    <p className="text-xs text-slate-500 mb-1">Join Code</p>
+                                                    <p className="text-xs text-slate-500 mb-1 font-sans-clean">Join Code</p>
                                                     <span className="text-2xl font-bold font-pixel text-emerald-400 tracking-wider">
                                                         {classroom.join_code}
                                                     </span>
@@ -289,7 +298,7 @@ export default function SettingsPage() {
                             <Button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold"
+                                className="bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none font-sans-clean"
                             >
                                 <Save size={16} className="mr-2" />
                                 {saving ? 'Saving...' : 'Save Changes'}
@@ -298,7 +307,7 @@ export default function SettingsPage() {
                             <Button
                                 onClick={handleLogout}
                                 variant="outline"
-                                className="border-red-500/20 text-red-400 hover:bg-red-500/10"
+                                className="border-red-500/20 text-red-400 hover:bg-red-500/10 font-sans-clean rounded-lg"
                             >
                                 <LogOut size={16} className="mr-2" />
                                 Logout

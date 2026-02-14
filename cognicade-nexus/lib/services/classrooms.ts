@@ -19,7 +19,7 @@ export async function getLessonsForClassroom(supabase: SupabaseClient, classroom
         .from('lesson_assignments')
         .select(`
             lesson_id,
-            lessons:lessons (*)
+            lessons (*)
         `)
         .eq('classroom_id', classroomId);
     // .eq('is_published', true) // Add this filter based on role later if needed
@@ -30,33 +30,35 @@ export async function getLessonsForClassroom(supabase: SupabaseClient, classroom
 }
 
 export async function getMembersForClassroom(supabase: SupabaseClient, classroomId: string): Promise<UserProfile[]> {
-    const { data, error } = await supabase
+    // 1. Get member IDs
+    const { data: members, error: memberError } = await supabase
         .from('classroom_members')
-        .select(`
-            student_id,
-            user_profiles:student_id (*)
-        `)
+        .select('student_id')
         .eq('classroom_id', classroomId);
 
-    if (error) throw error;
+    if (memberError) throw memberError;
 
-    // Assuming user_profiles matches on student_id
-    // But wait, the FK is to auth.users. user_profiles PK is usually same as auth.users.id
-    // I should check schema. 20260214_create_classroom_system.sql: user_profiles PK is id referencing auth.users(id)
-    // So the join via student_id -> auth.users -> user_profiles requires clear relation.
-    // If Supabase doesn't infer it via FK automatically to user_profiles, this might fail unless manually joined.
-    // Let's assume standard behavior for now.
+    if (!members || members.length === 0) return [];
 
-    return (data || []).map((item: any) => item.user_profiles).filter(Boolean);
+    const studentIds = members.map(m => m.student_id);
+
+    // 2. Get profiles matches
+    const { data: profiles, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .in('id', studentIds);
+
+    if (profileError) throw profileError;
+
+    return profiles || [];
 }
-
 
 export async function getClassroomsForStudent(supabase: SupabaseClient, studentId: string): Promise<Classroom[]> {
     const { data, error } = await supabase
         .from('classroom_members')
         .select(`
       classroom_id,
-      classrooms:classrooms (*)
+      classrooms (*)
     `)
         .eq('student_id', studentId)
         .eq('is_active', true);
@@ -70,14 +72,14 @@ export async function getClassroomsForStudent(supabase: SupabaseClient, studentI
 export async function joinClassroom(supabase: SupabaseClient, studentId: string, joinCode: string): Promise<string> {
     // Use the secure RPC function to bypass RLS and join classroom
     console.log('[DEBUG] joinClassroom called with:', { studentId, joinCode });
-    
+
     // First, let's check if the classroom exists with this join code
     const { data: checkData, error: checkError } = await supabase
         .from('classrooms')
         .select('id, join_code, is_active, name')
         .eq('join_code', joinCode)
         .single();
-    
+
     if (checkError) {
         console.log('[DEBUG] Classroom lookup error:', checkError);
     } else {
@@ -302,7 +304,7 @@ export async function getStudentRecentLessons(supabase: SupabaseClient, studentI
         .select(`
             lesson_id,
             classroom_id,
-            lessons:lesson_id (*)
+            lessons (*)
         `)
         .in('classroom_id', classroomIds)
         .eq('is_published', true)
