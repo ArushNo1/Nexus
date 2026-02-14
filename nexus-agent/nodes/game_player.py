@@ -7,6 +7,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from state import AgentState
 from utils.llm import get_llm
 from utils.logger import get_logger
+from utils.debug import dump_debug_state
 from utils.prompts import load_prompt, render_template
 
 log = get_logger("game_player")
@@ -44,14 +45,17 @@ async def game_player_node(state: AgentState) -> dict:
         error_section = content.upper().split("ERRORS:")[-1].split("\n\n")[0]
         errors = [line.strip("- ").strip() for line in error_section.strip().split("\n") if line.strip()]
 
-    verdict = "SHIP" if approved else "FIX"
-    error_count = len(errors)
-    log.info(f"[bold red]Node 5 — Game Player[/bold red] | done → verdict: {verdict} | errors: {error_count}")
-
-    return {
+    result = {
         "playtest_report": content,
         "ship_approved": approved,
         "errors": errors,
         "code_iteration": state["code_iteration"] + 1,
         "status": "done" if approved else "coding",
     }
+
+    verdict = "SHIP" if approved else "FIX"
+    error_count = len(errors)
+    log.info(f"[bold red]Node 5 — Game Player[/bold red] | done → verdict: {verdict} | errors: {error_count}")
+    dump_debug_state("game_player", {**state, **result})
+
+    return result

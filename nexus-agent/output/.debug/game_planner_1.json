@@ -1,0 +1,57 @@
+{
+  "lesson_plan": {
+    "lessonPlan": {
+      "title": "Introduction to Photosynthesis",
+      "duration": "60 minutes",
+      "gradeLevel": "Level: 5th Grade",
+      "subject": "Science",
+      "objectives": [
+        "Students will be able to define photosynthesis.",
+        "Students will identify the inputs (sunlight, water, carbon dioxide) and outputs (oxygen, glucose) of photosynthesis.",
+        "Students will explain the importance of photosynthesis for life on Earth."
+      ],
+      "standards": [
+        "NGSS 5-LS1-1: Support an argument that plants get the materials they need for growth chiefly from air and water."
+      ],
+      "materials": [
+        "Could not extract materials"
+      ],
+      "content": {
+        "introduction": "Could not extract introduction",
+        "procedure": "Could not extract procedure",
+        "closure": "Could not extract closure"
+      }
+    },
+    "rubrics": {
+      "title": "Extracted Rubric",
+      "criteria": []
+    },
+    "assessments": [
+      {
+        "type": "Extracted Assessment",
+        "title": "Assessment",
+        "questions": [
+          {
+            "questionText": "- Formative: participation in Thumbs Up/Thumbs Down.\n- Summative: Plant diagram worksheet accuracy.\n- Quiz (to be given next class):\n  1. What gas do plants take in? (Carbon Dioxide)\n  2. What gas do plants release? (Oxygen)\n  3. What is the main source of energy for plants? (Sunlight)",
+            "options": [],
+            "correctAnswer": "",
+            "points": 0
+          }
+        ]
+      }
+    ]
+  },
+  "game_design_doc": "# Game Design Document: Photosynthesis Factory\n\n## Core Concept\n- **Genre:** Drag-and-drop puzzle with factory simulation elements\n- **Description:** Students manage a plant \"factory\" by dragging the correct inputs (sunlight, water, CO\u2082) to create outputs (oxygen, glucose) while learning the photosynthesis process\n- **Target play time:** 3-4 minutes per session\n\n## Learning Integration\n- **Objective 1** (Define photosynthesis): Reinforced through interactive tutorial and success messages that explicitly state \"This is photosynthesis - plants making their own food!\"\n- **Objective 2** (Identify inputs/outputs): Core drag-and-drop mechanic requires recognizing and correctly placing all 3 inputs to generate 2 outputs\n- **Objective 3** (Explain importance): Success feedback connects plant oxygen production to \"the air we breathe\" and glucose to \"plant food for growth\"\n\n**Knowledge Checks:**\n1. **Recognition test:** Players must identify correct input shapes/labels before dragging\n2. **Process understanding:** Only complete input combinations (sun + water + CO\u2082) produce outputs, teaching the requirement for all three\n\n## Phaser Architecture\n\n### Scenes\n1. **MenuScene:** Instructions with accessibility options toggle\n2. **GameScene:** Main factory gameplay (60-second timer)\n\n### Key Game Objects\n1. **InputDropper:** Generates falling input items (sun, water drop, CO\u2082 bubble)\n2. **Plant:** Central factory that accepts inputs and produces outputs\n3. **ScoreManager:** Tracks correct combinations and provides educational feedback\n4. **AccessibilityManager:** Handles keyboard navigation and visual alternatives\n\n### Input System\n- **Primary:** Mouse drag-and-drop\n- **Accessibility Alternative:** Arrow keys to select items + WASD to move + Spacebar to drop\n- **Visual Focus:** Clear selection borders for keyboard users\n\n### Score Tracking\n- +10 points per correct input placement\n- +50 bonus for complete photosynthesis cycle (all 3 inputs \u2192 both outputs)\n- Educational pop-ups expla\n... [truncated, 4910 chars total]",
+  "design_feedback": "## Game Design Document Evaluation\n\n### 1. Pedagogical Alignment: **4/5**\n\n**Strengths:**\n- Excellent direct mapping of game mechanics to learning objectives\n- Core drag-and-drop mechanic naturally teaches input identification (Objective 2)\n- Visual factory metaphor effectively demonstrates the photosynthesis process\n- Knowledge checks are embedded in gameplay rather than separate quiz questions\n- Success messaging connects game actions to real-world importance (Objective 3)\n\n**Areas for improvement:**\n- Objective 1 (defining photosynthesis) relies only on intro text - could be reinforced through gameplay\n- Consider adding brief pop-up explanations when correct combinations are made\n- Could strengthen the \"plants make food\" concept beyond just showing glucose output\n\n### 2. Fun Factor: **3/5**\n\n**Strengths:**\n- Drag-and-drop is inherently satisfying and intuitive\n- Clear visual feedback with different shapes and colors for each element\n- Bonus scoring system for complete photosynthesis cycles adds strategy\n- Time pressure creates appropriate urgency\n\n**Concerns:**\n- May become repetitive quickly with only 3 input types\n- Limited variety in gameplay mechanics\n- No progression or increasing challenge over the 60-second period\n- Success relies heavily on recognition rather than problem-solving\n\n**Suggestions:**\n- Consider adding variety like different plant types or seasonal changes\n- Could introduce mild time pressure variations or combo multipliers\n\n### 3. Phaser Feasibility: **5/5**\n\n**Strengths:**\n- Extremely well-scoped for single HTML file implementation\n- All graphics are simple programmatic shapes (circles, rectangles, basic polygons)\n- Drag-and-drop is a core Phaser 3 feature with excellent support\n- Collision detection using bounds overlap is straightforward\n- Asset requirements are minimal - no external files needed\n- Scene structure is appropriately simple (2 scenes total)\n\n**Technical soundness:**\n- 400-line estimate seems realistic for this scope\n- All pr\n... [truncated, 4386 chars total]",
+  "design_approved": false,
+  "phaser_code": "",
+  "documentation": "",
+  "assets": {},
+  "assets_embedded": false,
+  "playtest_report": "",
+  "ship_approved": false,
+  "errors": [],
+  "design_iteration": 1,
+  "code_iteration": 0,
+  "status": "evaluating"
+}

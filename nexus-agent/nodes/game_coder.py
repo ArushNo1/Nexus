@@ -5,6 +5,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from state import AgentState
 from utils.llm import get_llm
 from utils.logger import get_logger
+from utils.debug import dump_debug_state
 from utils.prompts import load_prompt, render_template
 
 log = get_logger("game_coder")
@@ -44,10 +45,13 @@ async def game_coder_node(state: AgentState) -> dict:
     elif "```" in code:
         code = code.split("```", 1)[1].rsplit("```", 1)[0].strip()
 
-    log.info(f"[bold green]Node 3 — Game Coder[/bold green] | done → generated {len(code)} chars | status: generating_assets")
-
-    return {
+    result = {
         "phaser_code": code,
-        "documentation": code,  # Documentation is inline within the HTML
+        "documentation": code,
         "status": "generating_assets",
     }
+
+    log.info(f"[bold green]Node 3 — Game Coder[/bold green] | done → generated {len(code)} chars | status: generating_assets")
+    dump_debug_state("game_coder", {**state, **result})
+
+    return result

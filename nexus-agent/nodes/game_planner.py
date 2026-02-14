@@ -7,6 +7,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from state import AgentState
 from utils.llm import get_llm
 from utils.logger import get_logger
+from utils.debug import dump_debug_state
 from utils.prompts import load_prompt, render_template
 
 log = get_logger("game_planner")
@@ -33,9 +34,12 @@ async def game_planner_node(state: AgentState) -> dict:
         HumanMessage(content=user),
     ])
 
-    log.info("[bold cyan]Node 1 — Game Planner[/bold cyan] | done → status: evaluating")
-
-    return {
+    result = {
         "game_design_doc": response.content,
         "status": "evaluating",
     }
+
+    log.info("[bold cyan]Node 1 — Game Planner[/bold cyan] | done → status: evaluating")
+    dump_debug_state("game_planner", {**state, **result})
+
+    return result

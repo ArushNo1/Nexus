@@ -5,6 +5,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from state import AgentState
 from utils.llm import get_llm
 from utils.logger import get_logger
+from utils.debug import dump_debug_state
 from utils.prompts import load_prompt, render_template
 
 log = get_logger("asset_generator")
@@ -36,11 +37,14 @@ async def asset_generator_node(state: AgentState) -> dict:
     elif "```" in updated_code:
         updated_code = updated_code.split("```", 1)[1].rsplit("```", 1)[0].strip()
 
-    log.info(f"[bold magenta]Node 4 — Asset Generator[/bold magenta] | done → output code: {len(updated_code)} chars | status: playtesting")
-
-    return {
+    result = {
         "phaser_code": updated_code,
         "assets": {"sprites": [], "backgrounds": [], "sounds": []},
         "assets_embedded": True,
         "status": "playtesting",
     }
+
+    log.info(f"[bold magenta]Node 4 — Asset Generator[/bold magenta] | done → output code: {len(updated_code)} chars | status: playtesting")
+    dump_debug_state("asset_generator", {**state, **result})
+
+    return result

@@ -7,6 +7,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from state import AgentState
 from utils.llm import get_llm
 from utils.logger import get_logger
+from utils.debug import dump_debug_state
 from utils.prompts import load_prompt, render_template
 
 log = get_logger("design_evaluator")
@@ -37,11 +38,14 @@ async def design_evaluator_node(state: AgentState) -> dict:
     content = response.content
     approved = "PASS" in content.upper().split("DECISION")[-1] if "DECISION" in content.upper() else "PASS" in content.upper()
 
-    verdict = "PASS" if approved else "REVISE"
-    log.info(f"[bold yellow]Node 2 — Design Evaluator[/bold yellow] | done → verdict: {verdict}")
-
-    return {
+    result = {
         "design_feedback": content,
         "design_approved": approved,
         "design_iteration": state["design_iteration"] + 1,
     }
+
+    verdict = "PASS" if approved else "REVISE"
+    log.info(f"[bold yellow]Node 2 — Design Evaluator[/bold yellow] | done → verdict: {verdict}")
+    dump_debug_state("design_evaluator", {**state, **result})
+
+    return result

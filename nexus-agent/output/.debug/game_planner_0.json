@@ -1,0 +1,57 @@
+{
+  "lesson_plan": {
+    "lessonPlan": {
+      "title": "Introduction to Photosynthesis",
+      "duration": "60 minutes",
+      "gradeLevel": "Level: 5th Grade",
+      "subject": "Science",
+      "objectives": [
+        "Students will be able to define photosynthesis.",
+        "Students will identify the inputs (sunlight, water, carbon dioxide) and outputs (oxygen, glucose) of photosynthesis.",
+        "Students will explain the importance of photosynthesis for life on Earth."
+      ],
+      "standards": [
+        "NGSS 5-LS1-1: Support an argument that plants get the materials they need for growth chiefly from air and water."
+      ],
+      "materials": [
+        "Could not extract materials"
+      ],
+      "content": {
+        "introduction": "Could not extract introduction",
+        "procedure": "Could not extract procedure",
+        "closure": "Could not extract closure"
+      }
+    },
+    "rubrics": {
+      "title": "Extracted Rubric",
+      "criteria": []
+    },
+    "assessments": [
+      {
+        "type": "Extracted Assessment",
+        "title": "Assessment",
+        "questions": [
+          {
+            "questionText": "- Formative: participation in Thumbs Up/Thumbs Down.\n- Summative: Plant diagram worksheet accuracy.\n- Quiz (to be given next class):\n  1. What gas do plants take in? (Carbon Dioxide)\n  2. What gas do plants release? (Oxygen)\n  3. What is the main source of energy for plants? (Sunlight)",
+            "options": [],
+            "correctAnswer": "",
+            "points": 0
+          }
+        ]
+      }
+    ]
+  },
+  "game_design_doc": "# Game Design Document: Photosynthesis Factory\n\n## Core Concept\n- **Genre**: Resource Collection/Matching\n- **Description**: Players drag inputs (sunlight, water, CO2) into a plant factory to create outputs (oxygen, glucose) while learning the photosynthesis equation.\n- **Target play time**: 3-4 minutes\n\n## Learning Integration\n- **Objective 1 (Define photosynthesis)**: Game intro text explains \"photosynthesis is how plants make food from simple materials\"\n- **Objective 2 (Identify inputs/outputs)**: Core mechanic requires dragging correct inputs (sun, water drop, CO2 bubble) to produce outputs (oxygen bubble, glucose crystal)\n- **Objective 3 (Importance for life)**: Score feedback emphasizes \"You helped plants make oxygen for animals to breathe!\"\n\n**Knowledge checks**:\n1. **Input Recognition**: Players must identify and drag only correct inputs\n2. **Output Prediction**: Players see what they created and learn the connection\n\n## Phaser Architecture\n\n### Scenes (2 total)\n1. **GameScene**: Main gameplay with plant factory\n2. **ResultsScene**: Score and learning summary\n\n### Key Game Objects (4 types)\n1. **Plant Sprite**: Central factory (green rectangle with leaves)\n2. **Input Items**: Draggable sprites (sun=yellow circle, water=blue drop, CO2=gray bubble)\n3. **Output Items**: Generated sprites (oxygen=green bubble, glucose=brown hexagon)\n4. **UI Elements**: Score text, timer, instructions\n\n### Input & Mechanics\n- **Primary Input**: Mouse drag-and-drop\n- **Game Loop**: \n  - Random inputs spawn at screen edges\n  - Player drags inputs to plant center\n  - Correct combinations create outputs and points\n  - Wrong items disappear with no penalty\n  - 60-second timer\n\n### Score Tracking\n- +10 points per correct input delivered\n- +20 bonus when complete set (sun + water + CO2) creates both outputs\n- Display running total and final score with encouraging messages\n\n## Assets Needed\n\n### Graphics (Programmatic only)\n- Plant: Green rectangle (100x150px) with simple leaf shapes\n- S\n... [truncated, 3529 chars total]",
+  "design_feedback": "",
+  "design_approved": false,
+  "phaser_code": "",
+  "documentation": "",
+  "assets": {},
+  "assets_embedded": false,
+  "playtest_report": "",
+  "ship_approved": false,
+  "errors": [],
+  "design_iteration": 0,
+  "code_iteration": 0,
+  "status": "evaluating"
+}
