@@ -1,0 +1,16 @@
+{
+  "name": "sage",
+  "version": "1.0.0",
+  "description": "**AI that generates personalized educational video games in Unity based on what students are struggling with.**",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "express": "^5.2.1"
+  }
+}
