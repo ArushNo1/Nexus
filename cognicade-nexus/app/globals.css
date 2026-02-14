@@ -175,4 +175,8 @@
   .pixel-text-shadow {
     text-shadow: 3px 3px 0 #000, 6px 6px 0 rgba(0,0,0,0.4);
   }
+
+  .image-pixelated {
+    image-rendering: pixelated;
+  }
 }

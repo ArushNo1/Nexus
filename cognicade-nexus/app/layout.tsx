@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Jersey_10, Fredericka_the_Great } from "next/font/google";
 import { ThemeProvider } from "next-themes";
-import Navbar from "@/components/ui/navbar";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -32,6 +31,7 @@ const fredericka = Fredericka_the_Great({
   variable: "--font-fredericka",
   display: "swap",
   subsets: ["latin"],
+  adjustFontFallback: false,
 });
 
 export default function RootLayout({
@@ -48,7 +48,6 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar />
           {children}
         </ThemeProvider>
       </body>

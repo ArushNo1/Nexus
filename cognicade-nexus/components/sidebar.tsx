@@ -153,7 +153,7 @@ export default function Sidebar() {
             {/* Decorative Pixel Coin */}
             {!collapsed && (
                 <div className="absolute bottom-28 right-4 opacity-10 pointer-events-none">
-                    <img src="/coin.png" alt="" className="w-8 h-8 animate-float-gentle" style={{ imageRendering: 'pixelated' }} />
+                    <img src="/coin.png" alt="" className="w-8 h-8 animate-float-gentle image-pixelated" />
                 </div>
             )}
         </div>

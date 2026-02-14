@@ -4,11 +4,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Gamepad2,
     TrendingDown,
-    Menu,
-    X,
     ArrowRight
 } from 'lucide-react';
 import Link from 'next/link';
+import LandingNavbar from '@/components/ui/landing-navbar';
 
 /* --- DATA CONSTANTS --- */
 const GAME_MODES = [
@@ -286,35 +285,7 @@ export default function NexusLanding() {
         `}</style>
 
             {/* ================= NAV ================= */}
-            <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-[#0d281e]/90 backdrop-blur-md py-4 border-b border-white/5 shadow-md' : 'bg-transparent py-8'}`}>
-                <div className="max-w-7xl mx-auto px-8 flex justify-between items-center">
-                    {/* Logo */}
-                    <div className="flex items-center gap-3">
-                        <img src="/NEXUSLOGO.png" alt="Nexus" className="w-12 h-12 object-contain" />
-                        <span className="text-2xl text-white font-serif-display">Nexus</span>
-                    </div>
-
-                    {/* Desktop Menu */}
-                    <div className="hidden md:flex items-center space-x-12 text-sm font-medium text-slate-300">
-                        <a href="#" className="hover:text-white transition-colors">Features</a>
-                        <a href="#" className="hover:text-white transition-colors">Pricing</a>
-                        <Link href="/dashboard">
-                            <span className="hover:text-white transition-colors cursor-pointer">Dashboard</span>
-                        </Link>
-                        {/* White Button (Chalk style) */}
-                        <Link href="/auth/login">
-                            <button className="px-6 py-2.5 bg-white text-[#0d281e] font-bold rounded-lg hover:bg-slate-200 transition-all shadow-md">
-                                Sign In
-                            </button>
-                        </Link>
-                    </div>
-
-                    {/* Mobile Toggle */}
-                    <button className="md:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                        {isMenuOpen ? <X /> : <Menu />}
-                    </button>
-                </div>
-            </nav>
+            <LandingNavbar scrolled={scrolled} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
 
             {/* ================= HERO SECTION (SPLIT WORLD) ================= */}
             {/* Section owns the gradient — no panel divs have any background */}

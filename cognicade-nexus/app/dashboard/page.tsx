@@ -14,8 +14,9 @@ import {
     BarChart3,
     Target
 } from 'lucide-react';
-import Link from 'next/link';
 import Sidebar from '@/components/sidebar';
+import DashboardNavbar from '@/components/ui/dashboard-navbar';
+import Link from 'next/link';
 
 /* --- MOCK DATA --- */
 const STATS = [
@@ -76,24 +77,8 @@ export default function Dashboard() {
 
             {/* Main Content */}
             <div className="ml-64 min-h-screen">
-                {/* Top Bar */}
-                <div className="bg-[#0d281e]/90 backdrop-blur-md border-b border-white/5 sticky top-0 z-40">
-                    <div className="px-8 py-4 flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                            <span className="text-xl text-white font-serif-display">Dashboard</span>
-                        </div>
-                        <div className="flex items-center gap-6">
-                            <Link href="/landing" className="text-slate-300 hover:text-white transition-colors text-sm font-medium">
-                                Back to Home
-                            </Link>
-                            <Link href="/create">
-                                <button className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_2px_0_#065f46] hover:translate-y-[1px] hover:shadow-[0_1px_0_#065f46] active:translate-y-[2px] active:shadow-none text-sm">
-                                    Create Lesson
-                                </button>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
+                {/* Dashboard Navbar */}
+                <DashboardNavbar />
 
             <div className="px-8 py-12">
                 {/* Header */}
@@ -112,13 +97,11 @@ export default function Dashboard() {
                         return (
                             <div
                                 key={idx}
-                                className={`relative bg-[#0d281e] border ${stat.border} rounded-2xl p-6 cursor-pointer transition-all duration-300 overflow-hidden group`}
+                                className={`relative bg-[#0d281e] border ${stat.border} rounded-2xl p-6 cursor-pointer transition-all duration-300 overflow-hidden group ${
+                                    hoveredStat === idx ? '-translate-y-1 shadow-xl' : 'hover:shadow-lg'
+                                }`}
                                 onMouseEnter={() => setHoveredStat(idx)}
                                 onMouseLeave={() => setHoveredStat(null)}
-                                style={{
-                                    transform: hoveredStat === idx ? 'translateY(-4px)' : 'translateY(0)',
-                                    boxShadow: hoveredStat === idx ? `0 12px 40px rgba(52,211,153,0.15)` : 'none',
-                                }}
                             >
                                 <div className={`absolute inset-0 ${stat.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
                                 <div className="relative z-10">
@@ -232,8 +215,8 @@ export default function Dashboard() {
                 </div>
 
                 {/* Floating Game Elements */}
-                <img src="/coin.png" alt="" className="fixed bottom-20 right-20 w-12 opacity-20 animate-float-gentle pointer-events-none" style={{ imageRendering: 'pixelated' }} />
-                <img src="/coin.png" alt="" className="fixed top-32 right-40 w-8 opacity-15 animate-float-gentle pointer-events-none" style={{ imageRendering: 'pixelated', animationDelay: '1s' }} />
+                <img src="/coin.png" alt="" className="fixed bottom-20 right-20 w-12 opacity-20 animate-float-gentle pointer-events-none image-pixelated" />
+                <img src="/coin.png" alt="" className="fixed top-32 right-40 w-8 opacity-15 animate-float-gentle pointer-events-none image-pixelated" style={{ animationDelay: '1s' }} />
             </div>
             </div>
         </div>

@@ -1,10 +1,22 @@
-import { Suspense } from 'react';
+'use client';
+
+import { Suspense, useState, useEffect } from 'react';
 import { LessonUploader } from '@/components/lesson-uploader';
+import LandingNavbar from '@/components/ui/landing-navbar';
 
 export default function CreateLessonPage() {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
     return (
         <div className="min-h-screen bg-background text-foreground py-12 px-6">
-                <header className="mb-12 text-center">
+                <LandingNavbar scrolled={scrolled} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+                <header className="mb-12 text-center mt-20">
                     <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-4">
                         Nexus Lesson Parser
                     </h1>
