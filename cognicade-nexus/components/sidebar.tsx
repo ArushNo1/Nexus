@@ -22,6 +22,7 @@ import { createClient } from '@/lib/supabase/client';
 
 const TEACHER_NAV_ITEMS = [
     { label: 'Dashboard', href: '/dashboard', icon: Home },
+    { label: 'My Classrooms', href: '/classrooms', icon: Users },
     { label: 'Create Lesson', href: '/create', icon: Plus },
     { label: 'My Lessons', href: '/lessons', icon: BookOpen },
     { label: 'Analytics', href: '/analytics', icon: BarChart3 },

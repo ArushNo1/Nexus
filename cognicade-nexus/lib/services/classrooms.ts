@@ -68,37 +68,15 @@ export async function getClassroomsForStudent(supabase: SupabaseClient, studentI
 }
 
 export async function joinClassroom(supabase: SupabaseClient, studentId: string, joinCode: string): Promise<string> {
-    // 1. Find classroom by code
-    const { data: classroom, error: classroomError } = await supabase
-        .from('classrooms')
-        .select('id')
-        .eq('join_code', joinCode)
-        .eq('is_active', true)
-        .single();
+    // Use the secure RPC function to bypass RLS and join classroom
+    const { data: classroomId, error } = await supabase.rpc('join_classroom_by_code', {
+        p_student_id: studentId,
+        p_join_code: joinCode
+    });
 
-    if (classroomError || !classroom) throw new Error('Invalid join code or classroom not found');
+    if (error) throw new Error(error.message || 'Invalid join code or classroom not found');
 
-    // 2. Check if already a member
-    const { data: existingMember } = await supabase
-        .from('classroom_members')
-        .select('id')
-        .eq('classroom_id', classroom.id)
-        .eq('student_id', studentId)
-        .maybeSingle();
-
-    if (existingMember) throw new Error('You are already a member of this classroom');
-
-    // 3. Join
-    const { error: joinError } = await supabase
-        .from('classroom_members')
-        .insert({
-            classroom_id: classroom.id,
-            student_id: studentId
-        });
-
-    if (joinError) throw joinError;
-
-    return classroom.id;
+    return classroomId;
 }
 
 export async function getClassroomsForTeacher(supabase: SupabaseClient, teacherId: string): Promise<Classroom[]> {
