@@ -2,6 +2,14 @@
 
 {{ game_design_doc }}
 
+{% if implementation_plan %}
+## Implementation Plan
+
+Follow this detailed task list and implementation roadmap when building the game:
+
+{{ implementation_plan }}
+{% endif %}
+
 {% if is_revision %}
 ## Revision Context
 
@@ -24,7 +32,7 @@ Fix all reported errors and issues while preserving working functionality.
 ---
 
 {% if is_revision %}
-Revise the Phaser 3 game code to fix the issues described above. Output the complete, corrected HTML file.
+Revise the Kaplay.js game code to fix the issues described above. Output the complete, corrected HTML file.
 {% else %}
-Generate a complete, self-contained Phaser 3 game as a single HTML file based on the GDD above. Output ONLY the HTML code.
+Generate a complete, self-contained Kaplay.js game as a single HTML file based on the GDD above. Output ONLY the HTML code.
 {% endif %}

@@ -28,14 +28,14 @@ def load_lesson_plan(path: str) -> dict:
         return json.load(f)
 
 
-def save_output(phaser_code: str, game_design_doc: str, title: str, output_dir: str = "output") -> tuple[Path, Path]:
+def save_output(game_code: str, game_design_doc: str, title: str, output_dir: str = "output") -> tuple[Path, Path]:
     """Save the generated HTML game and design document to the output directory."""
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     slug = title.lower().replace(" ", "_").replace("-", "_")
 
     game_path = out / f"{slug}_game.html"
-    game_path.write_text(phaser_code)
+    game_path.write_text(game_code)
 
     doc_path = out / f"{slug}_design.md"
     doc_path.write_text(game_design_doc)
@@ -48,14 +48,15 @@ async def run(input_path: str, verbose: bool = False) -> None:
     lesson_plan = load_lesson_plan(input_path)
     title = lesson_plan.get("title", "untitled")
 
-    console.print(Panel(f"[bold]Generating Phaser game for:[/bold] {title}", style="cyan"))
+    console.print(Panel(f"[bold]Generating Kaplay game for:[/bold] {title}", style="cyan"))
 
     initial_state: AgentState = {
         "lesson_plan": lesson_plan,
         "game_design_doc": "",
         "design_feedback": "",
         "design_approved": False,
-        "phaser_code": "",
+        "implementation_plan": "",
+        "game_code": "",
         "documentation": "",
         "assets": {},
         "assets_embedded": False,
@@ -70,9 +71,9 @@ async def run(input_path: str, verbose: bool = False) -> None:
     graph = build_graph()
     final_state = await graph.ainvoke(initial_state)
 
-    if final_state.get("phaser_code"):
+    if final_state.get("game_code"):
         game_path, doc_path = save_output(
-            final_state["phaser_code"],
+            final_state["game_code"],
             final_state.get("game_design_doc", ""),
             title,
         )
@@ -91,7 +92,7 @@ async def run(input_path: str, verbose: bool = False) -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate a Phaser 3 game from a lesson plan")
+    parser = argparse.ArgumentParser(description="Generate a Kaplay.js game from a lesson plan")
     parser.add_argument("--input", "-i", required=True, help="Path to JSON lesson plan file")
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
     args = parser.parse_args()

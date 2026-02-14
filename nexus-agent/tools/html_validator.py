@@ -1,4 +1,4 @@
-"""HTML validation for the generated Phaser game output."""
+"""HTML validation for the generated Kaplay game output."""
 
 import re
 from langchain.tools import tool
@@ -13,10 +13,10 @@ def validate_html(html_code: str) -> str:
         issues.append("Missing <!DOCTYPE html> declaration")
     if "<html" not in html_code:
         issues.append("Missing <html> tag")
-    if "phaser" not in html_code.lower():
-        issues.append("Missing Phaser CDN script reference")
-    if "new Phaser.Game" not in html_code:
-        issues.append("Missing Phaser.Game initialization")
+    if "kaplay" not in html_code.lower():
+        issues.append("Missing Kaplay CDN script reference")
+    if "kaplay(" not in html_code:
+        issues.append("Missing kaplay() initialization")
 
     # Check for balanced script tags
     open_scripts = len(re.findall(r"<script", html_code))

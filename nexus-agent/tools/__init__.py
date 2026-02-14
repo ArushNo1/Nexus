@@ -1,1 +1,1 @@
-"""LangGraph tool definitions for the Phaser game generation pipeline."""
+"""LangGraph tool definitions for the Kaplay game generation pipeline."""

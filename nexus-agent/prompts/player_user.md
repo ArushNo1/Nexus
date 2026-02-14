@@ -1,7 +1,7 @@
 ## Generated Game Code
 
 ```html
-{{ phaser_code }}
+{{ game_code }}
 ```
 
 ## Game Design Document

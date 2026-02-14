@@ -16,7 +16,7 @@ log = get_logger("design_evaluator")
 async def design_evaluator_node(state: AgentState) -> dict:
     """Evaluate the GDD against a rubric and decide PASS or REVISE.
 
-    Scores on: pedagogical alignment, fun factor, Phaser feasibility,
+    Scores on: pedagogical alignment, fun factor, Kaplay feasibility,
     scope control, and accessibility. Passes if all >= 3 and avg >= 3.5.
     """
     log.info(f"[bold yellow]Node 2 — Design Evaluator[/bold yellow] | status: {state.get('status')} | iteration: {state['design_iteration'] + 1}")

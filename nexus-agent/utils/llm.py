@@ -7,6 +7,7 @@ from utils.config import settings
 MODEL_MAP: dict[str, str] = {
     "game_planner": "claude-sonnet-4-5",
     "design_evaluator": "claude-sonnet-4-5",
+    "implementation_planner": "claude-sonnet-4-5",
     "game_coder": "claude-opus-4-6",
     "asset_generator": "claude-sonnet-4-5",
     "game_player": "claude-sonnet-4-5",

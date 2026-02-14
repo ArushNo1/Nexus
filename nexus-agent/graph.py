@@ -7,6 +7,7 @@ from nodes.game_planner import game_planner_node
 from nodes.design_evaluator import design_evaluator_node
 from nodes.game_coder import game_coder_node
 from nodes.asset_generator import asset_generator_node
+from nodes.implementation_planner import implementation_planner_node
 from nodes.game_player import game_player_node
 
 
@@ -14,10 +15,10 @@ from nodes.game_player import game_player_node
 def design_gate(state: AgentState) -> str:
     """Route after design evaluation: approve → coder, or loop back to planner."""
     if state["design_approved"]:
-        return "game_coder"
+        return "implementation_planner"
     if state["design_iteration"] >= 3:
         print("Warning: Max design iterations reached, proceeding with best effort")
-        return "game_coder"
+        return "implementation_planner"
     return "game_planner"
 
 
@@ -39,6 +40,7 @@ def build_graph():
     # ── Add nodes ──
     workflow.add_node("game_planner", game_planner_node)
     workflow.add_node("design_evaluator", design_evaluator_node)
+    workflow.add_node("implementation_planner", implementation_planner_node)
     workflow.add_node("game_coder", game_coder_node)
     workflow.add_node("asset_generator", asset_generator_node)
     workflow.add_node("game_player", game_player_node)
@@ -48,6 +50,7 @@ def build_graph():
 
     # ── Linear edges ──
     workflow.add_edge("game_planner", "design_evaluator")
+    workflow.add_edge("implementation_planner", "game_coder")
     workflow.add_edge("game_coder", "asset_generator")
     workflow.add_edge("asset_generator", "game_player")
 

@@ -16,7 +16,7 @@ log = get_logger("game_player")
 async def game_player_node(state: AgentState) -> dict:
     """Evaluate the final game code via static analysis and LLM review.
 
-    Checks: HTML validity, Phaser CDN presence, JS structure, and
+    Checks: HTML validity, Kaplay CDN presence, JS structure, and
     whether the game matches the GDD and lesson objectives.
 
     Future: integrate Puppeteer for headless browser runtime testing.
@@ -25,7 +25,7 @@ async def game_player_node(state: AgentState) -> dict:
 
     system = load_prompt("player_system.md")
     user = render_template("player_user.md", {
-        "phaser_code": state["phaser_code"],
+        "game_code": state["game_code"],
         "game_design_doc": state["game_design_doc"],
         "lesson_plan": json.dumps(state["lesson_plan"], indent=2),
     })

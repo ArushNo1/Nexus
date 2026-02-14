@@ -12,8 +12,11 @@ class AgentState(TypedDict):
     design_feedback: str           # Structured critique
     design_approved: bool          # Gate signal
     
+    # ── Implementation Planner output ──
+    implementation_plan: str           # Detailed todo list & implementation roadmap
+
     # ── Coder & Documentor output ──
-    phaser_code: str               # The full index.html Phaser game source
+    game_code: str               # The full index.html Kaplay game source
     documentation: str             # Inline + sidebar doc block
     
     # ── Asset Generator output ──
@@ -28,4 +31,4 @@ class AgentState(TypedDict):
     # ── Control flow ──
     design_iteration: int          # Tracks planner ↔ evaluator loops (max 3)
     code_iteration: int            # Tracks coder ↔ player loops (max 2)
-    status: Literal["planning", "evaluating", "coding", "generating_assets", "playtesting", "done", "failed"]
+    status: Literal["planning", "evaluating", "implementation_planning", "coding", "generating_assets", "playtesting", "done", "failed"]

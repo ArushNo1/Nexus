@@ -1,4 +1,4 @@
-"""Node 3 - Game Coder & Documentor: Writes the Phaser 3 game code with documentation."""
+"""Node 3 - Game Coder & Documentor: Writes the Kaplay.js game code with documentation."""
 
 from langchain_core.messages import SystemMessage, HumanMessage
 
@@ -12,7 +12,7 @@ log = get_logger("game_coder")
 
 
 async def game_coder_node(state: AgentState) -> dict:
-    """Generate a complete, single-file Phaser 3 HTML game from the GDD.
+    """Generate a complete, single-file Kaplay.js HTML game from the GDD.
 
     If in a fix loop (code_iteration > 0), includes the playtest error log
     and report as revision context.
@@ -25,7 +25,8 @@ async def game_coder_node(state: AgentState) -> dict:
 
     context = {
         "game_design_doc": state["game_design_doc"],
-        "existing_code": state.get("phaser_code") or "",
+        "implementation_plan": state.get("implementation_plan") or "",
+        "existing_code": state.get("game_code") or "",
         "playtest_report": state.get("playtest_report") or "",
         "errors": "\n".join(state.get("errors", [])),
         "is_revision": state["code_iteration"] > 0,
@@ -46,7 +47,7 @@ async def game_coder_node(state: AgentState) -> dict:
         code = code.split("```", 1)[1].rsplit("```", 1)[0].strip()
 
     result = {
-        "phaser_code": code,
+        "game_code": code,
         "documentation": code,
         "status": "generating_assets",
     }

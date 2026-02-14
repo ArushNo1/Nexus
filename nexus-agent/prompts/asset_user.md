@@ -5,7 +5,7 @@
 ## Current Game Code
 
 ```html
-{{ phaser_code }}
+{{ game_code }}
 ```
 
 ---
