@@ -26,6 +26,7 @@ export function SignUpForm({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +45,7 @@ export function SignUpForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${baseUrl}/protected`,
         },
       });
       if (error) throw error;
@@ -65,7 +66,7 @@ export function SignUpForm({
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/confirm`,
+          redirectTo: `${baseUrl}/auth/confirm`,
         },
       });
       if (error) throw error;
