@@ -57,8 +57,16 @@ async def implementation_planner_node(state: AgentState) -> dict:
             output = await tool_fn.ainvoke(call["args"])
             messages.append(ToolMessage(content=str(output), tool_call_id=call["id"]))
 
+    # response.content may be a list of content blocks; extract text
+    content = response.content
+    if isinstance(content, list):
+        content = "\n".join(
+            block if isinstance(block, str) else block.get("text", "")
+            for block in content
+        )
+
     result = {
-        "implementation_plan": response.content,
+        "implementation_plan": content,
         "status": "coding",
     }
 

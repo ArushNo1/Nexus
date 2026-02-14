@@ -5,7 +5,7 @@ pydantic
 jinja2
 rich
 pydantic-settings
-langchain-anthropic
+langchain-google-genai
 beautifulsoup4
 requests
 html2text

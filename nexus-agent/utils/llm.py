@@ -1,24 +1,24 @@
-"""LLM client factory — routes each node to the appropriate Claude model."""
+"""LLM client factory — routes each node to the appropriate Gemini model."""
 
-from langchain_anthropic import ChatAnthropic
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from utils.config import settings
 
 MODEL_MAP: dict[str, str] = {
-    "game_planner": "claude-sonnet-4-5",
-    "design_evaluator": "claude-sonnet-4-5",
-    "implementation_planner": "claude-sonnet-4-5",
-    "game_coder": "claude-opus-4-6",
-    "asset_generator": "claude-sonnet-4-5",
-    "game_player": "claude-sonnet-4-5",
+    "game_planner": "gemini-2.5-flash",
+    "design_evaluator": "gemini-2.5-flash",
+    "implementation_planner": "gemini-2.5-flash",
+    "game_coder": "gemini-2.5-pro",
+    "asset_generator": "gemini-2.5-flash",
+    "game_player": "gemini-2.5-flash",
 }
 
 
-def get_llm(node_name: str) -> ChatAnthropic:
-    """Return a ChatAnthropic client configured for the given node."""
+def get_llm(node_name: str) -> ChatGoogleGenerativeAI:
+    """Return a ChatGoogleGenerativeAI client configured for the given node."""
     model = MODEL_MAP.get(node_name, settings.default_model)
-    return ChatAnthropic(
+    return ChatGoogleGenerativeAI(
         model=model,
-        api_key=settings.anthropic_api_key,
-        max_tokens=settings.max_tokens,
+        google_api_key=settings.gemini_api_key,
+        max_output_tokens=settings.max_tokens,
     )

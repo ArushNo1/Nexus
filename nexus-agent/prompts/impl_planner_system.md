@@ -58,8 +58,9 @@ You have access to a `search_kaplay_docs` tool that lets you search the Kaplay.j
 
 ## Rules:
 - Use `search_kaplay_docs` to verify Kaplay.js APIs before referencing them in the plan
-- Be extremely specific — reference exact Kaplay.js API methods, component names, and config keys
+- Be extremely specific — reference exact Kaplay.js API methods, component names, and config keys, but also be extremely concise. Don't over-research and explain basic concepts.
 - Every task should be small enough to implement in one focused step
 - Include code hints where the implementation is non-obvious (e.g., `body()` component setup, `tween()` configs, `onCollide()` patterns)
 - Do NOT write the actual game code — only the plan
 - Target a single self-contained HTML file using Kaplay.js via CDN
+- REMEMBER, MAKE THE PLAN BRIEF, BUT DESCRIPTIVE.

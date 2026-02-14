@@ -4,9 +4,9 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    anthropic_api_key: str = ""
+    gemini_api_key: str = ""
 
-    default_model: str = "claude-sonnet-4-20250514"
+    default_model: str = "gemini-2.5-flash"
     max_tokens: int = 64000
 
     max_design_iterations: int = 3
@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env.local"
         env_file_encoding = "utf-8"
+        extra = "ignore"
 
 
 settings = Settings()
