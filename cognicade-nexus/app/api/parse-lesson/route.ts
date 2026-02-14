@@ -1,48 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// ── Schema Definition ──────────────────────────────────────────────────────
-const LESSON_PLAN_SCHEMA = {
-    lessonPlan: {
-        title: "String",
-        duration: "String",
-        gradeLevel: "String",
-        subject: "String",
-        objectives: ["String"],
-        standards: ["String"],
-        materials: ["String"],
-        content: {
-            introduction: "String",
-            procedure: "String",
-            closure: "String"
-        }
-    },
-    rubrics: {
-        title: "String",
-        criteria: [
-            {
-                category: "String",
-                description: "String",
-                points: "Number"
-            }
-        ]
-    },
-    assessments: [
-        {
-            type: "String (quiz/test/assignment)",
-            title: "String",
-            questions: [
-                {
-                    questionText: "String",
-                    options: ["String"],
-                    correctAnswer: "String",
-                    points: "Number"
-                }
-            ]
-        }
-    ]
-};
+// ── TypeScript Interfaces ──────────────────────────────────────────────────
+
+interface LessonContent {
+    introduction: string;
+    procedure: string;
+    closure: string;
+}
+
+interface LessonPlan {
+    title: string;
+    duration: string;
+    gradeLevel: string;
+    subject: string;
+    objectives: string[];
+    standards: string[];
+    materials: string[];
+    content: LessonContent;
+}
+
+interface RubricCriterion {
+    category: string;
+    description: string;
+    points: number;
+}
+
+interface Rubric {
+    title: string;
+    criteria: RubricCriterion[];
+}
+
+interface Question {
+    questionText: string;
+    options: string[];
+    correctAnswer: string;
+    points: number;
+}
+
+interface Assessment {
+    type: string;
+    title: string;
+    questions: Question[];
+}
+
+interface ParsedLessonData {
+    lessonPlan: LessonPlan;
+    rubric: Rubric;
+    assessments: Assessment[];
+}
+
+// ── Schema Validation ──────────────────────────────────────────────────────
+
+function validateParsedData(data: any): data is ParsedLessonData {
+    if (!data || typeof data !== 'object') return false;
+
+    // Validate lessonPlan
+    if (!data.lessonPlan || typeof data.lessonPlan !== 'object') return false;
+    const lp = data.lessonPlan;
+    if (typeof lp.title !== 'string' ||
+        typeof lp.duration !== 'string' ||
+        typeof lp.gradeLevel !== 'string' ||
+        typeof lp.subject !== 'string') return false;
+
+    if (!Array.isArray(lp.objectives) || !Array.isArray(lp.standards) || !Array.isArray(lp.materials)) {
+        return false;
+    }
+
+    if (!lp.content || typeof lp.content !== 'object' ||
+        typeof lp.content.introduction !== 'string' ||
+        typeof lp.content.procedure !== 'string' ||
+        typeof lp.content.closure !== 'string') {
+        return false;
+    }
+
+    // Validate rubric
+    if (!data.rubric || typeof data.rubric !== 'object') return false;
+    if (typeof data.rubric.title !== 'string' || !Array.isArray(data.rubric.criteria)) {
+        return false;
+    }
+
+    // Validate assessments
+    if (!Array.isArray(data.assessments)) return false;
+
+    return true;
+}
 
 // ── Text Extraction (Multi-format) ─────────────────────────────────────────
+
 async function extractText(file: File): Promise<string> {
     const fileName = file.name.toLowerCase();
 
@@ -67,13 +111,24 @@ async function extractText(file: File): Promise<string> {
     return await file.text();
 }
 
-// ── LLM Parsing (Gemini) ──────────────────────────────────────────────────
-async function parseWithLLM(text: string, fileName: string): Promise<any> {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return null; // No key → fall back to basic parsing
+// ── Gemini Model List (fallback chain) ────────────────────────────────────
 
-    const prompt = `You are an expert at parsing educational documents. 
-Analyze the following text extracted from a file called "${fileName}" and return a VALID JSON object with the following structure. 
+const GEMINI_MODELS = [
+    'gemini-2.0-flash-lite',
+    'gemini-2.0-flash',
+    'gemini-2.5-flash',
+];
+
+// ── LLM Parsing (Gemini with model fallback) ──────────────────────────────
+
+async function parseWithLLM(text: string, fileName: string): Promise<ParsedLessonData> {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        throw new Error('GEMINI_API_KEY is not configured in environment variables');
+    }
+
+    const prompt = `You are an expert at parsing educational documents.
+Analyze the following text extracted from a file called "${fileName}" and return a VALID JSON object with the following structure.
 Fill in every field as accurately as possible from the text. If a field cannot be determined, use a sensible default or an empty array.
 
 Required JSON structure:
@@ -92,7 +147,7 @@ Required JSON structure:
       "closure": "string - the closing/wrap-up activity"
     }
   },
-  "rubrics": {
+  "rubric": {
     "title": "string - rubric title",
     "criteria": [
       { "category": "string", "description": "string", "points": number }
@@ -116,126 +171,75 @@ Here is the document text:
 ${text.substring(0, 15000)}
 ---`;
 
-    try {
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        temperature: 0.1,
-                        responseMimeType: "application/json"
-                    }
-                })
-            }
-        );
+    const errors: string[] = [];
 
-        if (!response.ok) {
-            console.error('Gemini API error:', response.status, await response.text());
-            return null;
+    for (const model of GEMINI_MODELS) {
+        try {
+            console.log(`[parse-lesson] Trying model: ${model}`);
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: {
+                            temperature: 0.1,
+                            responseMimeType: "application/json"
+                        }
+                    })
+                }
+            );
+
+            if (response.status === 429) {
+                console.warn(`[parse-lesson] Rate limited on ${model}, trying next model...`);
+                errors.push(`${model}: rate limited (429)`);
+                continue;
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`[parse-lesson] Gemini API error (${model}):`, response.status, errorText);
+                errors.push(`${model}: API error ${response.status}`);
+                continue;
+            }
+
+            const result = await response.json();
+            const content = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!content) {
+                console.warn(`[parse-lesson] No content from ${model}, trying next...`);
+                errors.push(`${model}: no content returned`);
+                continue;
+            }
+
+            // Parse the JSON response
+            const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            const parsedData = JSON.parse(cleaned);
+
+            // Validate the parsed data
+            if (!validateParsedData(parsedData)) {
+                console.warn(`[parse-lesson] Validation failed for ${model} output, trying next...`);
+                errors.push(`${model}: validation failed`);
+                continue;
+            }
+
+            console.log(`[parse-lesson] Successfully parsed with ${model}`);
+            return parsedData;
+        } catch (error: any) {
+            console.error(`[parse-lesson] Error with model ${model}:`, error.message);
+            errors.push(`${model}: ${error.message}`);
+            continue;
         }
-
-        const result = await response.json();
-        const content = result.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!content) return null;
-
-        // Parse the JSON response
-        const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        return JSON.parse(cleaned);
-    } catch (error) {
-        console.error('LLM parsing error:', error);
-        return null;
     }
-}
 
-// ── Basic Fallback Parsing (No LLM) ───────────────────────────────────────
-function parseBasic(text: string, fileName: string): any {
-    // Helper to find a value after a label
-    const findValue = (pattern: RegExp): string => {
-        const match = text.match(pattern);
-        return match?.[1]?.replace(/\*+/g, '').trim() || "";
-    };
-
-    // Helper to extract a section between two headers
-    const findSection = (startKeywords: string[], endKeywords: string[]): string => {
-        const startPattern = new RegExp(
-            `(?:^|\\n)\\s*(?:#{1,6}\\s*)?(?:\\*{0,2})(?:${startKeywords.join('|')})(?:\\*{0,2})[:\\s]*(?:\\([^)]*\\))?\\s*\\n([\\s\\S]*?)(?=\\n\\s*(?:#{1,6}\\s*)?(?:\\*{0,2})(?:${endKeywords.join('|')})|$)`,
-            'i'
-        );
-        const match = text.match(startPattern);
-        return match?.[1]?.trim() || "";
-    };
-
-    // Helper to extract list items from a section
-    const findList = (startKeywords: string[], endKeywords: string[]): string[] => {
-        const section = findSection(startKeywords, endKeywords);
-        if (!section) return [];
-        return section
-            .split(/\r?\n/)
-            .map(line => line.replace(/^[\s\-*•\d.]+/, '').replace(/\*+/g, '').trim())
-            .filter(line => line.length > 0 && !line.startsWith('#'));
-    };
-
-    const title = findValue(/(?:Title|Topic|Lesson\s*(?:Plan)?|Subject)[:\s]+(.+)/i)
-        || fileName.replace(/\.[^/.]+$/, "").replace(/[_-]/g, ' ');
-    const duration = findValue(/(?:Duration|Time|Length)[:\s]+(.+)/i) || "Unknown";
-    const gradeLevel = findValue(/(?:Grade|Level|Year)[:\s]+(.+)/i) || "Unknown";
-    const subject = findValue(/(?:Subject|Course|Area)[:\s]+(.+)/i) || "Unknown";
-
-    const allSectionEnds = ['Objectives', 'Goals', 'Standards', 'Materials', 'Resources',
-        'Procedures', 'Introduction', 'Activity', 'Assessment', 'Rubric',
-        'Closure', 'Conclusion', 'Content', 'Procedure'];
-
-    const objectives = findList(['Objectives', 'Goals', 'Aims', 'Learning Outcomes'], allSectionEnds);
-    const standards = findList(['Standards', 'NGSS', 'Common Core'], allSectionEnds);
-    const materials = findList(['Materials', 'Resources', 'Equipment', 'Supplies'], allSectionEnds);
-
-    const introduction = findSection(['Introduction', 'Hook', 'Opening', 'Warm-up', 'Warm Up'],
-        ['Procedure', 'Activity', 'Body', 'Closure', 'Conclusion', 'Assessment', 'Rubric']);
-    const procedure = findSection(['Procedure', 'Procedures', 'Activity', 'Activities', 'Body', 'Instructions', 'Steps'],
-        ['Closure', 'Conclusion', 'Wrap-up', 'Assessment', 'Rubric']);
-    const closure = findSection(['Closure', 'Closing', 'Conclusion', 'Wrap-up', 'Wrap Up', 'Exit'],
-        ['Assessment', 'Rubric', 'Quiz', 'Test']);
-
-    const assessmentText = findSection(['Assessment', 'Evaluation', 'Quiz', 'Test'],
-        ['Rubric']);
-    const rubricText = findSection(['Rubric', 'Scoring', 'Grading Criteria'],
-        ['Assessment', 'Notes', 'References']);
-
-    return {
-        lessonPlan: {
-            title,
-            duration,
-            gradeLevel,
-            subject,
-            objectives: objectives.length > 0 ? objectives : ["Could not extract objectives"],
-            standards: standards.length > 0 ? standards : ["Could not extract standards"],
-            materials: materials.length > 0 ? materials : ["Could not extract materials"],
-            content: {
-                introduction: introduction || "Could not extract introduction",
-                procedure: procedure || "Could not extract procedure",
-                closure: closure || "Could not extract closure"
-            }
-        },
-        rubrics: {
-            title: "Extracted Rubric",
-            criteria: rubricText
-                ? [{ category: "Rubric Content", description: rubricText, points: 0 }]
-                : []
-        },
-        assessments: assessmentText
-            ? [{
-                type: "Extracted Assessment",
-                title: "Assessment",
-                questions: [{ questionText: assessmentText, options: [], correctAnswer: "", points: 0 }]
-            }]
-            : []
-    };
+    throw new Error(
+        `All Gemini models failed. Errors: ${errors.join('; ')}. ` +
+        'You may have exceeded your API quota. Please try again later or check your billing at https://ai.google.dev/gemini-api/docs/rate-limits'
+    );
 }
 
 // ── API Route Handler ─────────────────────────────────────────────────────
+
 export async function POST(req: NextRequest) {
     try {
         const formData = await req.formData();
@@ -264,25 +268,30 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Step 2: Parse with LLM (preferred) or fall back to basic parsing
-        let parsedData = await parseWithLLM(text, file.name);
-        const usedLLM = parsedData !== null;
+        // Step 2: Parse with LLM
+        try {
+            const parsedData = await parseWithLLM(text, file.name);
 
-        if (!parsedData) {
-            parsedData = parseBasic(text, file.name);
+            // Step 3: Return results
+            return NextResponse.json({
+                success: true,
+                filename: file.name,
+                data: parsedData,
+                schema: {
+                    type: "ParsedLessonData",
+                    description: "Structured lesson plan with rubric and assessments"
+                }
+            });
+        } catch (parseError: any) {
+            console.error('Parsing error:', parseError);
+            return NextResponse.json(
+                {
+                    error: 'Failed to parse lesson plan',
+                    details: parseError.message
+                },
+                { status: 500 }
+            );
         }
-
-        // Step 3: Return results
-        return NextResponse.json({
-            success: true,
-            filename: file.name,
-            parsingMethod: usedLLM ? 'gemini-llm' : 'regex-heuristic',
-            schema: LESSON_PLAN_SCHEMA,
-            data: {
-                ...parsedData,
-                _rawText: text
-            }
-        });
 
     } catch (error) {
         console.error('Error processing file:', error);
