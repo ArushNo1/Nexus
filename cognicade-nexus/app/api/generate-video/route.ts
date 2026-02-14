@@ -13,6 +13,7 @@ interface VideoScene {
     animationType: string;
     elements: string[];
     audioUrl?: string | null;
+    spriteUrls?: Record<string, string | null>;
 }
 
 interface VideoData {
@@ -72,6 +73,62 @@ async function generateSceneAudio(
     }
 }
 
+async function fetchSpritesForElements(
+    elements: string[],
+    timestamp: number
+): Promise<Record<string, string | null>> {
+    const scriptPath = path.join(
+        process.cwd(),
+        'python_scripts',
+        'fetch_sprites.py'
+    );
+    const spriteDir = path.join(
+        process.cwd(),
+        'public',
+        'generated',
+        'sprites'
+    );
+
+    try {
+        // Ensure sprite directory exists
+        await fs.mkdir(spriteDir, { recursive: true });
+
+        // Call Python script in batch mode
+        const elementsJson = JSON.stringify(elements);
+        const cmd = `python3 "${scriptPath}" --batch '${elementsJson}' "${spriteDir}"`;
+
+        console.log('[sprite-fetch] Fetching sprites for:', elements.join(', '));
+
+        const { stdout } = await execAsync(cmd, { timeout: 60000 });
+        const result = JSON.parse(stdout);
+
+        if (result.success) {
+            // Convert absolute paths to relative URLs
+            const spriteUrls: Record<string, string | null> = {};
+            for (const [element, absPath] of Object.entries(result.sprites)) {
+                if (absPath && typeof absPath === 'string') {
+                    // Convert /path/to/public/generated/sprites/foo.png → /generated/sprites/foo.png
+                    const relativePath = absPath.replace(
+                        path.join(process.cwd(), 'public'),
+                        ''
+                    );
+                    spriteUrls[element] = relativePath;
+                } else {
+                    spriteUrls[element] = null;
+                }
+            }
+            console.log('[sprite-fetch] Success! Fetched', Object.keys(spriteUrls).length, 'sprites');
+            return spriteUrls;
+        } else {
+            console.warn('[sprite-fetch] Failed:', result.error);
+            return {};
+        }
+    } catch (e) {
+        console.error('[sprite-fetch] Error:', e);
+        return {};
+    }
+}
+
 async function renderVideoWithRemotion(
     videoData: VideoData
 ): Promise<string | null> {
@@ -88,7 +145,15 @@ async function renderVideoWithRemotion(
         const genDir = path.dirname(outputPath);
         await fs.mkdir(genDir, { recursive: true }).catch(() => { });
 
-        // 1. Generate audio for each scene
+        // 1. Fetch sprites for all elements across all scenes
+        console.log('[generate-video] Fetching sprites...');
+        const allElements = new Set<string>();
+        videoData.scenes.forEach(scene => {
+            scene.elements?.forEach(el => allElements.add(el));
+        });
+        const spriteUrls = await fetchSpritesForElements(Array.from(allElements), timestamp);
+
+        // 2. Generate audio for each scene
         console.log('[generate-video] Generating scene audio...');
         const scenesWithAudio: VideoScene[] = [];
 
@@ -104,14 +169,15 @@ async function renderVideoWithRemotion(
                 scenesWithAudio.push({
                     ...scene,
                     audioUrl: `/generated/${audioFilename}`,
+                    spriteUrls,
                 });
             } else {
                 console.warn(`[generate-video] Audio scene ${i + 1} FAILED`);
-                scenesWithAudio.push({ ...scene, audioUrl: null });
+                scenesWithAudio.push({ ...scene, audioUrl: null, spriteUrls });
             }
         }
 
-        // 2. Write props file
+        // 3. Write props file
         const propsData = {
             title: videoData.title,
             targetAudience: videoData.targetAudience,
@@ -123,7 +189,7 @@ async function renderVideoWithRemotion(
         const propsPath = path.join(genDir, `props-${timestamp}.json`);
         await fs.writeFile(propsPath, JSON.stringify(propsData, null, 2));
 
-        // 3. Render with Remotion CLI
+        // 4. Render with Remotion CLI
         console.log('[generate-video] Running Remotion render...');
         const renderCmd = `npx remotion render remotion/Root.tsx ${compositionId} "${outputPath}" --props="${propsPath}" --gl=angle`;
 
@@ -133,7 +199,7 @@ async function renderVideoWithRemotion(
         console.log('[generate-video] Remotion stdout:', stdout);
         if (stderr) console.warn('[generate-video] Remotion stderr:', stderr);
 
-        // 4. Clean up props file
+        // 5. Clean up props file
         await fs.unlink(propsPath).catch(() => { });
 
         return `/generated/video-${timestamp}.mp4`;
@@ -168,7 +234,7 @@ async function generateVideoWithGemini(
 
     console.log(`[generate-video] Lesson title: "${title}", subject: "${subject}", grade: "${gradeLevel}"`);
 
-    const prompt = `You are Edison, an expert at creating educational videos.
+    const prompt = `You are Edison, an elite educational video creator who makes STUNNING, VISUALLY CAPTIVATING educational content.
 
 LESSON INFORMATION (YOU MUST USE THIS CONTENT — DO NOT INVENT A DIFFERENT TOPIC):
 Title: ${title}
@@ -179,46 +245,99 @@ Introduction: ${content.introduction || ''}
 Main Content: ${content.procedure || ''}
 Closure: ${content.closure || ''}
 
-TASK: Generate exactly 3 scenes for an animated video about "${title}" for ${gradeLevel} students.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎬 YOUR MISSION: Create a PREMIUM educational video about "${title}" for ${gradeLevel} students
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-CRITICAL: The video MUST be about "${title}". Do NOT change the topic.
+CRITICAL RULES FOR EXCELLENCE:
+✓ Videos are our PRIMARY SELLING POINT - they must look PROFESSIONAL and ENGAGING
+✓ Narration does the heavy lifting - make it rich, detailed, and educational (90-120 words per scene)
+✓ Visual elements should be MINIMAL TEXT - just 1-3 word labels that represent concepts
+✓ Each element will become a HIGH-QUALITY SPRITE (icon/illustration) - choose visually distinct, searchable terms
+✓ Think like a top-tier educational content creator (Kurzgesagt, TED-Ed, Khan Academy)
 
-FOR EACH SCENE, provide:
-1. "narration" — 60-80 words of spoken narration (this gets converted to speech audio). Full sentences, educational, engaging.
-2. "animationType" — one of: "process", "transformation", "cycle", "comparison", "list"
-   - "process": shows a step-by-step flow (A -> B -> C). Good for showing how something works.
-   - "transformation": shows inputs becoming outputs (ingredients -> result). Good for reactions, conversions.
-   - "cycle": shows a circular loop of steps. Good for cycles (water cycle, life cycle).
-   - "comparison": shows two sides. Good for comparing/contrasting.
-   - "list": shows items appearing one by one. Good for facts, features, characteristics.
-3. "elements" — an array of 4-6 SHORT labels (1-3 words each) that represent the key visual elements to animate.
-   For "process": elements flow left to right with arrows
-   For "transformation": first half are inputs, second half are outputs
-   For "cycle": elements form a circle
-   For "comparison": elements split into two groups
-   For "list": elements appear one by one
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📐 ANIMATION TYPES - Choose the BEST fit for each concept:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-EXAMPLES:
-- Topic "Photosynthesis", animationType "transformation", elements: ["Sunlight", "Water", "CO2", "Glucose", "Oxygen"]
-- Topic "Water Cycle", animationType "cycle", elements: ["Evaporation", "Condensation", "Precipitation", "Collection"]
-- Topic "Fractions", animationType "process", elements: ["Whole Pizza", "Cut in Half", "1/2 Each", "Equal Parts"]
+🔄 "process" - Step-by-step flow (A → B → C → D)
+   ↳ Perfect for: How things work, sequences, procedures, timelines
+   ↳ Elements flow left-to-right or top-to-bottom with arrows
+   ↳ Example: "Digestion" → ["Mouth", "Stomach", "Intestines", "Nutrients"]
 
-Return JSON:
+⚡ "transformation" - Inputs become Outputs (ingredients → result)
+   ↳ Perfect for: Chemical reactions, conversions, before/after, cause/effect
+   ↳ First half = inputs, second half = outputs, transformation in middle
+   ↳ Example: "Photosynthesis" → ["Sunlight", "Water", "CO2", "Glucose", "Oxygen"]
+
+🔁 "cycle" - Circular loop of connected steps
+   ↳ Perfect for: Cycles, repeating processes, feedback loops
+   ↳ Elements arranged in a circle with continuous flow
+   ↳ Example: "Water Cycle" → ["Evaporation", "Condensation", "Precipitation", "Collection"]
+
+⚖️ "comparison" - Side-by-side contrast (A vs B)
+   ↳ Perfect for: Compare/contrast, pros/cons, two perspectives
+   ↳ Elements split into two groups (left vs right)
+   ↳ Example: "Vertebrates vs Invertebrates" → ["Backbone", "Skeleton", "Spine"] vs ["Exoskeleton", "Shell", "Soft Body"]
+
+📋 "list" - Sequential items appearing one by one
+   ↳ Perfect for: Facts, features, characteristics, tips, properties
+   ↳ Numbered items with smooth reveal animations
+   ↳ Example: "Layers of Earth" → ["Crust", "Mantle", "Outer Core", "Inner Core"]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✍️ NARRATION MASTERY:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Write 90-120 words per scene (MORE content = better learning)
+✓ Be conversational, engaging, and enthusiastic
+✓ Explain concepts clearly without relying on visual text
+✓ Use storytelling techniques: questions, examples, real-world connections
+✓ NO special characters, backslashes, markdown, or emojis
+✓ Spell out chemical formulas: "C O 2" not "CO₂", "H 2 O" not "H₂O"
+✓ Write as if speaking to an eager student - be inspiring!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎨 ELEMENT SELECTION (SPRITES):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Choose 4-6 elements per scene (optimal for visual clarity)
+✓ Each element = 1-3 words maximum (these become sprite searches)
+✓ Use concrete, visually searchable terms: "Sun", "Atom", "Tree", "Brain"
+✓ Avoid abstract text or full sentences - think ICONS and ILLUSTRATIONS
+✓ Elements should represent KEY CONCEPTS that support the narration
+✓ Consider: What would make a great icon/sprite for this concept?
+
+GOOD Elements:
+✓ "Sun", "Plant", "Oxygen" (photosynthesis)
+✓ "Rain", "Cloud", "Ocean" (water cycle)
+✓ "Cell", "DNA", "Nucleus" (biology)
+✓ "Addition", "Fraction", "Division" (math)
+
+BAD Elements (too wordy):
+✗ "The process of photosynthesis"
+✗ "When it rains the water falls"
+✗ "Cells contain genetic material"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Generate EXACTLY 3 scenes that together teach "${title}" comprehensively.
+
+Return JSON (NO markdown fences, ONLY JSON):
 {
   "title": "${title}",
   "targetAudience": "${gradeLevel}",
   "scenes": [
     {
-      "narration": "string (60-80 words)",
+      "narration": "string (90-120 words, engaging, educational, conversational)",
       "animationType": "process|transformation|cycle|comparison|list",
-      "elements": ["string", "string", "string", "string"]
+      "elements": ["1-3 word sprite term", "another term", "etc"]
     }
   ],
-  "keyTakeaways": ["string", "string", "string"]
+  "keyTakeaways": ["concise takeaway 1", "concise takeaway 2", "concise takeaway 3"]
 }
 
-IMPORTANT: Return ONLY valid JSON. No markdown fences. The title MUST be "${title}".
-NARRATION RULES: The narration will be read by text-to-speech. Use ONLY plain English. NO special characters, NO backslashes, NO markdown formatting, NO emojis. Write naturally as if speaking to a student. Use subscript names spelled out (e.g. say "C O 2" not "CO₂").`;
+Remember: This video is our SHOWCASE - make it EXCEPTIONAL! 🌟`;
 
     for (const model of GEMINI_MODELS) {
         try {

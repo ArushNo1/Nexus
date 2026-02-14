@@ -12,14 +12,15 @@ import {
 
 // ── Interfaces ──────────────────────────────────────────────────────────
 
-interface Scene {
+export interface Scene {
     narration: string;
     animationType: string;
     elements: string[];
     audioUrl?: string | null;
+    spriteUrls?: Record<string, string | null>;
 }
 
-interface EduVideoProps {
+export interface EduVideoProps {
     title?: string;
     scenes?: Scene[];
     targetAudience?: string;
@@ -161,29 +162,49 @@ const DecoShapes: React.FC<{ color: string; seed: number }> = ({ color, seed }) 
     );
 };
 
-// ── Animated Element Card ───────────────────────────────────────────────
+// ── Animated Element Card (with Sprite Support) ────────────────────────
 
 const ECard: React.FC<{
-    label: string; delay: number; color: string; large?: boolean;
-}> = ({ label, delay, color, large }) => {
+    label: string; delay: number; color: string; large?: boolean; spriteUrl?: string | null;
+}> = ({ label, delay, color, large, spriteUrl }) => {
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
     const ent = spring({ frame: frame - delay, fps, config: { damping: 14, mass: 0.5, stiffness: 100 } });
     const scale = interpolate(ent, [0, 1], [0, 1], { extrapolateRight: 'clamp' });
     const opacity = interpolate(ent, [0, 0.3], [0, 1], { extrapolateRight: 'clamp' });
     const yF = Math.sin((frame - delay) * 0.035) * 4;
-    const sz = large ? 24 : 18;
-    const pad = large ? '14px 24px' : '10px 16px';
+    const sz = large ? 20 : 16;
+    const pad = large ? '16px 20px' : '12px 16px';
+    const imgSize = large ? 50 : 40;
 
     return (
         <div style={{
             transform: `scale(${scale}) translateY(${yF}px)`, opacity,
-            background: `${color}18`, border: `2px solid ${color}66`, borderRadius: 14,
+            background: `${color}18`, border: `2px solid ${color}66`, borderRadius: 16,
             padding: pad, fontSize: sz, fontWeight: 700, color: 'white',
-            textAlign: 'center', backdropFilter: 'blur(6px)',
-            boxShadow: `0 4px 24px ${color}22`, whiteSpace: 'nowrap', flexShrink: 0,
+            textAlign: 'center', backdropFilter: 'blur(8px)',
+            boxShadow: `0 6px 30px ${color}25`, flexShrink: 0,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: spriteUrl ? 10 : 0,
+            minWidth: spriteUrl ? 120 : 'auto', maxWidth: spriteUrl ? 180 : 'auto',
         }}>
-            {label}
+            {spriteUrl && (
+                <div style={{
+                    width: imgSize, height: imgSize, borderRadius: 10,
+                    background: 'rgba(255,255,255,0.08)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    overflow: 'hidden', padding: 6,
+                }}>
+                    <img
+                        src={staticFile(spriteUrl.replace(/^\//, ''))}
+                        style={{
+                            maxWidth: '100%', maxHeight: '100%',
+                            objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))',
+                        }}
+                        alt={label}
+                    />
+                </div>
+            )}
+            <div style={{ whiteSpace: 'nowrap' }}>{label}</div>
         </div>
     );
 };
@@ -269,7 +290,7 @@ const PBar: React.FC<{ p: number; color: string }> = ({ p, color }) => (
 
 // ── PROCESS (A → B → C → D) ────────────────────────────────────────────
 
-const ProcessAnim: React.FC<{ elements: string[]; color: string; seed: number }> = ({ elements, color, seed }) => {
+const ProcessAnim: React.FC<{ elements: string[]; color: string; seed: number; spriteUrls?: Record<string, string | null> }> = ({ elements, color, seed, spriteUrls }) => {
     const { fps } = useVideoConfig();
     const frame = useCurrentFrame();
     const p2 = 5 * fps;
@@ -293,7 +314,7 @@ const ProcessAnim: React.FC<{ elements: string[]; color: string; seed: number }>
                 const d = p2 + i * gap;
                 return (
                     <React.Fragment key={i}>
-                        <ECard label={el} delay={d} color={color} large={i === 0 || i === elements.length - 1} />
+                        <ECard label={el} delay={d} color={color} large={i === 0 || i === elements.length - 1} spriteUrl={spriteUrls?.[el]} />
                         {i < elements.length - 1 && <Arr delay={d + Math.floor(gap * 0.5)} color={color} vertical={vertical} />}
                     </React.Fragment>
                 );
@@ -304,7 +325,7 @@ const ProcessAnim: React.FC<{ elements: string[]; color: string; seed: number }>
 
 // ── TRANSFORMATION (Inputs ⟹ Outputs) ──────────────────────────────────
 
-const TransformAnim: React.FC<{ elements: string[]; color: string; color2: string; seed: number }> = ({ elements, color, color2, seed }) => {
+const TransformAnim: React.FC<{ elements: string[]; color: string; color2: string; seed: number; spriteUrls?: Record<string, string | null> }> = ({ elements, color, color2, seed, spriteUrls }) => {
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
     const mid = Math.ceil(elements.length / 2);
@@ -327,7 +348,7 @@ const TransformAnim: React.FC<{ elements: string[]; color: string; color2: strin
             transform: `scale(${pulse})`,
         }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', flex: 1, paddingLeft: 30 }}>
-                {inputs.map((el, i) => <ECard key={`i${i}`} label={el} delay={p2 + i * inStag} color={color} />)}
+                {inputs.map((el, i) => <ECard key={`i${i}`} label={el} delay={p2 + i * inStag} color={color} spriteUrl={spriteUrls?.[el]} />)}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '0 16px' }}>
                 <Arr delay={tDelay - fps} color={color} />
@@ -340,7 +361,7 @@ const TransformAnim: React.FC<{ elements: string[]; color: string; color2: strin
                 <Arr delay={tDelay + fps} color={color2} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', flex: 1, paddingRight: 30 }}>
-                {outputs.map((el, i) => <ECard key={`o${i}`} label={el} delay={outStart + i * outStag} color={color2} large />)}
+                {outputs.map((el, i) => <ECard key={`o${i}`} label={el} delay={outStart + i * outStag} color={color2} large spriteUrl={spriteUrls?.[el]} />)}
             </div>
         </div>
     );
@@ -348,11 +369,11 @@ const TransformAnim: React.FC<{ elements: string[]; color: string; color2: strin
 
 // ── CYCLE (circular) ────────────────────────────────────────────────────
 
-const CycleAnim: React.FC<{ elements: string[]; color: string; seed: number }> = ({ elements, color, seed }) => {
+const CycleAnim: React.FC<{ elements: string[]; color: string; seed: number; spriteUrls?: Record<string, string | null> }> = ({ elements, color, seed, spriteUrls }) => {
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
     const n = elements.length;
-    const r = 170;
+    const r = 190;
     const p2 = 5 * fps;
     const stag = Math.floor(8 * fps / Math.max(n, 1));
     const orbAngle = ((frame - p2) * 0.022) % (Math.PI * 2);
@@ -369,14 +390,36 @@ const CycleAnim: React.FC<{ elements: string[]; color: string; seed: number }> =
                 const d = p2 + i * stag;
                 const ent = spring({ frame: frame - d, fps, config: { damping: 14, stiffness: 100 } });
                 const yF = Math.sin((frame - d) * 0.03) * 3;
+                const spriteUrl = spriteUrls?.[el];
                 return (
                     <div key={i} style={{
                         position: 'absolute', left: ex, top: ey,
                         transform: `translate(-50%, -50%) scale(${ent}) translateY(${yF}px)`, opacity: ent,
                         background: `${color}18`, border: `2px solid ${color}66`, borderRadius: 14,
-                        padding: '9px 14px', fontSize: 17, fontWeight: 700, color: 'white',
-                        textAlign: 'center', backdropFilter: 'blur(6px)', boxShadow: `0 4px 20px ${color}22`, whiteSpace: 'nowrap',
-                    }}>{el}</div>
+                        padding: spriteUrl ? '10px 12px' : '9px 14px', fontSize: 16, fontWeight: 700, color: 'white',
+                        textAlign: 'center', backdropFilter: 'blur(6px)', boxShadow: `0 4px 20px ${color}22`,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: spriteUrl ? 8 : 0,
+                        minWidth: spriteUrl ? 100 : 'auto',
+                    }}>
+                        {spriteUrl && (
+                            <div style={{
+                                width: 36, height: 36, borderRadius: 8,
+                                background: 'rgba(255,255,255,0.08)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                overflow: 'hidden', padding: 4,
+                            }}>
+                                <img
+                                    src={staticFile(spriteUrl.replace(/^\//, ''))}
+                                    style={{
+                                        maxWidth: '100%', maxHeight: '100%',
+                                        objectFit: 'contain', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.3))',
+                                    }}
+                                    alt={el}
+                                />
+                            </div>
+                        )}
+                        <div style={{ whiteSpace: 'nowrap' }}>{el}</div>
+                    </div>
                 );
             })}
             <div style={{
@@ -389,7 +432,7 @@ const CycleAnim: React.FC<{ elements: string[]; color: string; seed: number }> =
 
 // ── COMPARISON (side by side) ───────────────────────────────────────────
 
-const CompareAnim: React.FC<{ elements: string[]; color: string; color2: string; seed: number }> = ({ elements, color, color2, seed }) => {
+const CompareAnim: React.FC<{ elements: string[]; color: string; color2: string; seed: number; spriteUrls?: Record<string, string | null> }> = ({ elements, color, color2, seed, spriteUrls }) => {
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
     const mid = Math.ceil(elements.length / 2);
@@ -404,12 +447,12 @@ const CompareAnim: React.FC<{ elements: string[]; color: string; color2: string;
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: 24 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color, textTransform: 'uppercase', letterSpacing: 3, opacity: sideOp }}>Side A</div>
-                {left.map((el, i) => <ECard key={`l${i}`} label={el} delay={p2 + fps + i * stag} color={color} />)}
+                {left.map((el, i) => <ECard key={`l${i}`} label={el} delay={p2 + fps + i * stag} color={color} spriteUrl={spriteUrls?.[el]} />)}
             </div>
             <div style={{ width: 2, height: divH, background: `linear-gradient(180deg, ${color}, ${color2})`, opacity: 0.3, flexShrink: 0 }} />
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: 24 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: color2, textTransform: 'uppercase', letterSpacing: 3, opacity: sideOp }}>Side B</div>
-                {right.map((el, i) => <ECard key={`r${i}`} label={el} delay={p2 + 1.5 * fps + i * stag} color={color2} />)}
+                {right.map((el, i) => <ECard key={`r${i}`} label={el} delay={p2 + 1.5 * fps + i * stag} color={color2} spriteUrl={spriteUrls?.[el]} />)}
             </div>
         </div>
     );
@@ -417,7 +460,7 @@ const CompareAnim: React.FC<{ elements: string[]; color: string; color2: string;
 
 // ── LIST (numbered items) ───────────────────────────────────────────────
 
-const ListAnim: React.FC<{ elements: string[]; color: string; seed: number }> = ({ elements, color, seed }) => {
+const ListAnim: React.FC<{ elements: string[]; color: string; seed: number; spriteUrls?: Record<string, string | null> }> = ({ elements, color, seed, spriteUrls }) => {
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
     const p2 = 5 * fps;
@@ -440,7 +483,7 @@ const ListAnim: React.FC<{ elements: string[]; color: string; seed: number }> = 
                             fontSize: 15, fontWeight: 800, color: '#0d0d1a',
                             transform: `scale(${bEnt})`, opacity: bEnt, flexShrink: 0,
                         }}>{i + 1}</div>
-                        <ECard label={el} delay={d + 5} color={color} large />
+                        <ECard label={el} delay={d + 5} color={color} large spriteUrl={spriteUrls?.[el]} />
                     </div>
                 );
             })}
@@ -514,11 +557,11 @@ const ContentScene: React.FC<{ scene: Scene; idx: number; colors: ReturnType<typ
                 position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
                 opacity: interpolate(frame, [3.5 * fps, 5 * fps], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
             }}>
-                {aType === 'process' && <ProcessAnim elements={els} color={c} seed={sceneSeed} />}
-                {aType === 'transformation' && <TransformAnim elements={els} color={c} color2={c2} seed={sceneSeed} />}
-                {aType === 'cycle' && <CycleAnim elements={els} color={c} seed={sceneSeed} />}
-                {aType === 'comparison' && <CompareAnim elements={els} color={c} color2={c2} seed={sceneSeed} />}
-                {aType === 'list' && <ListAnim elements={els} color={c} seed={sceneSeed} />}
+                {aType === 'process' && <ProcessAnim elements={els} color={c} seed={sceneSeed} spriteUrls={scene.spriteUrls} />}
+                {aType === 'transformation' && <TransformAnim elements={els} color={c} color2={c2} seed={sceneSeed} spriteUrls={scene.spriteUrls} />}
+                {aType === 'cycle' && <CycleAnim elements={els} color={c} seed={sceneSeed} spriteUrls={scene.spriteUrls} />}
+                {aType === 'comparison' && <CompareAnim elements={els} color={c} color2={c2} seed={sceneSeed} spriteUrls={scene.spriteUrls} />}
+                {aType === 'list' && <ListAnim elements={els} color={c} seed={sceneSeed} spriteUrls={scene.spriteUrls} />}
             </div>
 
             {scene.audioUrl && <Audio src={staticFile(scene.audioUrl.replace(/^\//, ''))} />}
