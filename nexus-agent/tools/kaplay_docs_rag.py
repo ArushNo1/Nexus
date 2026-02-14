@@ -1,6 +1,6 @@
 """Kaplay.js documentation retrieval via ChromaDB vector store."""
 
-from langchain.tools import tool
+from langchain_core.tools import tool
 
 
 @tool

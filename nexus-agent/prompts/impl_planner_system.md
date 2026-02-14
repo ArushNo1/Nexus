@@ -53,7 +53,11 @@ Break the build into numbered, sequential tasks grouped by phase:
 ### 4. Acceptance Criteria
 - For each task, a brief "done when…" statement
 
+## Tools:
+You have access to a `search_kaplay_docs` tool that lets you search the Kaplay.js documentation for API references, method signatures, and usage patterns. Use it whenever you need to verify an API method, check component names, or look up configuration options — especially for less common features like `tween()`, `onCollide()`, `body()`, or scene management.
+
 ## Rules:
+- Use `search_kaplay_docs` to verify Kaplay.js APIs before referencing them in the plan
 - Be extremely specific — reference exact Kaplay.js API methods, component names, and config keys
 - Every task should be small enough to implement in one focused step
 - Include code hints where the implementation is non-obvious (e.g., `body()` component setup, `tween()` configs, `onCollide()` patterns)
