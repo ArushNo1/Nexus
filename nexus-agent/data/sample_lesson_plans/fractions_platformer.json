@@ -1,0 +1,27 @@
+{
+  "title": "Adding Fractions",
+  "subject": "Mathematics",
+  "grade_level": "5th Grade",
+  "duration_minutes": 15,
+  "objectives": [
+    "Students can add fractions with unlike denominators",
+    "Students can simplify resulting fractions",
+    "Students understand visual fraction models"
+  ],
+  "key_concepts": [
+    {"term": "common denominator", "definition": "A shared multiple of two denominators"},
+    {"term": "simplify", "definition": "Reduce a fraction to lowest terms"}
+  ],
+  "difficulty_progression": ["guided_example", "practice", "challenge"],
+  "preferences": {
+    "genre_hint": "platformer",
+    "art_style": "pixel_art",
+    "tone": "encouraging",
+    "max_questions": 10
+  },
+  "accessibility": {
+    "colorblind_safe": true,
+    "keyboard_only": true,
+    "text_size_min": 16
+  }
+}
