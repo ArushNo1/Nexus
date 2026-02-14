@@ -1,14 +1,19 @@
 """Node 3 - Game Coder & Documentor: Writes the Kaplay.js game code with documentation."""
 
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage
 
 from state import AgentState
 from utils.llm import get_llm, extract_text
 from utils.logger import get_logger
 from utils.debug import dump_debug_state
 from utils.prompts import load_prompt, render_template
+from tools.kaplay_docs_rag import search_kaplay_docs
 
 log = get_logger("game_coder")
+
+TOOLS = [search_kaplay_docs]
+TOOLS_BY_NAME = {t.name: t for t in TOOLS}
+MAX_TOOL_ROUNDS = 5
 
 
 async def game_coder_node(state: AgentState) -> dict:
@@ -16,6 +21,9 @@ async def game_coder_node(state: AgentState) -> dict:
 
     If in a fix loop (code_iteration > 0), includes the playtest error log
     and report as revision context.
+
+    The LLM can call the search_kaplay_docs tool to look up Kaplay.js API
+    references while writing or revising code.
     """
     is_revision = state["code_iteration"] > 0
     mode = "revision" if is_revision else "initial"
@@ -35,11 +43,26 @@ async def game_coder_node(state: AgentState) -> dict:
     }
     user = render_template("coder_user.md", context)
 
-    llm = get_llm("game_coder")
-    response = await llm.ainvoke([
+    llm = get_llm("game_coder").bind_tools(TOOLS)
+
+    messages = [
         SystemMessage(content=system),
         HumanMessage(content=user),
-    ])
+    ]
+
+    # Agentic tool-calling loop: let the LLM call tools until it produces a final text response
+    for _ in range(MAX_TOOL_ROUNDS):
+        response: AIMessage = await llm.ainvoke(messages)
+        messages.append(response)
+
+        if not response.tool_calls:
+            break
+
+        for call in response.tool_calls:
+            tool_fn = TOOLS_BY_NAME[call["name"]]
+            log.info(f"[green]  ↳ tool call:[/green] {call['name']}({call['args']})")
+            output = await tool_fn.ainvoke(call["args"])
+            messages.append(ToolMessage(content=str(output), tool_call_id=call["id"]))
 
     code = extract_text(response.content)
     # Extract HTML if wrapped in markdown code fences

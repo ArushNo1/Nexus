@@ -19,7 +19,14 @@ def _get_collection():
 
 @tool
 def search_kaplay_docs(query: str) -> str:
-    """Search Kaplay.js documentation for API references, method signatures, and usage patterns."""
+    """Search Kaplay.js documentation for API references, method signatures, and usage patterns.
+
+    Each call must use a NEW, specific query — one question per call.
+    Good:  "how to use tween for animation"
+    Good:  "area component collision shapes"
+    Bad:   "tween and collision and sprites" (too many topics bundled)
+    Bad:   repeating a previous query verbatim
+    """
     collection = _get_collection()
     results = collection.query(query_texts=[query], n_results=5)
 

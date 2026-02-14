@@ -18,6 +18,17 @@ You must apply BOTH sets of changes and output the complete modified game.
 - All visuals must use Kaplay primitives (`rect()`, `circle()`, `text()`) — NO external images
 - Brief JSDoc header mapping lesson objectives to game mechanics
 
+## Kaplay.js Documentation Tool
+
+You have access to `search_kaplay_docs` — a search tool that queries the Kaplay.js documentation.
+
+**How to use it correctly:**
+- Call it with a **specific, focused query** describing what you need (e.g. `"how to use tween for animation"`, `"area component collision detection"`)
+- Each call must use a **new, distinct query** — do NOT repeat the same query
+- Ask **one question per call** — do NOT bundle multiple topics into a single query
+- Use it when you're unsure about an API, need to verify method signatures, or want to check how a component works
+- You can make multiple calls to look up different things
+
 ## Kaplay.js Essentials
 
 - Initialize with `kaplay({ width, height, background, ... })`

@@ -1,46 +1,8 @@
-# Game Design Document: Photosynthesis Factory
+GAME_TYPE: maze
 
-### Core Concept
-- **Genre**: Catch / Collection
-- **Description**: The player controls a growing leaf to catch the necessary "Ingredients" (Inputs) for photosynthesis while avoiding "Non-essentials" to produce "Energy" (Outputs).
-- **Target Play Time**: 3 minutes
+RATIONALE: The maze template is ideal for photosynthesis because it mirrors the process of a plant searching for and absorbing specific nutrients. The navigation-based gameplay simulates how a plant must "gather" its necessary components (sunlight, water, CO2) from its environment to survive and grow.
 
-### Learning Integration
-- **Objective Mapping**: 
-    - **Inputs (Catch)**: Sunlight, Water, Carbon Dioxide.
-    - **Outputs (Automatic)**: Every time the "Photosynthesis Bar" fills, the plant releases Oxygen and Glucose, and the plant grows larger.
-- **Knowledge Check**: Players must distinguish between inputs (Sun, Water, CO2) and distractors (Rocks, Trash, Nitrogen) to keep the plant alive.
+ADDON FEATURE: The Photosynthesis Formula Bar
+In this mechanic, the player's primary goal is to fill a "Formula Bar" at the top of the screen by collecting three specific types of items in any order: a Water Drop, a Sunlight Spark, and a Carbon Dioxide Bubble. Once all three inputs are collected, the bar flashes, and the player releases an "Oxygen Blast" (functioning like a power pellet) that turns enemies into "Glucose" points for 10 seconds. This reinforces the specific inputs required for photosynthesis and the resulting outputs of oxygen and sugar.
 
-### Kaplay Architecture
-- **Scenes (3)**:
-    1. **Menu**: Title "Photosynthesis Factory", simple "Press Space to Start" text.
-    2. **Game**: Main loop. Items fall from the top. Player moves a "Leaf" (green rectangle) left/right.
-    3. **Results**: Shows "Total Oxygen Produced" and a summary of the photosynthesis formula ($CO_2 + Water + Light \rightarrow Glucose + Oxygen$).
-- **Key Game Objects**:
-    - **Player (Leaf)**: Controlled via arrow keys or mouse movement.
-    - **Ingredients (Inputs)**: Yellow Circle (Sun), Blue Circle (Water), Grey Circle (CO2).
-    - **Distractors**: Brown Square (Rocks/Trash).
-    - **UI**: A "Synthesis Bar" that fills as inputs are caught.
-- **Input**: Mouse move or Arrow keys (Primary: Mouse for accessibility).
-- **Score Tracking**: "Growth Level" (increases with successful synthesis) and "Oxygen Count."
-
-### Assets Needed (Programmatic)
-- **Leaf**: `add([rect(60, 20), color(0, 200, 0), pos(), area(), "player"])`
-- **Sunlight**: `add([circle(15), color(255, 255, 0), "input", { type: "sun" }])`
-- **Water**: `add([circle(15), color(0, 0, 255), "input", { type: "water" }])`
-- **CO2**: `add([circle(15), color(150, 150, 150), "input", { type: "co2" }])`
-- **Oxygen/Glucose**: Small particles that float UP when a synthesis event occurs.
-
-### Scope Constraints
-- **Single File**: All logic in one HTML file using Kaplay CDN.
-- **Visuals**: Use `drawRect`, `drawCircle`, and `drawText`. No external `.png` files.
-- **Audio**: Simple `play("beep")` or purely visual feedback (screen shake/flash) to save complexity.
-- **Simple Loop**: 
-    - Catch 3 unique inputs -> Trigger "Photosynthesis" animation.
-    - Catch a distractor -> Lose a life/Shrink leaf.
-    - Survive for 60 seconds to "Win."
-
-### Learning Flow
-1. **Pre-Game**: Instructions state: "Collect Sun, Water, and CO2 to make food!"
-2. **In-Game**: Immediate feedback—collecting a blue drop adds to the "Water" meter.
-3. **End-Game**: Result screen reinforces the lesson: "Success! You converted Sunlight, Water, and CO2 into Glucose (Food) and Oxygen for us to breathe!"
+VISUAL THEME: The game is set inside the microscopic world of a "Leaf Cell," with walls made of green plant cell structures. The player controls "Sunny the Seedling," while the "ghosts" are re-themed as "Pollution Clouds" and "Thirsty Aphids." The small dots usually found in a maze are replaced with "Nutrient Pellets," and the four power-ups are represented by large glowing "Chlorophyll" molecules.

@@ -33,7 +33,13 @@ A step-by-step plan for adding the custom feature:
 - Edge cases to handle
 
 ## Tools:
-You have access to a `search_kaplay_docs` tool that lets you search the Kaplay.js documentation for API references. Use it to verify API methods before referencing them.
+You have access to a `search_kaplay_docs` tool that queries the Kaplay.js documentation.
+
+**How to use it correctly:**
+- Call it with a **specific, focused query** describing what you need (e.g. `"how to use tween for animation"`, `"area component collision shapes"`)
+- Each call must use a **new, distinct query** — do NOT repeat the same query
+- Ask **one question per call** — do NOT bundle multiple topics into a single query
+- Use it when you're unsure about an API, need to verify method signatures, or want to check how a component works
 
 ## Rules:
 - Use `search_kaplay_docs` to verify Kaplay.js APIs before referencing them in the plan
