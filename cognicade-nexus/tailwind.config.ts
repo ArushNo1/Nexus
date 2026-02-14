@@ -68,8 +68,8 @@ export default {
           '50%': { transform: 'translateY(-16px) rotate(3deg)' },
         },
         marqueeScroll: {
-          '0%': { transform: 'translateX(0%)' },
-          '100%': { transform: 'translateX(-50%)' },
+          '0%': { transform: 'translateX(-33.33%)' },
+          '100%': { transform: 'translateX(0%)' },
         },
         coinBounce: {
           '0%': { transform: 'translateY(0px) scale(1)' },
