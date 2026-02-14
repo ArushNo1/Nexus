@@ -49,22 +49,28 @@ export default function OnboardingPage() {
 
         try {
             // Use UPSERT to handle cases where profile might already exist
-            const { error } = await supabase.from('user_profiles').upsert({
-                id: user.id,
-                role: role,
-                email: user.email,
-                full_name: user.user_metadata?.full_name || '',
-                avatar_url: user.user_metadata?.avatar_url || '',
-                updated_at: new Date().toISOString(),
-            }, {
-                onConflict: 'id' // Update if profile already exists
-            });
+            const { error, data } = await supabase.from('user_profiles').upsert(
+                {
+                    id: user.id,
+                    role: role,
+                    email: user.email,
+                    full_name: user.user_metadata?.full_name || '',
+                    avatar_url: user.user_metadata?.avatar_url || '',
+                    updated_at: new Date().toISOString(),
+                },
+                {
+                    onConflict: 'id', // Update if profile already exists
+                }
+            );
 
-            if (error) throw error;
+            if (error) {
+                console.error('Upsert error details:', error);
+                throw error;
+            }
 
             router.push('/dashboard');
-        } catch (error) {
-            console.error('Error creating profile:', error);
+        } catch (error: any) {
+            console.error('Error creating profile:', error?.message || error);
             alert('Failed to save profile. Please try again.');
         } finally {
             setSaving(false);
