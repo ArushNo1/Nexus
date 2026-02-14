@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAGE - Self-Adaptive Game Engine</title>
+    <title>Nexus - Self-Adaptive Game Engine</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Grotesk:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body>
     <div class="background-grid"></div>
     <div class="orb orb-1"></div>
@@ -17,7 +21,7 @@
 
     <header>
         <div class="logo">
-            <i class="fa-solid fa-cube"></i> SAGE
+            <i class="fa-solid fa-cube"></i> Nexus
         </div>
         <nav>
             <a href="#" class="active">Generate</a>
@@ -33,18 +37,22 @@
     <main>
         <div class="hero">
             <h1>Learn Anything through <span class="gradient-text">Play</span></h1>
-            <p class="subtitle">Just tell us what you're struggling with, and our 8 AI agents will build a custom Unity game for you in minutes.</p>
+            <p class="subtitle">Just tell us what you're struggling with, and our 8 AI agents will build a custom Unity
+                game for you in minutes.</p>
         </div>
 
         <div class="input-section">
             <div class="input-container glass-panel">
                 <i class="fa-solid fa-wand-magic-sparkles input-icon"></i>
-                <input type="text" id="struggleInput" placeholder="I'm struggling with... (e.g. 'Photosynthesis', 'Fractions', 'The Cold War')">
-                <button id="generateBtn" class="primary-btn">Generate Game <i class="fa-solid fa-arrow-right"></i></button>
+                <input type="text" id="struggleInput"
+                    placeholder="I'm struggling with... (e.g. 'Photosynthesis', 'Fractions', 'The Cold War')">
+                <button id="generateBtn" class="primary-btn">Generate Game <i
+                        class="fa-solid fa-arrow-right"></i></button>
             </div>
             <div class="suggestions">
                 <span>Try:</span>
-                <button class="suggestion-pill" onclick="setInput('I don\'t understand how photosynthesis works')">Photosynthesis</button>
+                <button class="suggestion-pill"
+                    onclick="setInput('I don\'t understand how photosynthesis works')">Photosynthesis</button>
                 <button class="suggestion-pill" onclick="setInput('The concept of limit in calculus')">Limits</button>
                 <button class="suggestion-pill" onclick="setInput('Causes of World War I')">WWI History</button>
             </div>
@@ -55,7 +63,7 @@
                 <h3><i class="fa-solid fa-microchip"></i> Generation In Progress</h3>
                 <span class="timer">00:00</span>
             </div>
-            
+
             <div class="agents-grid">
                 <div class="agent-card" id="agent-socrates">
                     <div class="agent-icon"><i class="fa-solid fa-brain"></i></div>
@@ -94,7 +102,7 @@
                     <span>System Output</span>
                 </div>
                 <div id="terminal-content" class="terminal-content">
-                    <div class="log-line system">> Initializing SAGE Core...</div>
+                    <div class="log-line system">> Initializing Nexus Core...</div>
                 </div>
             </div>
         </div>
@@ -116,4 +124,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>

@@ -13,15 +13,15 @@ const Director = require('./agents/Director');
 // API Endpoint to start game generation
 app.post('/api/generate-game', async (req, res) => {
     const { studentInput, studentProfile } = req.body;
-    
+
     console.log(`Received request: "${studentInput}" for student: ${JSON.stringify(studentProfile)}`);
-    
+
     try {
         // Initialize Director agent to orchestrate the process
         const gameId = await Director.orchestrateGameGeneration(studentInput, studentProfile);
-        
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             message: "Game generation started successfully.",
             gameId: gameId,
             status: "generating"
@@ -39,5 +39,5 @@ app.get('/api/game-status/:gameId', (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`SAGE Game Engine running on http://localhost:${port}`);
+    console.log(`Nexus Game Engine running on http://localhost:${port}`);
 });

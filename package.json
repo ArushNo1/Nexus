@@ -1,5 +1,5 @@
 {
-  "name": "sage",
+  "name": "nexus-engine",
   "version": "1.0.0",
   "description": "**AI that generates personalized educational video games in Unity based on what students are struggling with.**",
   "main": "index.js",
