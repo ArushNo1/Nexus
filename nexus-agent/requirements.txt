@@ -1,8 +1,8 @@
 langgraph
-langchain-anthropic
-langchain-openai 
+langchain-google-genai
 chromadb 
 playwright 
 pydantic 
 jinja2 
 rich
+pydantic-settings

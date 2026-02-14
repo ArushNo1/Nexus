@@ -4,10 +4,9 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    anthropic_api_key: str = ""
-    openai_api_key: str = ""
+    google_api_key: str = ""
 
-    default_model: str = "claude-sonnet-4-20250514"
+    default_model: str = "gemini-2.5-flash"
     max_tokens: int = 8192
 
     max_design_iterations: int = 3

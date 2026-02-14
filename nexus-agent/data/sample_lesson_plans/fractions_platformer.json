@@ -1,27 +1,42 @@
 {
-  "title": "Adding Fractions",
-  "subject": "Mathematics",
-  "grade_level": "5th Grade",
-  "duration_minutes": 15,
-  "objectives": [
-    "Students can add fractions with unlike denominators",
-    "Students can simplify resulting fractions",
-    "Students understand visual fraction models"
-  ],
-  "key_concepts": [
-    {"term": "common denominator", "definition": "A shared multiple of two denominators"},
-    {"term": "simplify", "definition": "Reduce a fraction to lowest terms"}
-  ],
-  "difficulty_progression": ["guided_example", "practice", "challenge"],
-  "preferences": {
-    "genre_hint": "platformer",
-    "art_style": "pixel_art",
-    "tone": "encouraging",
-    "max_questions": 10
+  "lessonPlan": {
+    "title": "Introduction to Photosynthesis",
+    "duration": "60 minutes",
+    "gradeLevel": "Level: 5th Grade",
+    "subject": "Science",
+    "objectives": [
+      "Students will be able to define photosynthesis.",
+      "Students will identify the inputs (sunlight, water, carbon dioxide) and outputs (oxygen, glucose) of photosynthesis.",
+      "Students will explain the importance of photosynthesis for life on Earth."
+    ],
+    "standards": [
+      "NGSS 5-LS1-1: Support an argument that plants get the materials they need for growth chiefly from air and water."
+    ],
+    "materials": [
+      "Could not extract materials"
+    ],
+    "content": {
+      "introduction": "Could not extract introduction",
+      "procedure": "Could not extract procedure",
+      "closure": "Could not extract closure"
+    }
   },
-  "accessibility": {
-    "colorblind_safe": true,
-    "keyboard_only": true,
-    "text_size_min": 16
-  }
+  "rubrics": {
+    "title": "Extracted Rubric",
+    "criteria": []
+  },
+  "assessments": [
+    {
+      "type": "Extracted Assessment",
+      "title": "Assessment",
+      "questions": [
+        {
+          "questionText": "- Formative: participation in Thumbs Up/Thumbs Down.\n- Summative: Plant diagram worksheet accuracy.\n- Quiz (to be given next class):\n  1. What gas do plants take in? (Carbon Dioxide)\n  2. What gas do plants release? (Oxygen)\n  3. What is the main source of energy for plants? (Sunlight)",
+          "options": [],
+          "correctAnswer": "",
+          "points": 0
+        }
+      ]
+    }
+  ]
 }
