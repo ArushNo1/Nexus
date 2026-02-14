@@ -1,0 +1,8 @@
+langgraph
+langchain-anthropic
+langchain-openai 
+chromadb 
+playwright 
+pydantic 
+jinja2 
+rich
