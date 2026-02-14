@@ -4,9 +4,9 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    google_api_key: str = ""
+    anthropic_api_key: str = ""
 
-    default_model: str = "gemini-2.5-flash"
+    default_model: str = "claude-sonnet-4-20250514"
     max_tokens: int = 8192
 
     max_design_iterations: int = 3
@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     output_dir: str = "output"
 
     class Config:
-        env_file = ".env"
+        env_file = ".env.local"
         env_file_encoding = "utf-8"
 
 
