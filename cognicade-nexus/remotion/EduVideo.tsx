@@ -195,7 +195,7 @@ const ECard: React.FC<{
                     overflow: 'hidden', padding: 6,
                 }}>
                     <img
-                        src={staticFile(spriteUrl.replace(/^\//, ''))}
+                        src={spriteUrl.startsWith('http') ? spriteUrl : staticFile(spriteUrl.replace(/^\//, ''))}
                         style={{
                             maxWidth: '100%', maxHeight: '100%',
                             objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))',
@@ -409,7 +409,7 @@ const CycleAnim: React.FC<{ elements: string[]; color: string; seed: number; spr
                                 overflow: 'hidden', padding: 4,
                             }}>
                                 <img
-                                    src={staticFile(spriteUrl.replace(/^\//, ''))}
+                                    src={spriteUrl.startsWith('http') ? spriteUrl : staticFile(spriteUrl.replace(/^\//, ''))}
                                     style={{
                                         maxWidth: '100%', maxHeight: '100%',
                                         objectFit: 'contain', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.3))',
@@ -564,7 +564,7 @@ const ContentScene: React.FC<{ scene: Scene; idx: number; colors: ReturnType<typ
                 {aType === 'list' && <ListAnim elements={els} color={c} seed={sceneSeed} spriteUrls={scene.spriteUrls} />}
             </div>
 
-            {scene.audioUrl && <Audio src={staticFile(scene.audioUrl.replace(/^\//, ''))} />}
+            {scene.audioUrl && <Audio src={scene.audioUrl.startsWith('http') ? scene.audioUrl : staticFile(scene.audioUrl.replace(/^\//, ''))} />}
             <PBar p={frame / (28 * fps)} color={c} />
         </AbsoluteFill>
     );
