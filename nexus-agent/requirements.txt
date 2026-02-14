@@ -1,8 +1,11 @@
 langgraph
-chromadb 
-playwright 
-pydantic 
-jinja2 
+chromadb
+playwright
+pydantic
+jinja2
 rich
 pydantic-settings
 langchain-anthropic
+beautifulsoup4
+requests
+html2text

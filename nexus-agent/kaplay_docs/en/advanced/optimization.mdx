@@ -1,0 +1,213 @@
+---
+title: Optimization
+description: Tips on optimizing performance / maintainability for KAPLAY games.
+url: optimization
+order: "advanced-0"
+---
+
+import Info from "@/components/Content/Info.astro";
+
+# Optimization Tips
+
+Here's some tips on optimizing performance / maintainability for KAPLAY games
+
+## Choose a collision detection algorithm which fits your game
+
+There is no perfect collision detection algorithm, which one is better depends 
+on the kind of game you are creating. A side-scroller works best with "sap" or
+Sweep-and-Prune. A vertical shooter does best with "sapv", a vertical version
+of Sweep-and-Prune. For a game which spans both directions, like a top down
+strategy game for example, it depends whether the screen is uniformly filled
+or if objects are clumped together in some areas. For the former you best use
+"grid" which is a hash grid, while the latter does better with "quadtree",
+which is exactly that.
+These are all broad-phase collisions detection algorithms, which do the first
+selection. You can also specify the narrow-phase algorithm, which does the
+more precise collision detection. Default is "gjk", or Gilbert–Johnson–Keerthi,
+which supports both polygon and curved surfaces. If you don't need circles or
+other curved shapes, you can use "sat" or Separating Axis Theorem, which only
+supports polygons. Lastly there is the simple "box", which implements collision
+using Minkowski difference, and only works with AABB or axis aligned bounding
+boxes.
+
+## Game Object is not always the answer
+
+Game objects are great for managing game entities, but they have a cost. If you
+are only rendering a static image, or a simple shape, you can use `onDraw` with
+`drawSprite` or `drawRect` instead of creating a game object.
+
+```js
+// create a game object
+const player = k.add([
+    k.sprite("bean"),
+    k.pos(100, 200),
+    k.scale(4),
+    k.opacity(0.5),
+]);
+
+// draw a sprite directly
+k.onDraw(() => {
+    k.drawSprite({
+        sprite: "bean",
+        pos: k.vec2(100, 200),
+    });
+});
+```
+
+If you're creating and destroying objects in an absurd rate, you should find
+another solution.
+
+- Particles: `particles()` component instead of creating and destroying objects
+  for each particle.
+- Rendering: `onDraw` for rendering static images or shapes.
+- Text: `text()` or `drawText()` transform instead of creating a game object for
+  each letter/word.
+- Data: `const gameData = {}` for storing game state instead of creating a game
+  object the state.
+
+## Cleanup One-off Objects
+
+Sometimes there are some objects that gets created, leaves screen, and never
+seen again, like a bullet. These objects will keep being rendered / updated and
+be detrimental to performance if they get created a lot, it's better to remove
+them when they leave screen.
+
+`offscreen()` is a component that helps you define behavior when objects go
+off-screen.
+
+```js
+k.add([
+    k.sprite("bullet"),
+    k.pos(player.pos),
+    // the bullet move left forever
+    k.move(LEFT, 600),
+    // destroy the bullet when it's far out of view
+    k.offscreen({ destroy: true }),
+]);
+```
+
+## Hide Off-Screen Objects
+
+Sometimes you might be drawing a lot of objects that's not on screen (e.g. if
+you have a big map and your camera only sees a small area), this is very
+unnecessary, use `offscreen()` component to define object's behavior when
+they're not on screen.
+
+```js
+// planting flowers all over the map
+for (let i = 0; i < 1000; i++) {
+    k.add([
+        k.sprite("flower"),
+        k.pos(k.rand(-5000, 5000), k.rand(-5000, 5000)),
+        // don't draw or update the flower when they're out of view
+        k.offscreen({ hide: true, pause: true }),
+    ]);
+}
+```
+
+## Avoid Global Namespace
+
+By default KAPLAY uses a lot of common names like `pos`, `sprite` that occupies
+global namespace, it's often better to use `KAPLAYOpt.global` in `false` to not export KAPLAY
+functions to `window`
+
+```js
+const k = kaplay({
+    global: false,
+});
+
+const pos = k.vec2(120, 200);
+```
+
+<Info
+    crew="bobo"
+    title="Browsers replace the global namespace whenever they feel like it.">
+Another reason for avoid global namespace is that browsers can patch global
+namespace with their own functions, which can cause conflicts with KAPLAY
+functions. That happened with `pathfinder()` component in the past, it was `navigate()`.
+</Info>
+
+## Compress Assets
+
+Loading assets takes time, compress them when you can.
+
+- Compress `.ttf` or `.otf` to `.woff2` (with
+  [google/woff2](https://github.com/google/woff2))
+- Compress `.wav` files to `.ogg` or `.mp3`
+
+## Use Game Object local timers
+
+When programming timer / tween behavior for a specific game object, it's better
+to attach `timer()` component to the game object and use that instead of global
+timer functions. This way the timer is tied to the life cycle of the game
+object, when the game object pauses or gets destroyed, the timer will not run.
+
+```js
+// prefer
+const player = k.add([
+    k.sprite("bean"),
+    k.pos(100, 200),
+    k.timer(),
+    k.state("idle"),
+]);
+
+// these timers will only run when player game object is not paused / destroyed
+player.wait(2, () => {
+    // ...
+});
+
+await player.tween(
+    player.pos,
+    k.mousePos(),
+    0.5,
+    (p) => (player.pos = p),
+    k.easings.easeOutQuad,
+);
+
+// this will pause all the timer events
+player.paused = true;
+
+// this will stop all the timer events
+player.destroy();
+
+player.onStateEnter("attack", async () => {
+    // ... state code
+    // if we use global k.wait() here it'll create infinitely running state transitions even when player game object doesn't exist anymore
+    await player.wait(2);
+    player.enterState("idle");
+});
+
+player.onStateEnter("idle", async () => {
+    // ... state code
+    // if we use global k.wait() here it'll create infinitely running state transitions even when player game object doesn't exist anymore
+    await player.wait(1);
+    player.enterState("attack");
+});
+```
+
+## Use Game Object local input handlers
+
+Similar to above, it's often better to use local input handlers as opposed to
+global ones.
+
+```js
+const gameScene = k.add([]);
+
+const player = gameScene.add([
+    k.sprite("bean"),
+    k.pos(100, 200),
+    k.area(),
+    k.body(),
+]);
+
+// these
+gameScene.onKeyPress("space", () => {
+    player.jump();
+});
+
+// this will pause all the input events
+gameScene.paused = true;
+
+// this will stop all the input events
+gameScene.destroy();
+```

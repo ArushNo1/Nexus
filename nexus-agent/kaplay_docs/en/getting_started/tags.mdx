@@ -1,0 +1,107 @@
+---
+title: Tags
+description: Learn how to add, remove and query for tags in KAPLAY.js
+url: tags
+order: "basics-4"
+---
+
+import Info from "@/components/Content/Info.astro";
+
+# Tags
+
+Tags are names, labels or keywords that group game objects, such as enemies,
+friends, trees, etc. They are useful for classifying different types of objects.
+
+## Using tags
+
+Tags can be added on the `add([])` function array as a string.
+
+```js
+const ghost = add([
+    sprite("ghosty"),
+    "enemy",
+]);
+```
+
+This makes it so ghosty has a tag, enemy, and there's many operations you can do
+with it.
+
+## Tag operations
+
+### How to add a tag
+
+```js
+// Add a tag on creation
+const ghosty = add([
+    sprite("ghosty"),
+    "enemy",
+]);
+
+// Add 1 tag or many tags!
+ghosty.tag("friend"); // now is a friend :D
+ghosty.tag(["friend", "invisible"]); // invisible forever
+```
+
+### How to remove a tag
+
+```js
+ghosty.untag("friend"); // D:
+```
+
+### How to know if a tag exists in a game object
+
+```js
+ghosty.is("enemy"); // true if tag is there, otherwise false
+```
+
+### How to get a list of all tags
+
+```js
+ghosty.tags; // read-only array with all tags.
+// result: ["enemy"]
+```
+
+<Info crew="gun" title="Important!">
+Don't try to push to or modify this array. It's only for reading purposes. If you want to add or remove a tag, use `.tag()` and `.untag()` instead.
+</Info>
+
+## Using tags in events and methods
+
+A large number of methods and functions work using tags.
+
+```js
+obj.get("enemy"); // returns an array with all enemy game objects
+```
+
+## Special tag: *
+
+All game objects have the `*` tag by default. This can be useful for example to
+get all game objects
+
+```js
+get("*"); // list of all game objects
+```
+
+## Components as tags
+
+In v3001, KAPLAY by default will take component IDs as tags:
+
+```js
+// this means if your object have a sprite() component, it also have a "sprite" tag
+const tga = add([
+    sprite("tga"),
+]);
+
+tga.is("sprite"); // true
+```
+
+In next versions this is disabled by default, but if you want to enable it or
+disable it in v3001 version, you can use the `tagsAsComponents` option:
+
+```js
+kaplay({
+    tagsAsComponents: false,
+});
+
+tga.is("sprite"); // false
+```

@@ -9,6 +9,7 @@ DEBUG_DIR = Path("output/.debug")
 MARKDOWN_FIELDS = {
     "game_planner": "game_design_doc",
     "design_evaluator": "design_feedback",
+    "implementation_planner": "implementation_plan",
 }
 
 

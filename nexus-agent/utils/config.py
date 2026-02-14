@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     max_code_iterations: int = 2
 
     output_dir: str = "output"
+    chroma_db_dir: str = "data/chroma_db"
 
     class Config:
         env_file = ".env.local"
