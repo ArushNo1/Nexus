@@ -69,13 +69,34 @@ export async function getClassroomsForStudent(supabase: SupabaseClient, studentI
 
 export async function joinClassroom(supabase: SupabaseClient, studentId: string, joinCode: string): Promise<string> {
     // Use the secure RPC function to bypass RLS and join classroom
+    console.log('[DEBUG] joinClassroom called with:', { studentId, joinCode });
+    
+    // First, let's check if the classroom exists with this join code
+    const { data: checkData, error: checkError } = await supabase
+        .from('classrooms')
+        .select('id, join_code, is_active, name')
+        .eq('join_code', joinCode)
+        .single();
+    
+    if (checkError) {
+        console.log('[DEBUG] Classroom lookup error:', checkError);
+    } else {
+        console.log('[DEBUG] Found classroom:', checkData);
+    }
+
     const { data: classroomId, error } = await supabase.rpc('join_classroom_by_code', {
         p_student_id: studentId,
         p_join_code: joinCode
     });
 
-    if (error) throw new Error(error.message || 'Invalid join code or classroom not found');
+    console.log('[DEBUG] RPC join_classroom_by_code response:', { classroomId, error });
 
+    if (error) {
+        console.error('[DEBUG] RPC Error details:', error);
+        throw new Error(error.message || 'Invalid join code or classroom not found');
+    }
+
+    console.log('[DEBUG] Successfully joined classroom:', classroomId);
     return classroomId;
 }
 

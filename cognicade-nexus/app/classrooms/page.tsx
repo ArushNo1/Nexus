@@ -110,6 +110,9 @@ export default function ClassroomsPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('Not authenticated');
 
+            console.log('[DEBUG] Attempting to join classroom with code:', joinCode.toUpperCase());
+            console.log('[DEBUG] Student ID:', user.id);
+
             await joinClassroom(supabase, user.id, joinCode.toUpperCase());
 
             setJoinCode('');
@@ -120,7 +123,9 @@ export default function ClassroomsPage() {
             setClassrooms(data);
             alert('Successfully joined classroom!');
         } catch (error: any) {
-            console.error('Error joining classroom:', error);
+            console.error('[DEBUG] Error joining classroom:', error);
+            console.error('[DEBUG] Error message:', error?.message);
+            console.error('[DEBUG] Error details:', JSON.stringify(error, null, 2));
             alert(error.message || 'Failed to join classroom.');
         } finally {
             setIsSubmitting(false);
