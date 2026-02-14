@@ -2,13 +2,7 @@
 
 **AI that generates personalized educational video games in Phaser (HTML5) based on what students are struggling with.**
 
-<<<<<<< HEAD
-## Short Description
-Students learn better through play, but creating custom educational games takes months. Nexus uses 8 specialized AI agents to analyze a student's learning gaps and autonomously generate a complete, playable Unity game in minutes. Type "I don't understand photosynthesis" and get a custom puzzle game that teaches the concept through interactive gameplay.
-=======
-## 📖 Short Description
 Students learn better through play, but creating custom educational games takes months. Nexus uses 8 specialized AI agents to analyze a student's learning gaps and autonomously generate a complete, playable web game in minutes. Type "I don't understand photosynthesis" and get a custom puzzle game that teaches the concept through interactive gameplay.
->>>>>>> 1dd5c11 (Switch engine from Unity to Phaser (HTML5))
 
 ##  Problem Statement
 One-size-fits-all education fails students. Everyone learns differently, and traditional teaching methods don't adapt to individual needs. Creating personalized educational games is prohibitively expensive and time-consuming, making game-based learning inaccessible to most students.
