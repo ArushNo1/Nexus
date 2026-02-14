@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     Gamepad2,
     TrendingDown,
@@ -8,6 +9,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import LandingNavbar from '@/components/ui/landing-navbar';
+import { createClient } from '@/lib/supabase/client';
 
 /* --- DATA CONSTANTS --- */
 const GAME_MODES = [
@@ -24,8 +26,10 @@ const PARTICLE_COLORS = ['#FFD700', '#ffffff', '#7dd3fc', '#fbbf24', '#34d399'];
 let particleId = 0;
 
 export default function NexusLanding() {
+    const router = useRouter();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [user, setUser] = useState<any>(null);
     const [particles, setParticles] = useState<Particle[]>([]);
     const [varInView, setVarInView] = useState(false);
     const [whyInView, setWhyInView] = useState(false);
@@ -35,6 +39,18 @@ export default function NexusLanding() {
     const varRef = useRef<HTMLElement>(null);
     const whyRef = useRef<HTMLElement>(null);
     const ctaRef = useRef<HTMLElement>(null);
+
+    // Redirect to dashboard if user is logged in
+    useEffect(() => {
+        const checkAuth = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setUser(user);
+            }
+        };
+        checkAuth();
+    }, [router]);
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -367,12 +383,22 @@ export default function NexusLanding() {
                         </p>
 
                         <div className="flex flex-wrap gap-4">
-                            <Link href="/auth/login">
-                                <button className="group flex items-center gap-2 px-8 py-4 bg-white hover:bg-slate-100 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_4px_0px_#94a3b8] hover:translate-y-[2px] hover:shadow-[0_2px_0px_#94a3b8] active:translate-y-[4px] active:shadow-none font-sans-clean">
-                                    Start Building
-                                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                                </button>
-                            </Link>
+
+                            {user ? (
+                                <Link href="/dashboard">
+                                    <button className="group flex items-center gap-2 px-8 py-4 bg-white hover:bg-slate-100 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_4px_0px_#94a3b8] hover:translate-y-[2px] hover:shadow-[0_2px_0px_#94a3b8] active:translate-y-[4px] active:shadow-none font-sans-clean">
+                                        Go to Dashboard
+                                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                </Link>
+                            ) : (
+                                <Link href="/auth/login">
+                                    <button className="group flex items-center gap-2 px-8 py-4 bg-white hover:bg-slate-100 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_4px_0px_#94a3b8] hover:translate-y-[2px] hover:shadow-[0_2px_0px_#94a3b8] active:translate-y-[4px] active:shadow-none font-sans-clean">
+                                        Start Building
+                                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -627,12 +653,21 @@ export default function NexusLanding() {
                         className="flex flex-col sm:flex-row items-center justify-center gap-4"
                         style={{ opacity: ctaInView ? 1 : 0, transform: ctaInView ? 'translateY(0)' : 'translateY(20px)', transition: 'opacity 0.7s ease 400ms, transform 0.7s cubic-bezier(0.16,1,0.3,1) 400ms' }}
                     >
-                        <Link href="/auth/login">
-                            <button className="group relative px-12 py-5 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold text-lg rounded-xl transition-colors font-sans-clean animate-glow-cta shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none">
-                                Get Started
-                                <ArrowRight className="inline ml-2 group-hover:translate-x-1 transition-transform" size={20} />
-                            </button>
-                        </Link>
+                        {user ? (
+                            <Link href="/dashboard">
+                                <button className="group relative px-12 py-5 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold text-lg rounded-xl transition-colors font-sans-clean animate-glow-cta shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none">
+                                    Go to Dashboard
+                                    <ArrowRight className="inline ml-2 group-hover:translate-x-1 transition-transform" size={20} />
+                                </button>
+                            </Link>
+                        ) : (
+                            <Link href="/auth/login">
+                                <button className="group relative px-12 py-5 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold text-lg rounded-xl transition-colors font-sans-clean animate-glow-cta shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none">
+                                    Get Started
+                                    <ArrowRight className="inline ml-2 group-hover:translate-x-1 transition-transform" size={20} />
+                                </button>
+                            </Link>
+                        )}
                     </div>
                 </div>
             </section>
