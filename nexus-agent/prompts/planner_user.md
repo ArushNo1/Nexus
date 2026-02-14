@@ -10,4 +10,4 @@
 
 ---
 
-Based on the lesson plan above, create a comprehensive Game Design Document. If prior feedback is provided, revise your design to address the specific concerns raised.
+Based on the lesson plan above, choose the best game template and design one addon feature. If prior feedback is provided, revise your choices to address the specific concerns raised.

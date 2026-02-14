@@ -4,10 +4,20 @@
 {{ lesson_plan }}
 ```
 
-## Approved Game Design Document
+## Game Template Selection & Addon Feature
 
 {{ game_design_doc }}
 
+## Base Template Code ({{ game_type }})
+
+```html
+{{ template_code }}
+```
+
 ---
 
-Based on the GDD above, create a detailed implementation plan and todo list. Be thorough — the coding agent will rely on this plan as its primary guide for building the game.
+Based on the game selection and addon feature above, create a detailed technical plan for:
+1. Reskinning every visual element in the template to match the lesson topic
+2. Implementing the addon mechanic on top of the existing template code
+
+Reference specific parts of the template code when describing where changes go.

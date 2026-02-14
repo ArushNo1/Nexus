@@ -6,7 +6,9 @@ class AgentState(TypedDict):
     lesson_plan: dict              # The raw JSON lesson plan
 
     # ── Game Planner output ──
-    game_design_doc: str           # Markdown GDD (genre, mechanics, scenes, learning hooks)
+    game_type: str                 # One of: beatemup, fighter, maze, platformer, shootemup
+    template_code: str             # The base HTML template for the chosen game type
+    game_design_doc: str           # Game type choice rationale + addon feature description
     
     # ── Design Evaluator output ──
     design_feedback: str           # Structured critique

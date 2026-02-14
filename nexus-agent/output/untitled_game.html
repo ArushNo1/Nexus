@@ -55,7 +55,7 @@ function addButton(txt, p, action) {
     const btn = add([
         rect(240, 60, { radius: 8 }),
         pos(p),
-        origin("center"),
+        anchor("center"),
         area(),
         outline(4),
         color(34, 139, 34),
@@ -64,7 +64,7 @@ function addButton(txt, p, action) {
     add([
         text(txt, { size: 32 }),
         pos(p),
-        origin("center"),
+        anchor("center"),
         color(255, 255, 255),
     ]);
     onClick("button", () => action());
@@ -78,13 +78,13 @@ scene("menu", () => {
     add([
         text("Photosynthesis Collector", { size: 48, width: width() - 40 }),
         pos(center().x, height() * 0.2),
-        origin("center"),
+        anchor("center"),
     ]);
 
     add([
         text("Use LEFT/RIGHT arrows to move.", { size: 24 }),
         pos(center().x, height() * 0.4),
-        origin("center"),
+        anchor("center"),
     ]);
 
     add([
@@ -94,7 +94,7 @@ scene("menu", () => {
             width: width() - 40,
         }),
         pos(center().x, height() * 0.55),
-        origin("center"),
+        anchor("center"),
     ]);
 
     addButton("Start Game", vec2(center().x, height() * 0.8), () => go("game"));
@@ -116,7 +116,7 @@ scene("game", () => {
     const player = add([
         rect(120, 20),
         pos(center().x, height() - 60),
-        origin("center"),
+        anchor("center"),
         color(0, 128, 0), // Green
         area(),
         "player",
@@ -142,7 +142,7 @@ scene("game", () => {
     const timerText = add([
         text(`Time: ${timer}`, { size: 32 }),
         pos(width() - 20, 20),
-        origin("topright"),
+        anchor("topright"),
         { value: timer },
     ]);
 
@@ -161,7 +161,7 @@ scene("game", () => {
         add([
             text(elementData.name, { size: 28 }),
             pos(rand(20, width() - 20), -20),
-            origin("center"),
+            anchor("center"),
             move(DOWN, 120 + rand(-20, 20)),
             area(),
             color(elementData.color),
@@ -209,13 +209,13 @@ scene("results", ({ score }) => {
     add([
         text("Time's Up!", { size: 48 }),
         pos(center().x, height() * 0.2),
-        origin("center"),
+        anchor("center"),
     ]);
 
     add([
         text(`Final Score: ${score}`, { size: 64 }),
         pos(center().x, height() * 0.4),
-        origin("center"),
+        anchor("center"),
     ]);
 
     add([
@@ -225,7 +225,7 @@ scene("results", ({ score }) => {
             align: "center",
         }),
         pos(center().x, height() * 0.6),
-        origin("center"),
+        anchor("center"),
     ]);
 
     addButton("Play Again", vec2(center().x, height() * 0.85), () => go("menu"));

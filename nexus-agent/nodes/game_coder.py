@@ -25,6 +25,8 @@ async def game_coder_node(state: AgentState) -> dict:
 
     context = {
         "game_design_doc": state["game_design_doc"],
+        "game_type": state["game_type"],
+        "template_code": state["template_code"],
         "implementation_plan": state.get("implementation_plan") or "",
         "existing_code": state.get("game_code") or "",
         "playtest_report": state.get("playtest_report") or "",

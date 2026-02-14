@@ -34,6 +34,8 @@ async def implementation_planner_node(state: AgentState) -> dict:
     user = render_template("impl_planner_user.md", {
         "lesson_plan": json.dumps(state["lesson_plan"], indent=2),
         "game_design_doc": state["game_design_doc"],
+        "game_type": state["game_type"],
+        "template_code": state["template_code"],
     })
 
     llm = get_llm("implementation_planner").bind_tools(TOOLS)

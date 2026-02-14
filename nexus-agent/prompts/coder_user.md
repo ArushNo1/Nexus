@@ -1,11 +1,17 @@
-## Game Design Document
+## Game Design Selection
 
 {{ game_design_doc }}
+
+## Base Template ({{ game_type }})
+
+```html
+{{ template_code }}
+```
 
 {% if implementation_plan %}
 ## Implementation Plan
 
-Follow this detailed task list and implementation roadmap when building the game:
+Follow this technical plan for reskinning and addon implementation:
 
 {{ implementation_plan }}
 {% endif %}
@@ -32,7 +38,7 @@ Fix all reported errors and issues while preserving working functionality.
 ---
 
 {% if is_revision %}
-Revise the Kaplay.js game code to fix the issues described above. Output the complete, corrected HTML file.
+Revise the game code to fix the issues described above. Output the complete, corrected HTML file.
 {% else %}
-Generate a complete, self-contained Kaplay.js game as a single HTML file based on the GDD above. Output ONLY the HTML code.
+Modify the base template according to the implementation plan: reskin all visuals and implement the addon mechanic. Output the complete HTML file.
 {% endif %}

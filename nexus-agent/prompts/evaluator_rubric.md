@@ -2,8 +2,8 @@
 
 Score each axis 1-5:
 
-1. **Pedagogical Alignment** — Do the game mechanics actually teach the stated objectives? Are knowledge checks meaningful?
-2. **Fun Factor** — Would a student genuinely want to play this? Is there intrinsic motivation beyond "answer questions"?
-3. **Kaplay Feasibility** — Can this realistically be built in a single HTML file with Kaplay.js? Are the proposed features technically achievable?
-4. **Scope Control** — Is the design achievable without exceeding the complexity budget? Could a single LLM code generation pass produce this?
-5. **Accessibility** — Is it keyboard navigable? Color-blind safe? Are instructions clear? Is text readable?
+1. **Genre Fit** — Does the chosen game type naturally match the lesson's structure and energy? Would a different template be clearly better?
+2. **Pedagogical Alignment** — Does the addon feature genuinely teach or test the stated learning objectives? Is it more than superficial theming?
+3. **Addon Feasibility** — Can the addon feature be implemented on top of the existing template without major restructuring? Is it scoped appropriately?
+4. **Visual Theme Coherence** — Does the proposed re-theming make sense for the topic? Will students immediately understand the connection between the game world and the lesson?
+5. **Fun Factor** — Will the addon enhance gameplay rather than interrupt it? Does it feel like a natural part of the game, not a forced quiz?
