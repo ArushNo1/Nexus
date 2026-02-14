@@ -647,7 +647,7 @@ export default function NexusLanding() {
                         className="text-slate-400 text-lg mb-12 max-w-xl mx-auto font-sans-clean"
                         style={{ opacity: ctaInView ? 1 : 0, transform: ctaInView ? 'translateY(0)' : 'translateY(24px)', transition: 'opacity 0.7s ease 280ms, transform 0.7s cubic-bezier(0.16,1,0.3,1) 280ms' }}
                     >
-                        Join thousands of educators already transforming their classrooms with game-powered learning.
+                        Become an educator transforming your classrooms with game-powered learning.
                     </p>
                     <div
                         className="flex flex-col sm:flex-row items-center justify-center gap-4"
@@ -689,7 +689,7 @@ export default function NexusLanding() {
                         {/* Links */}
                         <div className="flex gap-14 text-sm">
                             {[
-                                { heading: 'Product', links: ['Features', 'Pricing', 'About'] },
+                                { heading: 'Product', links: ['Features', 'Pricing'] },
                                 { heading: 'Legal', links: ['Privacy', 'TOS', 'Legal'] },
                                 { heading: 'Company', links: ['Contact Us', 'Blog', 'Careers'] },
                             ].map(col => (

@@ -53,6 +53,8 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/auth") &&
     !request.nextUrl.pathname.startsWith("/landing") &&
+    !request.nextUrl.pathname.startsWith("/features") &&
+    !request.nextUrl.pathname.startsWith("/pricing") &&
     !request.nextUrl.pathname.startsWith("/generated")
   ) {
     // For API routes, return 401 instead of redirecting

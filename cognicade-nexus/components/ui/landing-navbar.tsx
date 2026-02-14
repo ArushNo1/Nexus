@@ -54,12 +54,9 @@ export default function LandingNavbar({ scrolled, isMenuOpen, setIsMenuOpen }: L
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-12 text-sm font-medium text-slate-300">
-          <a href="#" className="hover:text-white transition-colors">Features</a>
-          <a href="#" className="hover:text-white transition-colors">Pricing</a>
-          <Link href="/dashboard">
-            <span className="hover:text-white transition-colors cursor-pointer">Dashboard</span>
-          </Link>
-          {/* Conditional Auth Button */}
+          <Link href="/features" className="hover:text-white transition-colors">Features</Link>
+          <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+{/* Conditional Auth Button */}
           {!isLoading && (
             user ? (
               <button onClick={handleLogout} className="px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition-all shadow-md flex items-center gap-2">
