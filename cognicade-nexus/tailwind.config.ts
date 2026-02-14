@@ -52,10 +52,40 @@ export default {
           "5": "hsl(var(--chart-5))",
         },
       },
+      fontFamily: {
+        chalk: ['"Segoe Print"', '"Bradley Hand"', '"Comic Sans MS"', 'cursive'],
+        pixel: ['"Courier New"', 'monospace'],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        floatDrift: {
+          '0%, 100%': { transform: 'translateY(0px) rotate(-3deg)' },
+          '50%': { transform: 'translateY(-16px) rotate(3deg)' },
+        },
+        marqueeScroll: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+        coinBounce: {
+          '0%': { transform: 'translateY(0px) scale(1)' },
+          '100%': { transform: 'translateY(-12px) scale(1.1)' },
+        },
+        pixelBlink: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0' },
+        },
+      },
+      animation: {
+        'float-slow': 'floatDrift 6s ease-in-out infinite',
+        'float-medium': 'floatDrift 4s ease-in-out infinite',
+        'float-fast': 'floatDrift 3s ease-in-out infinite',
+        'marquee': 'marqueeScroll 30s linear infinite',
+        'coin-bounce': 'coinBounce 0.8s ease-in-out infinite alternate',
+        'pixel-blink': 'pixelBlink 1s step-end infinite',
       },
     },
   },
