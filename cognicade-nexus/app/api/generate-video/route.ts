@@ -3,6 +3,8 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
+import { createClient } from '@/lib/supabase/server';
+import { uploadToStorage, uploadMultipleToStorage } from '@/lib/supabase/storage';
 
 const execAsync = promisify(exec);
 
@@ -130,20 +132,16 @@ async function fetchSpritesForElements(
 }
 
 async function renderVideoWithRemotion(
-    videoData: VideoData
-): Promise<string | null> {
+    videoData: VideoData,
+    userId: string
+): Promise<{ videoUrl: string | null; audioFiles: string[]; spriteFiles: string[] }> {
     const timestamp = Date.now();
-    const outputPath = path.join(
-        process.cwd(),
-        'public',
-        'generated',
-        `video-${timestamp}.mp4`
-    );
+    const tempDir = path.join(process.cwd(), 'temp', `video-${timestamp}`);
+    const outputPath = path.join(tempDir, `video-${timestamp}.mp4`);
     const compositionId = 'EduVideo';
 
     try {
-        const genDir = path.dirname(outputPath);
-        await fs.mkdir(genDir, { recursive: true }).catch(() => { });
+        await fs.mkdir(tempDir, { recursive: true });
 
         // 1. Fetch sprites for all elements across all scenes
         console.log('[generate-video] Fetching sprites...');
@@ -151,24 +149,32 @@ async function renderVideoWithRemotion(
         videoData.scenes.forEach(scene => {
             scene.elements?.forEach(el => allElements.add(el));
         });
+        const spriteDir = path.join(tempDir, 'sprites');
+        await fs.mkdir(spriteDir, { recursive: true });
         const spriteUrls = await fetchSpritesForElements(Array.from(allElements), timestamp);
 
         // 2. Generate audio for each scene
         console.log('[generate-video] Generating scene audio...');
         const scenesWithAudio: VideoScene[] = [];
+        const audioFilePaths: string[] = [];
 
         for (let i = 0; i < videoData.scenes.length; i++) {
             const scene = videoData.scenes[i];
             const audioFilename = `narration-${timestamp}-${i}.mp3`;
-            const audioPath = path.join(genDir, audioFilename);
+            const audioPath = path.join(tempDir, audioFilename);
 
             const success = await generateSceneAudio(scene.narration, audioPath);
 
             if (success) {
                 console.log(`[generate-video] Audio scene ${i + 1} OK`);
+                audioFilePaths.push(audioPath);
+
+                // Upload audio to Supabase
+                const { url } = await uploadToStorage('audio', audioPath, userId, audioFilename);
+
                 scenesWithAudio.push({
                     ...scene,
-                    audioUrl: `/generated/${audioFilename}`,
+                    audioUrl: url || null,
                     spriteUrls,
                 });
             } else {
@@ -177,19 +183,42 @@ async function renderVideoWithRemotion(
             }
         }
 
-        // 3. Write props file
+        // 3. Upload sprites to Supabase
+        console.log('[generate-video] Uploading sprites to Supabase...');
+        const spriteFilePaths: string[] = [];
+        const spriteUrlsSupabase: Record<string, string | null> = {};
+
+        for (const [element, localPath] of Object.entries(spriteUrls)) {
+            if (localPath && localPath.startsWith('/')) {
+                const fullPath = path.join(process.cwd(), 'public', localPath);
+                if (await fs.access(fullPath).then(() => true).catch(() => false)) {
+                    const spriteName = path.basename(localPath);
+                    const { url } = await uploadToStorage('sprites', fullPath, 'shared', spriteName);
+                    spriteUrlsSupabase[element] = url;
+                    spriteFilePaths.push(fullPath);
+                }
+            }
+        }
+
+        // Update scenes with Supabase sprite URLs
+        const scenesWithSupabaseAssets = scenesWithAudio.map(scene => ({
+            ...scene,
+            spriteUrls: spriteUrlsSupabase,
+        }));
+
+        // 4. Write props file
         const propsData = {
             title: videoData.title,
             targetAudience: videoData.targetAudience,
-            scenes: scenesWithAudio,
+            scenes: scenesWithSupabaseAssets,
         };
 
         console.log('[generate-video] Props data:', JSON.stringify(propsData, null, 2).slice(0, 500));
 
-        const propsPath = path.join(genDir, `props-${timestamp}.json`);
+        const propsPath = path.join(tempDir, `props-${timestamp}.json`);
         await fs.writeFile(propsPath, JSON.stringify(propsData, null, 2));
 
-        // 4. Render with Remotion CLI
+        // 5. Render with Remotion CLI
         console.log('[generate-video] Running Remotion render...');
         const renderCmd = `npx remotion render remotion/Root.tsx ${compositionId} "${outputPath}" --props="${propsPath}" --gl=angle`;
 
@@ -199,12 +228,25 @@ async function renderVideoWithRemotion(
         console.log('[generate-video] Remotion stdout:', stdout);
         if (stderr) console.warn('[generate-video] Remotion stderr:', stderr);
 
-        // 5. Clean up props file
-        await fs.unlink(propsPath).catch(() => { });
+        // 6. Upload video to Supabase
+        console.log('[generate-video] Uploading video to Supabase...');
+        const videoFilename = `video-${timestamp}.mp4`;
+        const { url: videoUrl } = await uploadToStorage('videos', outputPath, userId, videoFilename);
 
-        return `/generated/video-${timestamp}.mp4`;
+        // 7. Clean up temp files
+        await fs.rm(tempDir, { recursive: true, force: true }).catch(err => {
+            console.warn('[generate-video] Cleanup failed:', err);
+        });
+
+        return {
+            videoUrl,
+            audioFiles: scenesWithSupabaseAssets.map(s => s.audioUrl).filter(Boolean) as string[],
+            spriteFiles: Object.values(spriteUrlsSupabase).filter(Boolean) as string[],
+        };
     } catch (error) {
         console.error('Remotion rendering error:', error);
+        // Clean up on error
+        await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
         throw error;
     }
 }
@@ -218,7 +260,8 @@ const GEMINI_MODELS = [
 ];
 
 async function generateVideoWithGemini(
-    lessonData: any
+    lessonData: any,
+    userId: string
 ): Promise<VideoResponse> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -391,10 +434,11 @@ Remember: This video is our SHOWCASE - make it EXCEPTIONAL! 🌟`;
 
             console.log(`[generate-video] AI returned title: "${videoData.title}", scenes: ${videoData.scenes?.length}`);
 
-            // Generate video with Remotion (includes audio generation)
+            // Generate video with Remotion (includes audio generation and Supabase upload)
             let videoUrl = null;
             try {
-                videoUrl = await renderVideoWithRemotion(videoData);
+                const result = await renderVideoWithRemotion(videoData, userId);
+                videoUrl = result.videoUrl;
             } catch (renderError) {
                 console.error('Video rendering failed:', renderError);
             }
@@ -407,7 +451,7 @@ Remember: This video is our SHOWCASE - make it EXCEPTIONAL! 🌟`;
                 videoUrl,
                 thumbnailUrl: null,
                 generatedAt: new Date().toISOString(),
-                agent: 'Edison (Remotion + Edge TTS)',
+                agent: 'Edison (Remotion + Edge TTS + Supabase)',
             };
         } catch (error) {
             console.error(
@@ -426,6 +470,18 @@ Remember: This video is our SHOWCASE - make it EXCEPTIONAL! 🌟`;
 // ── API Route Handler ─────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
     try {
+        const supabase = await createClient();
+
+        // Get authenticated user
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+            return NextResponse.json(
+                { error: 'Unauthorized. Please sign in.' },
+                { status: 401 }
+            );
+        }
+
         const body = await req.json();
         const { lessonData } = body;
 
@@ -436,10 +492,61 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const videoData = await generateVideoWithGemini(lessonData);
+        // 1. Save lesson to database
+        console.log('[generate-video] Saving lesson to database...');
+        const { data: savedLesson, error: lessonError } = await supabase
+            .from('lessons')
+            .insert({
+                user_id: user.id,
+                title: lessonData.lessonPlan?.title || 'Untitled Lesson',
+                subject: lessonData.lessonPlan?.subject,
+                grade_level: lessonData.lessonPlan?.gradeLevel,
+                objectives: lessonData.lessonPlan?.objectives || [],
+                content: lessonData.lessonPlan?.content || {},
+            })
+            .select()
+            .single();
+
+        if (lessonError) {
+            console.error('[generate-video] Failed to save lesson:', lessonError);
+            throw new Error('Failed to save lesson to database');
+        }
+
+        console.log('[generate-video] Lesson saved:', savedLesson.id);
+
+        // 2. Generate video
+        const videoData = await generateVideoWithGemini(lessonData, user.id);
+
+        // 3. Save video to database
+        console.log('[generate-video] Saving video to database...');
+        const { data: savedVideo, error: videoError } = await supabase
+            .from('videos')
+            .insert({
+                lesson_id: savedLesson.id,
+                user_id: user.id,
+                title: videoData.title,
+                target_audience: videoData.targetAudience,
+                scenes: videoData.scenes,
+                key_takeaways: videoData.keyTakeaways || [],
+                video_url: videoData.videoUrl,
+                thumbnail_url: videoData.thumbnailUrl,
+                status: videoData.videoUrl ? 'completed' : 'failed',
+                error_message: videoData.videoUrl ? null : 'Video rendering failed',
+            })
+            .select()
+            .single();
+
+        if (videoError) {
+            console.error('[generate-video] Failed to save video:', videoError);
+            throw new Error('Failed to save video to database');
+        }
+
+        console.log('[generate-video] Video saved:', savedVideo.id);
 
         return NextResponse.json({
             success: true,
+            lessonId: savedLesson.id,
+            videoId: savedVideo.id,
             ...videoData,
         });
     } catch (error: any) {
