@@ -1,424 +1,283 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-    Beaker,
-    Map,
     Gamepad2,
-    Trophy,
     TrendingDown,
-    MonitorOff,
-    FileQuestion,
+    BrainCircuit,
+    Zap,
     Menu,
     X,
-    Instagram,
-    Youtube
+    ArrowRight
 } from 'lucide-react';
 
-const STAR_POSITIONS = [
-    { top: '5%', left: '12%', delay: '0.3s' },
-    { top: '8%', left: '45%', delay: '1.1s' },
-    { top: '12%', left: '78%', delay: '0.7s' },
-    { top: '15%', left: '30%', delay: '1.8s' },
-    { top: '20%', left: '60%', delay: '0.2s' },
-    { top: '25%', left: '85%', delay: '1.4s' },
-    { top: '28%', left: '20%', delay: '0.9s' },
-    { top: '32%', left: '55%', delay: '1.6s' },
-    { top: '35%', left: '90%', delay: '0.5s' },
-    { top: '40%', left: '15%', delay: '1.2s' },
-    { top: '45%', left: '70%', delay: '0.1s' },
-    { top: '48%', left: '40%', delay: '1.9s' },
-    { top: '52%', left: '25%', delay: '0.8s' },
-    { top: '55%', left: '65%', delay: '1.3s' },
-    { top: '10%', left: '92%', delay: '0.6s' },
-    { top: '18%', left: '8%', delay: '1.7s' },
-    { top: '38%', left: '50%', delay: '0.4s' },
-    { top: '42%', left: '35%', delay: '1.0s' },
-    { top: '22%', left: '75%', delay: '1.5s' },
-    { top: '30%', left: '5%', delay: '0.0s' },
-];
-
-const GAME_PREVIEWS = [
-    { mode: 'RPG MODE', color: 'text-green-400', placeholder: '[ Pixel Wizard ]', subject: 'History Quest' },
-    { mode: 'BATTLE MODE', color: 'text-red-400', placeholder: '[ Fighter Arena ]', subject: 'Math Battles' },
-    { mode: 'BUILDER MODE', color: 'text-blue-400', placeholder: '[ Level Editor ]', subject: 'Science Lab' },
-    { mode: 'PUZZLE MODE', color: 'text-purple-400', placeholder: '[ Puzzle Board ]', subject: 'Logic Games' },
-    { mode: 'RACE MODE', color: 'text-yellow-400', placeholder: '[ Track & Finish ]', subject: 'Speed Math' },
-    { mode: 'STORY MODE', color: 'text-pink-400', placeholder: '[ Visual Novel ]', subject: 'Literature' },
-];
-
-const CROSSING_ELEMENTS = [
-    { learnIcon: '\u2211', gameIcon: '\u2605', topPos: '30%', delay: '0s' },
-    { learnIcon: '\u269B', gameIcon: '\u2666', topPos: '50%', delay: '2.67s' },
-    { learnIcon: '\u03C0', gameIcon: '\u2694', topPos: '65%', delay: '5.33s' },
+/* --- DATA CONSTANTS --- */
+const GAME_MODES = [
+    { label: 'RPG MODE', subject: 'History', title: 'The Timekeeper', color: 'text-emerald-300', bg: 'bg-emerald-900/40', border: 'border-emerald-500/20' },
+    { label: 'BATTLE', subject: 'Calculus', title: 'Derivative Dungeon', color: 'text-red-300', bg: 'bg-red-900/40', border: 'border-red-500/20' },
+    { label: 'SIM', subject: 'Physics', title: 'Gravity Lab', color: 'text-blue-300', bg: 'bg-blue-900/40', border: 'border-blue-500/20' },
+    { label: 'PUZZLE', subject: 'Logic', title: 'Code Breaker', color: 'text-purple-300', bg: 'bg-purple-900/40', border: 'border-purple-500/20' },
+    { label: 'RACING', subject: 'Vocab', title: 'Speed Reader', color: 'text-yellow-300', bg: 'bg-yellow-900/40', border: 'border-yellow-500/20' },
 ];
 
 export default function NexusLanding() {
-    const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     return (
-        <div className="min-h-screen font-sans">
+        <div className="min-h-screen bg-[#0a1f18] text-slate-100 font-sans selection:bg-emerald-500/30 overflow-x-hidden">
+
+            {/* --- GLOBAL STYLES & FONTS --- */}
+            <style jsx global>{`
+                @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
+                
+                .font-pixel { font-family: 'Press Start 2P', cursive; }
+                .font-serif-display { font-family: 'DM Serif Display', serif; }
+                .font-sans-clean { font-family: 'Inter', sans-serif; }
+
+                /* PALETTE: Deep Blackboard */
+                .bg-academic-dark {
+                    background-color: #0d281e; 
+                }
+                
+                /* CHALK TEXTURE */
+                .bg-chalk-texture {
+                    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+                }
+
+                /* CRT SCANLINE EFFECT */
+                .scanlines {
+                    background: linear-gradient(
+                        to bottom, 
+                        rgba(255,255,255,0), 
+                        rgba(255,255,255,0) 50%, 
+                        rgba(0,0,0,0.1) 50%, 
+                        rgba(0,0,0,0.1)
+                    );
+                    background-size: 100% 4px;
+                    pointer-events: none;
+                }
+
+                /* ANIMATIONS */
+                @keyframes float-pixel { 
+                    0%, 100% { transform: translateY(0px); } 
+                    50% { transform: translateY(-6px); } 
+                }
+                .animate-float-pixel { animation: float-pixel 3s step-end infinite; }
+            `}</style>
 
             {/* ================= NAV ================= */}
-            <nav className="fixed top-0 w-full bg-[#1a2e1a]/90 backdrop-blur-md border-b chalk-line z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16">
-                        <div className="flex-shrink-0 flex items-center gap-2">
-                            <span className="text-2xl font-black tracking-widest text-[#e8f5e9] font-pixel">
-                                NEXUS
-                            </span>
+            <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-[#0d281e]/90 backdrop-blur-md py-4 border-b border-white/5 shadow-md' : 'bg-transparent py-8'}`}>
+                <div className="max-w-7xl mx-auto px-8 flex justify-between items-center">
+                    {/* Logo */}
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center font-serif-display text-white text-xl border border-white/20 backdrop-blur-sm">
+                            N
                         </div>
-
-                        <div className="hidden md:flex items-center space-x-8">
-                            <a href="#" className="text-[#a5c8a5] hover:text-[#e8f5e9] font-chalk transition-colors">About</a>
-                            <a href="#" className="text-[#a5c8a5] hover:text-[#e8f5e9] font-chalk transition-colors">Features</a>
-                            <a href="#" className="text-[#a5c8a5] hover:text-[#e8f5e9] font-chalk transition-colors">Pricing</a>
-                            <button className="chalk-box bg-transparent text-[#e8f5e9] px-4 py-2 font-chalk font-bold hover:bg-[#7ec87e]/20 transition-colors">
-                                Sign in
-                            </button>
-                        </div>
-
-                        <div className="md:hidden flex items-center">
-                            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-[#e8f5e9]">
-                                {isMenuOpen ? <X /> : <Menu />}
-                            </button>
-                        </div>
+                        <span className="text-xl font-bold tracking-tight text-white font-sans-clean">NEXUS</span>
                     </div>
 
-                    {/* Mobile menu */}
-                    {isMenuOpen && (
-                        <div className="md:hidden pb-4 space-y-2">
-                            <a href="#" className="block text-[#a5c8a5] hover:text-[#e8f5e9] font-chalk py-2">About</a>
-                            <a href="#" className="block text-[#a5c8a5] hover:text-[#e8f5e9] font-chalk py-2">Features</a>
-                            <a href="#" className="block text-[#a5c8a5] hover:text-[#e8f5e9] font-chalk py-2">Pricing</a>
-                            <button className="chalk-box bg-transparent text-[#e8f5e9] px-4 py-2 font-chalk font-bold w-full text-left">
-                                Sign in
-                            </button>
-                        </div>
-                    )}
+                    {/* Desktop Menu */}
+                    <div className="hidden md:flex items-center space-x-12 text-sm font-medium text-slate-300">
+                        <a href="#" className="hover:text-white transition-colors">Methodology</a>
+                        <a href="#" className="hover:text-white transition-colors">Features</a>
+                        <a href="#" className="hover:text-white transition-colors">Pricing</a>
+                        {/* White Button (Chalk style) */}
+                        <button className="px-6 py-2.5 bg-white text-[#0d281e] font-bold rounded-lg hover:bg-slate-200 transition-all shadow-md">
+                            Sign In
+                        </button>
+                    </div>
+
+                    {/* Mobile Toggle */}
+                    <button className="md:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                        {isMenuOpen ? <X /> : <Menu />}
+                    </button>
                 </div>
             </nav>
 
-            {/* ================= HERO SECTION ================= */}
-            <section className="min-h-screen relative grid lg:grid-cols-2 overflow-hidden">
+            {/* ================= HERO SECTION (SPLIT WORLD) ================= */}
+            <section className="relative min-h-[100vh] w-full flex flex-col lg:flex-row overflow-hidden">
 
-                {/* CHALKBOARD SIDE */}
-                <div className="relative bg-[#1a2e1a] flex flex-col justify-center px-8 md:px-12 py-32 lg:py-24 overflow-hidden">
-                    {/* Chalk grid texture */}
-                    <div
-                        className="absolute inset-0 opacity-[0.06]"
-                        style={{
-                            backgroundImage: 'repeating-linear-gradient(0deg, #7ec87e 0px, transparent 1px, transparent 32px)',
-                            backgroundSize: '100% 32px',
-                        }}
-                    />
+                {/* --- LEFT: ACADEMIC WORLD (Blackboard) --- */}
+                {/* Harsh transition: No borders, no spikes. Just clean color edge. */}
+                <div className="relative w-full lg:w-1/2 bg-academic-dark bg-chalk-texture flex flex-col justify-center px-8 lg:px-20 py-24 lg:py-0 z-10">
 
-                    {/* Floating learning decorations */}
-                    <div className="absolute top-20 left-8 animate-float-slow opacity-30 font-chalk text-[#a5c8a5] text-sm select-none">
-                        x = (-b &plusmn; &radic;&Delta;) / 2a
-                    </div>
-                    <div className="absolute top-36 right-16 animate-float-medium opacity-25">
-                        <Beaker size={36} className="text-[#a5c8a5]" />
-                    </div>
-                    <div className="absolute bottom-32 left-12 animate-float-slow opacity-20" style={{ animationDelay: '1s' }}>
-                        <Map size={32} className="text-[#a5c8a5]" />
-                    </div>
-                    <div className="absolute bottom-20 right-10 animate-float-medium opacity-15 font-chalk text-[#a5c8a5] text-xs select-none" style={{ animationDelay: '2s' }}>
-                        Fe + O&#x2082; &rarr; Fe&#x2082;O&#x2083;
-                    </div>
-                    <div className="absolute top-48 left-1/3 animate-float-fast opacity-20 font-chalk text-[#a5c8a5] text-xs select-none" style={{ animationDelay: '0.5s' }}>
-                        E = mc&sup2;
+                    {/* Background Formulas */}
+                    <div className="absolute inset-0 opacity-10 pointer-events-none select-none font-serif-display text-white">
+                        <span className="absolute top-32 left-10 text-3xl rotate-12">∫ x² dx</span>
+                        <span className="absolute bottom-40 right-10 text-4xl -rotate-6">E = mc²</span>
+                        <span className="absolute top-1/2 left-4 text-2xl">C₆H₁₂O₆</span>
                     </div>
 
-                    {/* Headline */}
-                    <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold chalk-text font-chalk leading-tight relative z-10">
-                        Make learning<br />
-                        <span className="chalk-underline text-[#a5c8a5] italic">feel like...</span>
-                    </h1>
+                    <div className="relative z-20 max-w-xl">
+                        {/* Badge */}
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/20 bg-white/5 text-slate-300 text-[10px] font-bold uppercase tracking-widest mb-8 font-sans-clean backdrop-blur-sm">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            For K-12 Educators
+                        </div>
 
-                    {/* Chalk note */}
-                    <div className="mt-6 max-w-xs chalk-box p-4 transform -rotate-1 relative z-10 bg-[#1f3522]/60">
-                        <p className="font-chalk text-[#a5c8a5] text-sm">
-                            &ldquo;What if every lesson was<br />a level to beat?&rdquo;
+                        <h1 className="text-5xl lg:text-7xl font-serif-display text-white leading-[1.1] mb-8 drop-shadow-lg">
+                            Make learning <br />
+                            <span className="text-emerald-400 italic">feel like...</span>
+                        </h1>
+
+                        <p className="text-slate-300 text-lg leading-relaxed mb-10 max-w-md font-sans-clean font-medium">
+                            Transform static lesson plans into interactive worlds.
+                            Bridge the gap between curriculum and engagement instantly.
                         </p>
-                    </div>
 
-                    {/* Mobile divider */}
-                    <div className="lg:hidden mt-12 border-t chalk-line" />
+                        <div className="flex flex-wrap gap-4">
+                            {/* CTA: White Button */}
+                            <button className="group flex items-center gap-2 px-8 py-4 bg-white hover:bg-slate-100 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_4px_0px_#94a3b8] hover:translate-y-[2px] hover:shadow-[0_2px_0px_#94a3b8] active:translate-y-[4px] active:shadow-none font-sans-clean">
+                                Start Building
+                                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                            </button>
+                            <button className="px-8 py-4 border-2 border-white/20 hover:border-white/50 text-white rounded-lg transition-colors font-medium backdrop-blur-sm bg-white/5">
+                                View Demo
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                {/* JAGGED DIVIDER */}
-                <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 z-20 -translate-x-1/2 w-16 pointer-events-none">
-                    <svg viewBox="0 0 64 800" preserveAspectRatio="none" className="w-full h-full">
-                        <path
-                            d="M32,0 L20,50 L44,100 L16,150 L40,200 L18,250 L42,300 L14,350 L38,400 L20,450 L44,500 L16,550 L40,600 L18,650 L42,700 L22,750 L32,800"
-                            fill="none"
-                            stroke="rgba(232,245,233,0.2)"
-                            strokeWidth="2"
-                            strokeDasharray="6 4"
-                        />
-                    </svg>
-                </div>
+                {/* --- RIGHT: GAME WORLD (Sky Blue) --- */}
+                {/* Clean vertical split */}
+                <div className="relative w-full lg:w-1/2 bg-[#38bdf8] flex items-center justify-center min-h-[50vh] lg:min-h-auto">
+                    {/* Sky Gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#0ea5e9] to-[#38bdf8] z-0"></div>
+                    <div className="absolute inset-0 scanlines opacity-20 z-10 mix-blend-overlay"></div>
 
-                {/* CROSSING ELEMENTS (positioned in parent section to span both halves) */}
-                {CROSSING_ELEMENTS.map((el, i) => (
-                    <div
-                        key={i}
-                        className="hidden lg:block absolute z-30 w-16 h-16"
-                        style={{ top: el.topPos, left: 'calc(50% - 32px)' }}
-                    >
-                        {/* Learning icon — fades out at midpoint */}
-                        <div
-                            className="absolute inset-0 flex items-center justify-center font-chalk text-[#a5c8a5] text-2xl"
-                            style={{ animation: `crossFromLeft 8s linear infinite`, animationDelay: el.delay }}
+                    {/* Game Assets */}
+                    <div className="absolute inset-0 w-full h-full pointer-events-none z-10">
+                        {/* Clouds */}
+                        <img src="/cloud_0.png" className="absolute top-20 right-20 w-32 opacity-90 animate-float-pixel" style={{ imageRendering: 'pixelated' }} alt="" />
+                        <img src="/cloud_1.png" className="absolute top-40 left-10 w-24 opacity-80 animate-float-pixel" style={{ imageRendering: 'pixelated', animationDelay: '1s' }} alt="" />
+
+                        {/* Ground & Platforms */}
+                        <div className="absolute bottom-0 w-full h-20" style={{ backgroundImage: "url('/ground.png')", backgroundSize: 'contain', imageRendering: 'pixelated' }}></div>
+                        <img src="/platform.png" className="absolute bottom-32 left-10 w-32" style={{ imageRendering: 'pixelated' }} alt="" />
+                        <img src="/platform.png" className="absolute bottom-52 right-10 w-32" style={{ imageRendering: 'pixelated' }} alt="" />
+
+                        {/* Coin (Gold) */}
+                        <div className="absolute bottom-52 left-20 animate-bounce">
+                            <div className="w-8 h-8 bg-[#FFD700] border-4 border-black rounded-sm flex items-center justify-center shadow-md">
+                                <span className="font-pixel text-black text-[10px] mt-1">$</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* PLAY Text */}
+                    <div className="relative z-20 transform -rotate-2">
+                        <h2 className="text-[5rem] md:text-[8rem] lg:text-[9rem] text-[#FFD700] leading-none select-none font-pixel tracking-tighter"
+                            style={{
+                                textShadow: '6px 6px 0px #b45309, 10px 10px 0px rgba(0,0,0,0.3)'
+                            }}
                         >
-                            {el.learnIcon}
+                            PLAY
+                        </h2>
+                        {/* Score UI */}
+                        <div className="absolute -top-12 right-0 bg-black/60 backdrop-blur-sm px-3 py-2 border-2 border-white/30 text-white font-pixel text-[10px] rounded-sm shadow-lg">
+                            SCORE: <span className="text-[#FFD700]">99999</span>
                         </div>
-                        {/* Game icon — fades in at midpoint */}
-                        <div
-                            className="absolute inset-0 flex items-center justify-center text-[#fbbf24] text-2xl font-pixel"
-                            style={{ animation: `crossToGame 8s linear infinite`, animationDelay: el.delay }}
-                        >
-                            {el.gameIcon}
-                        </div>
-                    </div>
-                ))}
-
-                {/* GAME SIDE */}
-                <div className="relative bg-[#0d0d1a] flex flex-col items-center justify-center overflow-hidden min-h-[400px] lg:min-h-0">
-                    {/* Pixel sky gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-[#1a1a3e] to-[#0d0d1a]" />
-
-                    {/* Stars */}
-                    {STAR_POSITIONS.map((star, i) => (
-                        <div
-                            key={i}
-                            className="absolute w-1 h-1 bg-white rounded-full animate-pixel-blink"
-                            style={{ top: star.top, left: star.left, animationDelay: star.delay }}
-                        />
-                    ))}
-
-                    {/* PLAY text */}
-                    <h2 className="relative z-10 text-7xl md:text-8xl lg:text-9xl font-black font-pixel tracking-widest text-[#fbbf24] pixel-text-shadow select-none">
-                        PLAY
-                    </h2>
-
-                    {/* Platforms */}
-                    <div className="absolute bottom-32 left-8 w-28 h-4 bg-[#22c55e] border-b-4 border-green-800 pixel-shadow" />
-                    <div className="absolute bottom-48 right-12 w-20 h-4 bg-[#22c55e] border-b-4 border-green-800 pixel-shadow" />
-                    <div className="absolute bottom-64 left-20 w-16 h-4 bg-[#22c55e] border-b-4 border-green-800 pixel-shadow" />
-
-                    {/* Coins */}
-                    <div className="absolute bottom-36 left-14 animate-coin-bounce">
-                        <div className="w-6 h-6 rounded-full bg-[#fbbf24] border-2 border-yellow-600 flex items-center justify-center text-xs font-black text-yellow-800">$</div>
-                    </div>
-                    <div className="absolute bottom-52 right-16 animate-coin-bounce" style={{ animationDelay: '0.2s' }}>
-                        <div className="w-6 h-6 rounded-full bg-[#fbbf24] border-2 border-yellow-600 flex items-center justify-center text-xs font-black text-yellow-800">$</div>
-                    </div>
-
-                    {/* Pixel character */}
-                    <div className="absolute bottom-36 left-1/2 -translate-x-1/2 flex flex-col items-center z-10" style={{ imageRendering: 'pixelated' as React.CSSProperties['imageRendering'] }}>
-                        <div className="w-4 h-4 bg-red-500" />
-                        <div className="w-6 h-6 bg-amber-300" />
-                        <div className="w-6 h-4 bg-blue-500" />
-                        <div className="flex gap-1">
-                            <div className="w-2 h-4 bg-blue-700" />
-                            <div className="w-2 h-4 bg-blue-700" />
-                        </div>
-                    </div>
-
-                    {/* Score HUD */}
-                    <div className="absolute top-4 right-4 font-pixel text-[#fbbf24] text-xs z-10">
-                        <div>SCORE</div>
-                        <div className="text-white">001200</div>
-                        <div className="mt-1">&#10084;&#10084;&#10084;</div>
                     </div>
                 </div>
             </section>
 
             {/* ================= VARIETY SECTION ================= */}
-            <section className="py-24 bg-[#1a2e1a]">
-                <div className="max-w-7xl mx-auto px-4 grid lg:grid-cols-5 gap-0 items-center">
-
-                    {/* LEFT: text */}
-                    <div className="lg:col-span-2 z-10 pr-8 mb-8 lg:mb-0">
-                        <h2 className="text-4xl md:text-5xl font-bold chalk-text font-chalk mb-4">
-                            No two<br />experiences are<br />the same.
-                        </h2>
-                        <p className="text-[#a5c8a5] font-chalk mt-4 text-lg">
-                            Every student gets a unique adventure, tailored to how they learn best.
-                        </p>
-                    </div>
-
-                    {/* RIGHT: scrolling feed */}
-                    <div className="lg:col-span-3 overflow-hidden relative marquee-fade-left">
-                        <div className="marquee-track">
-                            {GAME_PREVIEWS.concat(GAME_PREVIEWS).map((preview, i) => (
-                                <div
-                                    key={i}
-                                    className="min-w-[260px] h-44 mx-3 chalk-box bg-[#1f3522] rounded-xl p-4 flex flex-col justify-between shrink-0"
-                                >
-                                    <div className={`text-xs font-pixel ${preview.color} px-2 py-1 rounded w-fit bg-black/30`}>
-                                        {preview.mode}
-                                    </div>
-                                    <div className="h-24 bg-[#1a2e1a]/80 rounded flex items-center justify-center font-pixel text-[#a5c8a5] text-xs">
-                                        {preview.placeholder}
-                                    </div>
-                                    <div className="font-chalk text-[#a5c8a5] text-xs">{preview.subject}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+            <section className="py-24 bg-[#0a1f18] border-t border-white/5 overflow-hidden relative">
+                <div className="max-w-7xl mx-auto px-6 mb-12 text-center relative z-10">
+                    <h2 className="text-3xl font-bold font-serif-display text-white">Choose your adventure</h2>
+                    <p className="text-slate-400 mt-2 font-sans-clean">The curriculum adapts to the genre.</p>
                 </div>
-            </section>
 
-            {/* ================= WHY NEXUS ================= */}
-            <section className="py-24 bg-[#1f3522]">
-                <div className="max-w-7xl mx-auto px-4">
-                    <h2 className="text-4xl font-bold text-center chalk-text font-chalk mb-16">
-                        Why Nexus?
-                    </h2>
-
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {/* CARD 1: Complex Topics */}
-                        <div className="flip-card-container h-72 cursor-pointer">
-                            <div className="flip-card-inner">
-                                <div className="flip-card-face chalk-box bg-[#1a2e1a] rounded-2xl p-8 flex flex-col gap-4">
-                                    <FileQuestion className="text-[#a5c8a5]" size={40} />
-                                    <h3 className="text-xl font-bold chalk-text font-chalk">Complex Topics</h3>
-                                    <div className="space-y-2 mt-2">
-                                        <div className="h-2 w-full bg-[#a5c8a5]/20 rounded" />
-                                        <div className="h-2 w-3/4 bg-[#a5c8a5]/20 rounded" />
-                                        <div className="h-2 w-5/6 bg-[#a5c8a5]/15 rounded" />
-                                        <div className="h-2 w-2/3 bg-[#a5c8a5]/15 rounded" />
-                                    </div>
-                                </div>
-                                <div className="flip-card-back bg-[#7ec87e]/10 chalk-box rounded-2xl p-8 flex flex-col justify-center gap-3">
-                                    <div className="text-3xl">
-                                        <Gamepad2 className="text-[#7ec87e]" size={36} />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-[#7ec87e] font-chalk">
-                                        We gamify the hard stuff.
-                                    </h3>
-                                    <p className="text-[#a5c8a5] font-chalk text-sm leading-relaxed">
-                                        Every complex concept becomes a game mechanic. Boss fights for calculus, treasure hunts for history.
-                                    </p>
-                                </div>
+                <div className="flex gap-6 w-max animate-[scroll_40s_linear_infinite]">
+                    {[...GAME_MODES, ...GAME_MODES, ...GAME_MODES].map((game, i) => (
+                        <div key={i} className={`
+                            group relative w-64 h-40 rounded-xl border ${game.border} ${game.bg} 
+                            backdrop-blur-sm p-5 flex flex-col justify-between hover:scale-105 hover:bg-opacity-50 transition-all cursor-pointer shadow-lg
+                        `}>
+                            <div className="flex justify-between items-start">
+                                <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded bg-black/20 ${game.color}`}>
+                                    {game.label}
+                                </span>
+                                <Gamepad2 size={16} className={game.color} />
                             </div>
-                        </div>
-
-                        {/* CARD 2: Attention Spans */}
-                        <div className="flip-card-container h-72 cursor-pointer">
-                            <div className="flip-card-inner">
-                                <div className="flip-card-face chalk-box bg-[#1a2e1a] rounded-2xl p-8 flex flex-col gap-4 overflow-hidden relative">
-                                    <TrendingDown className="text-red-400" size={40} />
-                                    <h3 className="text-xl font-bold chalk-text font-chalk">
-                                        Shortening <span className="chalk-underline">Attention Spans</span>
-                                    </h3>
-                                    <p className="text-[#a5c8a5] font-chalk text-sm">Students disengage faster than ever.</p>
-                                    <svg viewBox="0 0 100 40" className="w-full text-red-400/40 mt-auto">
-                                        <polyline points="0,5 20,12 40,8 60,25 80,35 100,38" fill="none" stroke="currentColor" strokeWidth="3" />
-                                    </svg>
-                                </div>
-                                <div className="flip-card-back bg-[#fbbf24]/10 chalk-box rounded-2xl p-8 flex flex-col justify-center gap-3">
-                                    <div className="text-3xl">
-                                        <Trophy className="text-[#fbbf24]" size={36} />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-[#fbbf24] font-chalk">
-                                        Engagement is built-in.
-                                    </h3>
-                                    <p className="text-[#a5c8a5] font-chalk text-sm leading-relaxed">
-                                        Game loops &mdash; rewards, progress bars, unlockables &mdash; keep students locked in for hours.
-                                    </p>
-                                </div>
+                            <div>
+                                <h3 className="font-bold text-white text-lg leading-tight group-hover:text-white transition-colors font-sans-clean">
+                                    {game.title}
+                                </h3>
+                                <p className="text-xs text-slate-400 mt-1">{game.subject} Module</p>
                             </div>
-                        </div>
-
-                        {/* CARD 3: Traditional Slides */}
-                        <div className="flip-card-container h-72 cursor-pointer">
-                            <div className="flip-card-inner">
-                                <div className="flip-card-face chalk-box bg-[#1a2e1a] rounded-2xl p-8 flex flex-col gap-4">
-                                    <MonitorOff className="text-yellow-500" size={40} />
-                                    <h3 className="text-xl font-bold chalk-text font-chalk">
-                                        Traditional Slides<br />
-                                        <span className="chalk-underline">don&apos;t work.</span>
-                                    </h3>
-                                    <div className="flex justify-center py-2 text-4xl select-none">&#x1F634;</div>
-                                </div>
-                                <div className="flip-card-back bg-purple-900/20 chalk-box rounded-2xl p-8 flex flex-col justify-center gap-3">
-                                    <div className="text-3xl select-none">&#x1F680;</div>
-                                    <h3 className="text-xl font-bold text-purple-300 font-chalk">
-                                        Interactive by default.
-                                    </h3>
-                                    <p className="text-[#a5c8a5] font-chalk text-sm leading-relaxed">
-                                        No more passive watching. Students make choices, solve puzzles, and learn by doing.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ================= CTA ================= */}
-            <section className="py-32 relative overflow-hidden bg-[#1a2e1a]">
-                {/* Notebook lines */}
-                <div
-                    className="absolute inset-0 opacity-[0.05]"
-                    style={{
-                        backgroundImage: 'repeating-linear-gradient(0deg, #7ec87e 0px, transparent 1px, transparent 28px)',
-                        backgroundSize: '100% 28px',
-                    }}
-                />
-                {/* Margin line */}
-                <div className="absolute inset-y-0 left-16 w-px bg-red-500/15" />
-
-                <div className="max-w-3xl mx-auto px-4 text-center relative z-10">
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold chalk-text font-chalk leading-tight mb-10">
-                        Immerse yourself in the<br />
-                        <span className="text-[#7ec87e] chalk-underline">joy of learning.</span>
-                    </h2>
-
-                    <button className="relative font-pixel text-lg md:text-xl font-black px-10 md:px-12 py-4 md:py-5 bg-[#7ec87e] text-[#1a2e1a] border-b-4 border-green-800 pixel-shadow hover:-translate-y-1 hover:shadow-[4px_8px_0_rgba(0,0,0,0.5)] active:translate-y-1 active:border-b-0 transition-all duration-150">
-                        GET STARTED
-                    </button>
-
-                    <p className="mt-6 text-[#a5c8a5] font-chalk text-sm">
-                        Free to try. No credit card required.
-                    </p>
-                </div>
-            </section>
-
-            {/* ================= FOOTER ================= */}
-            <footer className="bg-[#1a2e1a] border-t chalk-line py-12">
-                <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
-                    <div className="col-span-2 md:col-span-1">
-                        <span className="font-pixel font-black text-2xl text-[#e8f5e9] tracking-widest block mb-3">NEXUS</span>
-                        <div className="text-sm text-[#a5c8a5] font-chalk">&copy; 2026 Nexus Inc.</div>
-                        <div className="flex gap-4 mt-4 text-[#a5c8a5]">
-                            <Instagram size={20} className="hover:text-pink-400 cursor-pointer transition-colors" />
-                            <Youtube size={20} className="hover:text-red-400 cursor-pointer transition-colors" />
-                        </div>
-                    </div>
-
-                    {[
-                        { title: 'Product', links: ['Features', 'Pricing'] },
-                        { title: 'Company', links: ['About', 'Contact Us'] },
-                        { title: 'Legal', links: ['Privacy', 'TOS', 'Legal'] },
-                    ].map((col) => (
-                        <div key={col.title}>
-                            <h4 className="font-bold chalk-text font-chalk mb-4">{col.title}</h4>
-                            <ul className="space-y-2 text-sm text-[#a5c8a5] font-chalk">
-                                {col.links.map((link) => (
-                                    <li key={link}>
-                                        <a href="#" className="hover:text-[#e8f5e9] transition-colors">{link}</a>
-                                    </li>
-                                ))}
-                            </ul>
                         </div>
                     ))}
                 </div>
-            </footer>
+            </section>
+
+            {/* ================= BENTO GRID (Why Nexus) ================= */}
+            <section className="py-24 bg-[#0a1f18] relative">
+                <div className="max-w-6xl mx-auto px-6 relative z-10">
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl lg:text-5xl font-bold font-serif-display text-white mb-4">Why it works</h2>
+                        <div className="h-1 w-24 bg-emerald-500 mx-auto rounded-full"></div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-6">
+
+                        {/* CARD 1: Engagement */}
+                        <div className="md:col-span-6 lg:col-span-8 bg-[#0d281e] border border-white/5 rounded-2xl p-8 relative overflow-hidden group hover:border-emerald-500/30 transition-colors">
+                            <div className="relative z-10">
+                                <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center mb-6 border border-red-500/20">
+                                    <TrendingDown className="text-red-400" size={24} />
+                                </div>
+                                <h3 className="text-2xl font-bold text-white mb-3 font-sans-clean">Fixing the <span className="text-red-400 decoration-wavy underline">Engagement Drop</span></h3>
+                                <p className="text-slate-400 max-w-sm">Traditional slides lose students after 8 minutes. Nexus resets the attention clock every time a new game mechanic is introduced.</p>
+                            </div>
+                        </div>
+
+                        {/* CARD 2: Complexity */}
+                        <div className="md:col-span-6 lg:col-span-4 bg-[#0d281e] border border-white/5 rounded-2xl p-8 flex flex-col justify-between group hover:border-purple-500/30 transition-colors">
+                            <div>
+                                <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-6 border border-purple-500/20">
+                                    <BrainCircuit className="text-purple-400" size={24} />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-2 font-sans-clean">Complex Topics</h3>
+                                <p className="text-slate-400 text-sm">We turn "hard" subjects into boss battles. Harder levels = deeper understanding.</p>
+                            </div>
+                            <div className="mt-8 p-3 bg-black/40 rounded-lg border border-white/5">
+                                <div className="flex justify-between text-[10px] text-purple-300 font-pixel mb-2">
+                                    <span>BOSS HP</span>
+                                    <span>85%</span>
+                                </div>
+                                <div className="w-full bg-[#0a1f18] h-2 rounded-full overflow-hidden">
+                                    <div className="bg-purple-500 w-[85%] h-full"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* CARD 3: Feedback */}
+                        <div className="md:col-span-6 lg:col-span-12 bg-gradient-to-r from-[#0d281e] to-[#0a1f18] border border-white/5 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-8">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                                        <Zap className="text-emerald-400" size={20} />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white font-sans-clean">Instant Feedback Loops</h3>
+                                </div>
+                                <p className="text-slate-400">Forget grading papers on weekends. Students get instant visual feedback on their performance, allowing them to self-correct in real-time.</p>
+                            </div>
+                            <button className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-lg hover:scale-105 transition-transform whitespace-nowrap">
+                                See Analytics Dashboard
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
         </div>
     );
 }

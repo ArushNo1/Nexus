@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Jersey_10, Fredericka_the_Great } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import Navbar from "@/components/ui/navbar";
 import "./globals.css";
@@ -20,6 +20,20 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+const jersey10 = Jersey_10({
+  weight: "400",
+  variable: "--font-jersey-10",
+  display: "swap",
+  subsets: ["latin"],
+});
+
+const fredericka = Fredericka_the_Great({
+  weight: "400",
+  variable: "--font-fredericka",
+  display: "swap",
+  subsets: ["latin"],
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,7 +41,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.className} antialiased`}>
+      <body className={`${geistSans.className} ${jersey10.variable} ${fredericka.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
