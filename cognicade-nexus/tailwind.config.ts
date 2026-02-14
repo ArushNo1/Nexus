@@ -53,7 +53,8 @@ export default {
         },
       },
       fontFamily: {
-        chalk: ['"Segoe Print"', '"Bradley Hand"', '"Comic Sans MS"', 'cursive'],
+        chalk: ['var(--font-fredericka)', 'serif'],
+        jersey: ['var(--font-jersey-10)', 'sans-serif'],
         pixel: ['"Courier New"', 'monospace'],
       },
       borderRadius: {
@@ -67,8 +68,8 @@ export default {
           '50%': { transform: 'translateY(-16px) rotate(3deg)' },
         },
         marqueeScroll: {
-          '0%': { transform: 'translateX(0%)' },
-          '100%': { transform: 'translateX(-50%)' },
+          '0%': { transform: 'translateX(-33.33%)' },
+          '100%': { transform: 'translateX(0%)' },
         },
         coinBounce: {
           '0%': { transform: 'translateY(0px) scale(1)' },
@@ -78,6 +79,10 @@ export default {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0' },
         },
+        hoverBounce: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-20px)' },
+        },
       },
       animation: {
         'float-slow': 'floatDrift 6s ease-in-out infinite',
@@ -86,6 +91,7 @@ export default {
         'marquee': 'marqueeScroll 30s linear infinite',
         'coin-bounce': 'coinBounce 0.8s ease-in-out infinite alternate',
         'pixel-blink': 'pixelBlink 1s step-end infinite',
+        'hover-bounce': 'hoverBounce 3s ease-in-out infinite',
       },
     },
   },

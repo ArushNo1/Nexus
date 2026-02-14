@@ -67,6 +67,15 @@
   }
 }
 
+/* Hide scrollbar but keep scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Crossing animation keyframes */
 @keyframes crossFromLeft {
   0%   { transform: translateX(-140px); opacity: 0; }
