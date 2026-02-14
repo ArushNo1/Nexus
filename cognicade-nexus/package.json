@@ -27,6 +27,7 @@
     "pdf-parse": "^2.4.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "supabase": "^2.76.8",
     "tailwind-merge": "^3.3.0"
   },
   "devDependencies": {
