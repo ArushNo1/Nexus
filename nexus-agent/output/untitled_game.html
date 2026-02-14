@@ -1,1164 +1,1256 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photosynthesis Factory</title>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photosynthesis Lab</title>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
+<style>
+* { margin: 0; padding: 0; }
+body { 
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  height: 100vh; 
+  font-family: 'Arial', sans-serif;
+}
+#game-container {
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+</style>
 </head>
-<body style="margin: 0; padding: 0; background: #1a1a1a; font-family: Arial, sans-serif;">
-
+<body>
+<div id="game-container">
 <script>
 /**
- * Photosynthesis Factory - Educational Drag & Drop Game
- * Learning Objectives → Game Mechanics:
- * - Define photosynthesis → Interactive tutorial with explicit feedback messages
- * - Identify inputs/outputs → Drag 3 inputs (sun, water, CO₂) to plant to create 2 outputs (O₂, glucose)
- * - Explain importance → Success messages connect oxygen to breathing, glucose to plant growth
+ * Photosynthesis Lab — Enhanced with Programmatic Assets
+ * Educational Drag-and-Drop Puzzle with Rich Visual Graphics
  */
 
-class AudioManager {
-    constructor(scene) {
-        this.scene = scene;
-        this.enabled = true;
-        this.audioContext = null;
-        this.initAudio();
-    }
-
-    initAudio() {
-        try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        } catch (e) {
-            console.log('Web Audio API not supported');
-            this.enabled = false;
-        }
-    }
-
-    playSuccess() {
-        if (!this.enabled || !this.audioContext) return;
-        
-        const oscillator = this.audioContext.createOscillator();
-        const gainNode = this.audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
-        
-        oscillator.frequency.setValueAtTime(523, this.audioContext.currentTime); // C5
-        oscillator.frequency.setValueAtTime(659, this.audioContext.currentTime + 0.1); // E5
-        oscillator.frequency.setValueAtTime(784, this.audioContext.currentTime + 0.2); // G5
-        
-        gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
-        
-        oscillator.start(this.audioContext.currentTime);
-        oscillator.stop(this.audioContext.currentTime + 0.5);
-    }
-
-    playDrop() {
-        if (!this.enabled || !this.audioContext) return;
-        
-        const oscillator = this.audioContext.createOscillator();
-        const gainNode = this.audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
-        
-        oscillator.frequency.setValueAtTime(200, this.audioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(100, this.audioContext.currentTime + 0.2);
-        
-        gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
-        
-        oscillator.start(this.audioContext.currentTime);
-        oscillator.stop(this.audioContext.currentTime + 0.2);
-    }
-
-    playComplete() {
-        if (!this.enabled || !this.audioContext) return;
-        
-        const frequencies = [261, 329, 392, 523]; // C major chord
-        
-        frequencies.forEach((freq, index) => {
-            const oscillator = this.audioContext.createOscillator();
-            const gainNode = this.audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(this.audioContext.destination);
-            
-            oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime + index * 0.1);
-            gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime + index * 0.1);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + index * 0.1 + 1);
-            
-            oscillator.start(this.audioContext.currentTime + index * 0.1);
-            oscillator.stop(this.audioContext.currentTime + index * 0.1 + 1);
-        });
-    }
-}
+const W = 800, H = 600;
 
 class MenuScene extends Phaser.Scene {
-    constructor() {
-        super({ key: 'MenuScene' });
+  constructor() { super('MenuScene'); }
+  
+  preload() {
+    this.createAssets();
+  }
+  
+  createAssets() {
+    // Create animated background particles
+    this.createParticleTexture();
+    
+    // Create decorative plant graphics
+    this.createPlantDecorations();
+    
+    // Create button hover effects
+    this.createButtonTextures();
+  }
+  
+  createParticleTexture() {
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0x4ade80, 0.6);
+    graphics.fillCircle(4, 4, 4);
+    graphics.generateTexture('particle', 8, 8);
+    graphics.destroy();
+  }
+  
+  createPlantDecorations() {
+    // Create a decorative leaf texture
+    const leafGraphics = this.add.graphics();
+    leafGraphics.fillStyle(0x22c55e);
+    leafGraphics.beginPath();
+    leafGraphics.arc(0, 0, 15, 0, Math.PI);
+    leafGraphics.fillPath();
+    leafGraphics.fillStyle(0x16a34a);
+    leafGraphics.fillEllipse(0, -5, 25, 8);
+    leafGraphics.generateTexture('leaf', 30, 30);
+    leafGraphics.destroy();
+    
+    // Create sun rays texture
+    const sunGraphics = this.add.graphics();
+    sunGraphics.lineStyle(3, 0xfbbf24, 0.8);
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const x1 = Math.cos(angle) * 20;
+      const y1 = Math.sin(angle) * 20;
+      const x2 = Math.cos(angle) * 35;
+      const y2 = Math.sin(angle) * 35;
+      sunGraphics.lineBetween(x1, y1, x2, y2);
     }
-
-    preload() {
-        this.createAssets();
-    }
-
-    createAssets() {
-        // Create background gradient texture
-        const bgTexture = this.textures.createCanvas('bg-gradient', 800, 600);
-        const bgCanvas = bgTexture.getCanvas();
-        const bgCtx = bgCanvas.getContext('2d');
-        
-        const gradient = bgCtx.createLinearGradient(0, 0, 0, 600);
-        gradient.addColorStop(0, '#87CEEB'); // Sky blue
-        gradient.addColorStop(0.7, '#98FB98'); // Pale green
-        gradient.addColorStop(1, '#228B22'); // Forest green
-        
-        bgCtx.fillStyle = gradient;
-        bgCtx.fillRect(0, 0, 800, 600);
-        
-        bgTexture.refresh();
-
-        // Create sun texture
-        const sunTexture = this.textures.createCanvas('sun-texture', 100, 100);
-        const sunCanvas = sunTexture.getCanvas();
-        const sunCtx = sunCanvas.getContext('2d');
-        
-        // Sun body
-        const sunGradient = sunCtx.createRadialGradient(50, 50, 10, 50, 50, 40);
-        sunGradient.addColorStop(0, '#FFD700');
-        sunGradient.addColorStop(1, '#FFA500');
-        
-        sunCtx.fillStyle = sunGradient;
-        sunCtx.beginPath();
-        sunCtx.arc(50, 50, 35, 0, Math.PI * 2);
-        sunCtx.fill();
-        
-        // Sun rays
-        sunCtx.strokeStyle = '#FFD700';
-        sunCtx.lineWidth = 4;
-        for (let i = 0; i < 12; i++) {
-            const angle = (i * 30) * Math.PI / 180;
-            sunCtx.beginPath();
-            sunCtx.moveTo(50 + Math.cos(angle) * 40, 50 + Math.sin(angle) * 40);
-            sunCtx.lineTo(50 + Math.cos(angle) * 48, 50 + Math.sin(angle) * 48);
-            sunCtx.stroke();
-        }
-        
-        sunTexture.refresh();
-
-        // Create water droplet texture
-        const waterTexture = this.textures.createCanvas('water-texture', 60, 80);
-        const waterCanvas = waterTexture.getCanvas();
-        const waterCtx = waterCanvas.getContext('2d');
-        
-        const waterGradient = waterCtx.createRadialGradient(30, 40, 5, 30, 40, 30);
-        waterGradient.addColorStop(0, '#87CEEB');
-        waterGradient.addColorStop(1, '#4169E1');
-        
-        waterCtx.fillStyle = waterGradient;
-        waterCtx.beginPath();
-        waterCtx.moveTo(30, 10);
-        waterCtx.quadraticCurveTo(15, 25, 15, 45);
-        waterCtx.quadraticCurveTo(15, 65, 30, 70);
-        waterCtx.quadraticCurveTo(45, 65, 45, 45);
-        waterCtx.quadraticCurveTo(45, 25, 30, 10);
-        waterCtx.fill();
-        
-        // Water highlight
-        waterCtx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-        waterCtx.beginPath();
-        waterCtx.ellipse(25, 30, 8, 15, 0, 0, Math.PI * 2);
-        waterCtx.fill();
-        
-        waterTexture.refresh();
-
-        // Create CO2 bubble texture
-        const co2Texture = this.textures.createCanvas('co2-texture', 60, 60);
-        const co2Canvas = co2Texture.getCanvas();
-        const co2Ctx = co2Canvas.getContext('2d');
-        
-        const co2Gradient = co2Ctx.createRadialGradient(30, 30, 5, 30, 30, 25);
-        co2Gradient.addColorStop(0, '#D3D3D3');
-        co2Gradient.addColorStop(1, '#808080');
-        
-        co2Ctx.fillStyle = co2Gradient;
-        co2Ctx.beginPath();
-        co2Ctx.arc(30, 30, 25, 0, Math.PI * 2);
-        co2Ctx.fill();
-        
-        // CO2 text
-        co2Ctx.fillStyle = '#FFFFFF';
-        co2Ctx.font = 'bold 14px Arial';
-        co2Ctx.textAlign = 'center';
-        co2Ctx.fillText('CO₂', 30, 35);
-        
-        co2Texture.refresh();
-
-        // Create plant texture
-        const plantTexture = this.textures.createCanvas('plant-texture', 200, 200);
-        const plantCanvas = plantTexture.getCanvas();
-        const plantCtx = plantCanvas.getContext('2d');
-        
-        // Stem
-        const stemGradient = plantCtx.createLinearGradient(95, 120, 105, 120);
-        stemGradient.addColorStop(0, '#228B22');
-        stemGradient.addColorStop(1, '#32CD32');
-        
-        plantCtx.fillStyle = stemGradient;
-        plantCtx.fillRect(95, 120, 10, 60);
-        
-        // Leaves
-        const leafGradient = plantCtx.createRadialGradient(100, 100, 10, 100, 100, 30);
-        leafGradient.addColorStop(0, '#32CD32');
-        leafGradient.addColorStop(1, '#228B22');
-        
-        plantCtx.fillStyle = leafGradient;
-        
-        // Left leaf
-        plantCtx.beginPath();
-        plantCtx.arc(80, 100, 25, 0, Math.PI * 2);
-        plantCtx.fill();
-        
-        // Right leaf
-        plantCtx.beginPath();
-        plantCtx.arc(120, 100, 25, 0, Math.PI * 2);
-        plantCtx.fill();
-        
-        // Center leaf (larger)
-        plantCtx.beginPath();
-        plantCtx.arc(100, 80, 30, 0, Math.PI * 2);
-        plantCtx.fill();
-        
-        plantTexture.refresh();
-
-        // Create oxygen texture
-        const oxygenTexture = this.textures.createCanvas('oxygen-texture', 50, 50);
-        const oxygenCanvas = oxygenTexture.getCanvas();
-        const oxygenCtx = oxygenCanvas.getContext('2d');
-        
-        const oxygenGradient = oxygenCtx.createRadialGradient(25, 25, 5, 25, 25, 20);
-        oxygenGradient.addColorStop(0, '#E0FFFF');
-        oxygenGradient.addColorStop(1, '#87CEEB');
-        
-        oxygenCtx.fillStyle = oxygenGradient;
-        oxygenCtx.beginPath();
-        oxygenCtx.arc(25, 25, 20, 0, Math.PI * 2);
-        oxygenCtx.fill();
-        
-        // O2 text
-        oxygenCtx.fillStyle = '#000080';
-        oxygenCtx.font = 'bold 12px Arial';
-        oxygenCtx.textAlign = 'center';
-        oxygenCtx.fillText('O₂', 25, 30);
-        
-        oxygenTexture.refresh();
-
-        // Create glucose texture (hexagon)
-        const glucoseTexture = this.textures.createCanvas('glucose-texture', 60, 60);
-        const glucoseCanvas = glucoseTexture.getCanvas();
-        const glucoseCtx = glucoseCanvas.getContext('2d');
-        
-        const glucoseGradient = glucoseCtx.createRadialGradient(30, 30, 5, 30, 30, 25);
-        glucoseGradient.addColorStop(0, '#F4A460');
-        glucoseGradient.addColorStop(1, '#D2691E');
-        
-        glucoseCtx.fillStyle = glucoseGradient;
-        glucoseCtx.beginPath();
-        
-        // Draw hexagon
-        for (let i = 0; i < 6; i++) {
-            const angle = (i * 60) * Math.PI / 180;
-            const x = 30 + Math.cos(angle) * 20;
-            const y = 30 + Math.sin(angle) * 20;
-            if (i === 0) {
-                glucoseCtx.moveTo(x, y);
-            } else {
-                glucoseCtx.lineTo(x, y);
-            }
-        }
-        glucoseCtx.closePath();
-        glucoseCtx.fill();
-        
-        // Glucose formula
-        glucoseCtx.fillStyle = '#8B4513';
-        glucoseCtx.font = 'bold 8px Arial';
-        glucoseCtx.textAlign = 'center';
-        glucoseCtx.fillText('C₆H₁₂O₆', 30, 34);
-        
-        glucoseTexture.refresh();
-    }
-
-    create() {
-        // Background
-        this.add.image(400, 300, 'bg-gradient');
-        
-        // Decorative elements
-        this.add.image(150, 100, 'sun-texture').setScale(0.8);
-        this.add.image(650, 150, 'plant-texture').setScale(0.6);
-        
-        // Title with better styling
-        const title = this.add.text(400, 120, 'PHOTOSYNTHESIS FACTORY', { 
-            fontSize: '36px', 
-            fill: '#2F4F2F', 
-            fontWeight: 'bold',
-            stroke: '#FFFFFF',
-            strokeThickness: 2
-        }).setOrigin(0.5);
-        
-        // Subtitle
-        this.add.text(400, 180, 'Help plants make their own food!', { 
-            fontSize: '20px', 
-            fill: '#228B22', 
-            fontWeight: 'bold',
-            stroke: '#FFFFFF',
-            strokeThickness: 1
-        }).setOrigin(0.5);
-        
-        this.add.text(400, 220, 'Drag sunlight, water, and CO₂ to the plant.', { 
-            fontSize: '18px', 
-            fill: '#2F4F2F',
-            stroke: '#FFFFFF',
-            strokeThickness: 1
-        }).setOrigin(0.5);
-
-        // Controls info with better formatting
-        const controlsText = this.add.text(400, 290, 'CONTROLS', { 
-            fontSize: '16px', 
-            fill: '#2F4F2F', 
-            fontWeight: 'bold' 
-        }).setOrigin(0.5);
-        
-        this.add.text(400, 320, 'Mouse: Drag and drop inputs', { 
-            fontSize: '14px', 
-            fill: '#2F4F2F' 
-        }).setOrigin(0.5);
-        
-        this.add.text(400, 340, 'Keyboard: Arrow keys + WASD + Space', { 
-            fontSize: '14px', 
-            fill: '#2F4F2F' 
-        }).setOrigin(0.5);
-
-        // Accessibility notice
-        this.add.text(400, 380, 'Fully accessible with keyboard controls and high contrast mode', { 
-            fontSize: '12px', 
-            fill: '#4B0082', 
-            fontStyle: 'italic' 
-        }).setOrigin(0.5);
-
-        // Enhanced start button
-        const startBtn = this.add.graphics();
-        startBtn.fillStyle(0x4CAF50);
-        startBtn.fillRoundedRect(300, 420, 200, 60, 10);
-        startBtn.lineStyle(3, 0x388E3C);
-        startBtn.strokeRoundedRect(300, 420, 200, 60, 10);
-        
-        const startBtnZone = this.add.zone(400, 450, 200, 60)
-            .setInteractive()
-            .on('pointerover', () => {
-                startBtn.clear();
-                startBtn.fillStyle(0x66BB6A);
-                startBtn.fillRoundedRect(300, 420, 200, 60, 10);
-                startBtn.lineStyle(3, 0x388E3C);
-                startBtn.strokeRoundedRect(300, 420, 200, 60, 10);
-            })
-            .on('pointerout', () => {
-                startBtn.clear();
-                startBtn.fillStyle(0x4CAF50);
-                startBtn.fillRoundedRect(300, 420, 200, 60, 10);
-                startBtn.lineStyle(3, 0x388E3C);
-                startBtn.strokeRoundedRect(300, 420, 200, 60, 10);
-            })
-            .on('pointerdown', () => this.scene.start('GameScene'));
-
-        this.add.text(400, 450, 'START FACTORY', { 
-            fontSize: '20px', 
-            fill: '#FFFFFF', 
-            fontWeight: 'bold' 
-        }).setOrigin(0.5);
-    }
+    sunGraphics.fillStyle(0xfbbf24);
+    sunGraphics.fillCircle(0, 0, 18);
+    sunGraphics.generateTexture('sun', 70, 70);
+    sunGraphics.destroy();
+  }
+  
+  createButtonTextures() {
+    // Normal button
+    const btnGraphics = this.add.graphics();
+    btnGraphics.fillStyle(0x22c55e);
+    btnGraphics.fillRoundedRect(0, 0, 200, 50, 8);
+    btnGraphics.lineStyle(2, 0x16a34a);
+    btnGraphics.strokeRoundedRect(0, 0, 200, 50, 8);
+    btnGraphics.generateTexture('button-normal', 200, 50);
+    btnGraphics.destroy();
+    
+    // Hover button
+    const btnHoverGraphics = this.add.graphics();
+    btnHoverGraphics.fillStyle(0x16a34a);
+    btnHoverGraphics.fillRoundedRect(0, 0, 200, 50, 8);
+    btnHoverGraphics.lineStyle(2, 0x15803d);
+    btnHoverGraphics.strokeRoundedRect(0, 0, 200, 50, 8);
+    btnHoverGraphics.fillStyle(0x22c55e, 0.3);
+    btnHoverGraphics.fillRoundedRect(2, 2, 196, 46, 6);
+    btnHoverGraphics.generateTexture('button-hover', 200, 50);
+    btnHoverGraphics.destroy();
+  }
+  
+  create() {
+    // Animated gradient background
+    const bgGraphics = this.add.graphics();
+    bgGraphics.fillGradientStyle(0x1b4332, 0x1b4332, 0x064e3b, 0x064e3b, 1);
+    bgGraphics.fillRect(0, 0, W, H);
+    
+    // Floating particles
+    const particles = this.add.particles(0, 0, 'particle', {
+      x: { min: 0, max: W },
+      y: { min: 0, max: H },
+      speed: { min: 10, max: 30 },
+      lifespan: 8000,
+      quantity: 2,
+      alpha: { start: 0.8, end: 0 },
+      scale: { start: 0.5, end: 1.2 }
+    });
+    
+    // Decorative elements
+    this.add.image(150, 120, 'sun').setScale(0.8).setAlpha(0.7);
+    this.add.image(650, 150, 'leaf').setScale(1.5).setAlpha(0.6);
+    this.add.image(100, 450, 'leaf').setScale(1.2).setAlpha(0.5).setRotation(0.5);
+    this.add.image(700, 480, 'leaf').setScale(1.3).setAlpha(0.6).setRotation(-0.3);
+    
+    // Title with enhanced styling
+    const titleShadow = this.add.text(W/2 + 3, 103, '🌿 Photosynthesis Lab 🌿', { 
+      fontSize: '36px', fontFamily: 'Arial', color: '#064e3b', fontStyle: 'bold' 
+    }).setOrigin(0.5);
+    
+    const title = this.add.text(W/2, 100, '🌿 Photosynthesis Lab 🌿', { 
+      fontSize: '36px', fontFamily: 'Arial', color: '#a7f3d0', fontStyle: 'bold' 
+    }).setOrigin(0.5);
+    
+    // Pulsing effect for title
+    this.tweens.add({
+      targets: title,
+      scaleX: 1.05,
+      scaleY: 1.05,
+      duration: 2000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+    
+    // Subtitle with glow effect
+    const subtitle = this.add.text(W/2, 180, 'Learn how plants make food and oxygen!', { 
+      fontSize: '20px', fontFamily: 'Arial', color: '#d1fae5' 
+    }).setOrigin(0.5);
+    
+    // Instructions with better visual hierarchy
+    const instructions = [
+      'HOW TO PLAY:',
+      '• Drag the 3 inputs (Sunlight, Water, CO₂) onto the plant',
+      '• Or use Arrow Keys to select, Spacebar to pick up/drop',
+      '• Complete 5 cycles to unlock the quiz',
+      '• Answer 3 questions to finish the lab!'
+    ];
+    
+    const instructionContainer = this.add.container(W/2, 300);
+    const instructionBg = this.add.graphics();
+    instructionBg.fillStyle(0x064e3b, 0.4);
+    instructionBg.fillRoundedRect(-300, -70, 600, 140, 8);
+    instructionBg.lineStyle(1, 0x4ade80, 0.6);
+    instructionBg.strokeRoundedRect(-300, -70, 600, 140, 8);
+    instructionContainer.add(instructionBg);
+    
+    instructions.forEach((t, i) => {
+      const textObj = this.add.text(0, -50 + i * 25, t, { 
+        fontSize: i === 0 ? '18px' : '15px', 
+        fontFamily: 'Arial', 
+        color: i === 0 ? '#fbbf24' : '#e2e8f0',
+        fontStyle: i === 0 ? 'bold' : 'normal'
+      }).setOrigin(0.5);
+      instructionContainer.add(textObj);
+    });
+    
+    // Enhanced chemical equation
+    const equationBg = this.add.graphics();
+    equationBg.fillStyle(0x22c55e, 0.2);
+    equationBg.fillRoundedRect(W/2 - 220, 425, 440, 35, 8);
+    equationBg.lineStyle(1, 0x86efac, 0.8);
+    equationBg.strokeRoundedRect(W/2 - 220, 425, 440, 35, 8);
+    
+    this.add.text(W/2, 442, '6CO₂ + 6H₂O + Light Energy → C₆H₁₂O₆ + 6O₂', { 
+      fontSize: '18px', fontFamily: 'Arial', color: '#86efac', fontStyle: 'italic' 
+    }).setOrigin(0.5);
+    
+    // Enhanced start button
+    const btn = this.add.image(W/2, 520, 'button-normal').setInteractive({ useHandCursor: true });
+    const btnText = this.add.text(W/2, 520, 'START LAB', { 
+      fontSize: '20px', fontFamily: 'Arial', color: '#fff', fontStyle: 'bold' 
+    }).setOrigin(0.5);
+    
+    btn.on('pointerover', () => {
+      btn.setTexture('button-hover');
+      this.tweens.add({ targets: btn, scaleX: 1.05, scaleY: 1.05, duration: 100 });
+    });
+    
+    btn.on('pointerout', () => {
+      btn.setTexture('button-normal');
+      this.tweens.add({ targets: btn, scaleX: 1, scaleY: 1, duration: 100 });
+    });
+    
+    btn.on('pointerdown', () => {
+      this.tweens.add({ 
+        targets: btn, 
+        scaleX: 0.95, 
+        scaleY: 0.95, 
+        duration: 50, 
+        yoyo: true,
+        onComplete: () => this.scene.start('GameScene')
+      });
+    });
+    
+    this.input.keyboard.on('keydown-ENTER', () => this.scene.start('GameScene'));
+    this.input.keyboard.on('keydown-SPACE', () => this.scene.start('GameScene'));
+  }
 }
 
 class GameScene extends Phaser.Scene {
-    constructor() {
-        super({ key: 'GameScene' });
+  constructor() { super('GameScene'); }
+  
+  preload() {
+    this.createGameAssets();
+  }
+  
+  createGameAssets() {
+    // Create detailed plant graphics
+    this.createPlantTextures();
+    
+    // Create input item textures
+    this.createInputTextures();
+    
+    // Create effect textures
+    this.createEffectTextures();
+    
+    // Create UI elements
+    this.createUITextures();
+  }
+  
+  createPlantTextures() {
+    // Main plant body
+    const plantGraphics = this.add.graphics();
+    
+    // Plant pot
+    plantGraphics.fillStyle(0x92400e);
+    plantGraphics.fillRect(-15, 70, 30, 25);
+    plantGraphics.fillStyle(0x78350f);
+    plantGraphics.fillRect(-12, 70, 24, 20);
+    
+    // Stem
+    plantGraphics.fillStyle(0x16a34a);
+    plantGraphics.fillRect(-3, 0, 6, 75);
+    
+    // Main leaves
+    plantGraphics.fillStyle(0x22c55e);
+    plantGraphics.fillEllipse(-25, 20, 40, 24);
+    plantGraphics.fillEllipse(25, 25, 36, 20);
+    plantGraphics.fillEllipse(-20, 40, 30, 16);
+    plantGraphics.fillEllipse(20, 45, 32, 18);
+    
+    // Leaf details
+    plantGraphics.lineStyle(1, 0x16a34a);
+    plantGraphics.strokeEllipse(-25, 20, 40, 24);
+    plantGraphics.strokeEllipse(25, 25, 36, 20);
+    plantGraphics.strokeEllipse(-20, 40, 30, 16);
+    plantGraphics.strokeEllipse(20, 45, 32, 18);
+    
+    // Flower
+    plantGraphics.fillStyle(0xfbbf24);
+    plantGraphics.fillCircle(0, 0, 8);
+    plantGraphics.fillStyle(0xf59e0b);
+    plantGraphics.fillCircle(0, 0, 5);
+    
+    plantGraphics.generateTexture('detailed-plant', 100, 120);
+    plantGraphics.destroy();
+    
+    // Photosynthesis glow effect
+    const glowGraphics = this.add.graphics();
+    glowGraphics.fillStyle(0x4ade80, 0.3);
+    glowGraphics.fillCircle(0, 0, 100);
+    glowGraphics.fillStyle(0x22c55e, 0.2);
+    glowGraphics.fillCircle(0, 0, 80);
+    glowGraphics.generateTexture('plant-glow', 200, 200);
+    glowGraphics.destroy();
+  }
+  
+  createInputTextures() {
+    // Sunlight texture
+    const sunlightGraphics = this.add.graphics();
+    sunlightGraphics.fillStyle(0xfbbf24);
+    sunlightGraphics.fillRoundedRect(0, 0, 130, 55, 8);
+    sunlightGraphics.lineStyle(2, 0xf59e0b);
+    sunlightGraphics.strokeRoundedRect(0, 0, 130, 55, 8);
+    
+    // Sun rays
+    sunlightGraphics.lineStyle(1, 0xfcd34d, 0.6);
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const x1 = 65 + Math.cos(angle) * 25;
+      const y1 = 27 + Math.sin(angle) * 12;
+      const x2 = 65 + Math.cos(angle) * 35;
+      const y2 = 27 + Math.sin(angle) * 17;
+      sunlightGraphics.lineBetween(x1, y1, x2, y2);
     }
-
-    create() {
-        this.score = 0;
-        this.timeLeft = 60;
-        this.accessibilityMode = false;
-        this.selectedItem = null;
-        this.keyboardCursor = null;
-        this.audioManager = new AudioManager(this);
-        this.highContrast = false;
-
-        this.setupUI();
-        this.setupPlant();
-        this.setupInputSystem();
-        this.setupKeyboard();
-        this.setupTimer();
-        this.spawnInputs();
+    
+    sunlightGraphics.generateTexture('sunlight-input', 130, 55);
+    sunlightGraphics.destroy();
+    
+    // Water texture
+    const waterGraphics = this.add.graphics();
+    waterGraphics.fillStyle(0x3b82f6);
+    waterGraphics.fillRoundedRect(0, 0, 130, 55, 8);
+    waterGraphics.lineStyle(2, 0x2563eb);
+    waterGraphics.strokeRoundedRect(0, 0, 130, 55, 8);
+    
+    // Water droplets
+    waterGraphics.fillStyle(0x60a5fa, 0.6);
+    waterGraphics.fillCircle(25, 20, 4);
+    waterGraphics.fillCircle(45, 35, 3);
+    waterGraphics.fillCircle(85, 25, 4);
+    waterGraphics.fillCircle(105, 40, 3);
+    
+    waterGraphics.generateTexture('water-input', 130, 55);
+    waterGraphics.destroy();
+    
+    // CO₂ texture
+    const co2Graphics = this.add.graphics();
+    co2Graphics.fillStyle(0x6b7280);
+    co2Graphics.fillRoundedRect(0, 0, 130, 55, 8);
+    co2Graphics.lineStyle(2, 0x4b5563);
+    co2Graphics.strokeRoundedRect(0, 0, 130, 55, 8);
+    
+    // CO₂ molecules (dots pattern)
+    co2Graphics.fillStyle(0x9ca3af, 0.7);
+    for (let i = 0; i < 8; i++) {
+      const x = 20 + (i % 4) * 22;
+      const y = 18 + Math.floor(i / 4) * 20;
+      co2Graphics.fillCircle(x, y, 2);
     }
+    
+    co2Graphics.generateTexture('co2-input', 130, 55);
+    co2Graphics.destroy();
+  }
+  
+  createEffectTextures() {
+    // Sparkle effect
+    const sparkleGraphics = this.add.graphics();
+    sparkleGraphics.fillStyle(0xfbbf24);
+    sparkleGraphics.beginPath();
+    sparkleGraphics.moveTo(0, -8);
+    sparkleGraphics.lineTo(2, -2);
+    sparkleGraphics.lineTo(8, 0);
+    sparkleGraphics.lineTo(2, 2);
+    sparkleGraphics.lineTo(0, 8);
+    sparkleGraphics.lineTo(-2, 2);
+    sparkleGraphics.lineTo(-8, 0);
+    sparkleGraphics.lineTo(-2, -2);
+    sparkleGraphics.closePath();
+    sparkleGraphics.fillPath();
+    sparkleGraphics.generateTexture('sparkle', 16, 16);
+    sparkleGraphics.destroy();
+    
+    // Success burst
+    const burstGraphics = this.add.graphics();
+    burstGraphics.lineStyle(3, 0x4ade80);
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const x1 = Math.cos(angle) * 10;
+      const y1 = Math.sin(angle) * 10;
+      const x2 = Math.cos(angle) * 25;
+      const y2 = Math.sin(angle) * 25;
+      burstGraphics.lineBetween(x1, y1, x2, y2);
+    }
+    burstGraphics.generateTexture('burst', 50, 50);
+    burstGraphics.destroy();
+  }
+  
+  createUITextures() {
+    // Progress bar background
+    const progressBgGraphics = this.add.graphics();
+    progressBgGraphics.fillStyle(0x1f2937);
+    progressBgGraphics.fillRoundedRect(0, 0, 300, 20, 10);
+    progressBgGraphics.lineStyle(2, 0x4ade80);
+    progressBgGraphics.strokeRoundedRect(0, 0, 300, 20, 10);
+    progressBgGraphics.generateTexture('progress-bg', 300, 20);
+    progressBgGraphics.destroy();
+    
+    // Progress bar fill
+    const progressFillGraphics = this.add.graphics();
+    progressFillGraphics.fillGradientStyle(0x22c55e, 0x16a34a, 0x4ade80, 0x22c55e, 1);
+    progressFillGraphics.fillRoundedRect(0, 0, 300, 16, 8);
+    progressFillGraphics.generateTexture('progress-fill', 300, 16);
+    progressFillGraphics.destroy();
+    
+    // Output display background
+    const outputBgGraphics = this.add.graphics();
+    outputBgGraphics.fillStyle(0x064e3b, 0.9);
+    outputBgGraphics.fillRoundedRect(0, 0, 500, 50, 12);
+    outputBgGraphics.lineStyle(2, 0x34d399);
+    outputBgGraphics.strokeRoundedRect(0, 0, 500, 50, 12);
+    
+    // Add glow effect
+    outputBgGraphics.lineStyle(4, 0x4ade80, 0.3);
+    outputBgGraphics.strokeRoundedRect(-2, -2, 504, 54, 14);
+    
+    outputBgGraphics.generateTexture('output-bg', 500, 50);
+    outputBgGraphics.destroy();
+  }
+  
+  create() {
+    this.score = 0;
+    this.cycles = 0;
+    this.targetCycles = 5;
+    this.delivered = { Sunlight: false, Water: false, 'CO₂': false };
+    this.kbIndex = 0;
+    this.kbHolding = null;
 
-    setupUI() {
-        // Enhanced background with gradient
-        const bgTexture = this.textures.createCanvas('game-bg', 800, 600);
-        const bgCanvas = bgTexture.getCanvas();
-        const bgCtx = bgCanvas.getContext('2d');
-        
-        const gradient = bgCtx.createLinearGradient(0, 0, 0, 600);
-        gradient.addColorStop(0, '#87CEEB');
-        gradient.addColorStop(0.6, '#98FB98');
-        gradient.addColorStop(1, '#8FBC8F');
-        
-        bgCtx.fillStyle = gradient;
-        bgCtx.fillRect(0, 0, 800, 600);
-        
-        bgTexture.refresh();
-        this.add.image(400, 300, 'game-bg');
-        
-        // Ground with texture
-        const groundTexture = this.textures.createCanvas('ground', 800, 100);
-        const groundCanvas = groundTexture.getCanvas();
-        const groundCtx = groundCanvas.getContext('2d');
-        
-        const groundGradient = groundCtx.createLinearGradient(0, 0, 0, 100);
-        groundGradient.addColorStop(0, '#CD853F');
-        groundGradient.addColorStop(1, '#8B4513');
-        
-        groundCtx.fillStyle = groundGradient;
-        groundCtx.fillRect(0, 0, 800, 100);
-        
-        // Add some texture lines
-        groundCtx.strokeStyle = 'rgba(139, 69, 19, 0.3)';
-        groundCtx.lineWidth = 1;
-        for (let i = 0; i < 10; i++) {
-            groundCtx.beginPath();
-            groundCtx.moveTo(0, i * 10);
-            groundCtx.lineTo(800, i * 10 + 20);
-            groundCtx.stroke();
+    // Enhanced background
+    const bgGraphics = this.add.graphics();
+    bgGraphics.fillGradientStyle(0x0f2a1d, 0x0f2a1d, 0x064e3b, 0x1b4332, 1);
+    bgGraphics.fillRect(0, 0, W, H);
+    
+    // Background particles
+    this.add.particles(0, 0, 'sparkle', {
+      x: { min: 0, max: W },
+      y: { min: 0, max: H },
+      speed: { min: 5, max: 15 },
+      lifespan: 12000,
+      quantity: 1,
+      alpha: { start: 0.6, end: 0 },
+      scale: { start: 0.3, end: 0.8 }
+    });
+
+    // Enhanced plant with detailed graphics
+    this.plant = this.add.image(W/2, H/2, 'detailed-plant').setScale(1.5);
+    this.plantGlow = this.add.image(W/2, H/2, 'plant-glow').setScale(0.8).setAlpha(0);
+    
+    // Plant zone with animated border
+    this.plantZone = this.add.zone(W/2, H/2, 160, 200).setRectangleDropZone(160, 200);
+    this.dropOutline = this.add.graphics();
+    this.dropOutline.lineStyle(3, 0x4ade80, 0.8);
+    this.dropOutline.strokeRoundedRect(W/2 - 80, H/2 - 100, 160, 200, 12);
+    
+    // Animate drop zone
+    this.tweens.add({
+      targets: this.dropOutline,
+      alpha: 0.3,
+      duration: 1500,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    // Enhanced input items with custom graphics
+    const inputDefs = [
+      { label: 'Sunlight', texture: 'sunlight-input', x: 120, y: 150, emoji: '☀️' },
+      { label: 'Water', texture: 'water-input', x: 120, y: 300, emoji: '💧' },
+      { label: 'CO₂', texture: 'co2-input', x: 120, y: 450, emoji: '💨' }
+    ];
+    
+    this.inputs = [];
+    inputDefs.forEach((d, i) => {
+      const c = this.add.container(d.x, d.y);
+      const bg = this.add.image(0, 0, d.texture);
+      const txt = this.add.text(0, 0, `${d.emoji} ${d.label}`, { 
+        fontSize: '16px', fontFamily: 'Arial', color: '#000', fontStyle: 'bold' 
+      }).setOrigin(0.5);
+      
+      // Add hover glow effect
+      const glow = this.add.rectangle(0, 0, 140, 65, 0xffffff, 0).setStrokeStyle(2, 0xfbbf24, 0);
+      
+      c.add([glow, bg, txt]);
+      c.setSize(130, 55);
+      c.setInteractive({ draggable: true, useHandCursor: true });
+      c.label = d.label;
+      c.homeX = d.x;
+      c.homeY = d.y;
+      c.bg = bg;
+      c.glow = glow;
+      c.idx = i;
+      
+      // Enhanced hover effects
+      c.on('pointerover', () => {
+        if (!this.delivered[c.label]) {
+          this.tweens.add({ targets: c, scaleX: 1.05, scaleY: 1.05, duration: 100 });
+          c.glow.setStrokeStyle(2, 0xfbbf24, 0.8);
         }
-        
-        groundTexture.refresh();
-        this.add.image(400, 550, 'ground');
-        
-        // Enhanced UI elements
-        this.scoreText = this.add.text(20, 20, 'Score: 0', { 
-            fontSize: '22px', 
-            fill: '#2F4F2F', 
-            fontWeight: 'bold',
-            stroke: '#FFFFFF',
-            strokeThickness: 2
+      });
+      
+      c.on('pointerout', () => {
+        if (!this.delivered[c.label]) {
+          this.tweens.add({ targets: c, scaleX: 1, scaleY: 1, duration: 100 });
+          c.glow.setStrokeStyle(2, 0xfbbf24, 0);
+        }
+      });
+      
+      this.inputs.push(c);
+    });
+
+    // Enhanced keyboard focus indicator
+    this.focusRect = this.add.graphics();
+    this.focusRect.lineStyle(4, 0xf59e0b);
+    this.focusRect.strokeRoundedRect(-70, -32, 140, 65, 8);
+    this.focusRect.setDepth(10);
+    this.updateFocus();
+
+    // Enhanced drag events with visual feedback
+    this.input.on('drag', (p, obj, dx, dy) => { 
+      obj.x = dx; 
+      obj.y = dy;
+      
+      // Check if over plant zone and highlight
+      const overPlant = Phaser.Geom.Rectangle.Overlaps(
+        new Phaser.Geom.Rectangle(obj.x - 65, obj.y - 27, 130, 55),
+        new Phaser.Geom.Rectangle(W/2 - 80, H/2 - 100, 160, 200)
+      );
+      
+      this.dropOutline.clear();
+      this.dropOutline.lineStyle(3, overPlant ? 0x22c55e : 0x4ade80, overPlant ? 1 : 0.8);
+      this.dropOutline.strokeRoundedRect(W/2 - 80, H/2 - 100, 160, 200, 12);
+    });
+    
+    this.input.on('dragstart', (p, obj) => { 
+      obj.setDepth(5);
+      obj.glow.setStrokeStyle(3, 0xfbbf24, 1);
+      
+      // Create drag trail effect
+      this.dragTrail = this.add.particles(obj.x, obj.y, 'sparkle', {
+        follow: obj,
+        quantity: 2,
+        scale: { start: 0.3, end: 0 },
+        alpha: { start: 0.8, end: 0 },
+        lifespan: 300
+      });
+    });
+    
+    this.input.on('dragend', (p, obj) => {
+      obj.setDepth(0);
+      obj.glow.setStrokeStyle(2, 0xfbbf24, 0);
+      
+      if (this.dragTrail) {
+        this.dragTrail.destroy();
+        this.dragTrail = null;
+      }
+      
+      if (Phaser.Geom.Rectangle.Overlaps(
+        new Phaser.Geom.Rectangle(obj.x - 65, obj.y - 27, 130, 55),
+        new Phaser.Geom.Rectangle(W/2 - 80, H/2 - 100, 160, 200)
+      )) {
+        this.deliverInput(obj);
+      } else {
+        this.tweens.add({ 
+          targets: obj, 
+          x: obj.homeX, 
+          y: obj.homeY, 
+          duration: 300,
+          ease: 'Back.easeOut'
         });
-        
-        this.timerText = this.add.text(680, 20, 'Time: 60s', { 
-            fontSize: '22px', 
-            fill: '#2F4F2F', 
-            fontWeight: 'bold',
-            stroke: '#FFFFFF',
-            strokeThickness: 2
+      }
+      
+      // Reset drop zone visual
+      this.dropOutline.clear();
+      this.dropOutline.lineStyle(3, 0x4ade80, 0.8);
+      this.dropOutline.strokeRoundedRect(W/2 - 80, H/2 - 100, 160, 200, 12);
+    });
+
+    // Enhanced checkmarks with animations
+    this.checks = {};
+    ['Sunlight', 'Water', 'CO₂'].forEach((l, i) => {
+      this.checks[l] = this.add.text(W/2 + 100, H/2 - 60 + i * 35, '', { 
+        fontSize: '18px', fontFamily: 'Arial', color: '#4ade80', fontStyle: 'bold'
+      });
+    });
+
+    // Enhanced UI elements
+    this.scoreText = this.add.text(W - 20, 20, 'Score: 0', { 
+      fontSize: '20px', fontFamily: 'Arial', color: '#fde68a', fontStyle: 'bold' 
+    }).setOrigin(1, 0);
+    
+    this.cycleText = this.add.text(W - 20, 50, 'Cycles: 0/5', { 
+      fontSize: '16px', fontFamily: 'Arial', color: '#d1fae5' 
+    }).setOrigin(1, 0);
+
+    // Enhanced progress bar
+    this.progressBarBg = this.add.image(W/2, 25, 'progress-bg');
+    this.progressBar = this.add.image(W/2 - 150, 25, 'progress-fill').setOrigin(0, 0.5).setDisplaySize(0, 16);
+    this.add.text(W/2, 25, 'Progress to Quiz', { 
+      fontSize: '12px', fontFamily: 'Arial', color: '#fff', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(1);
+
+    // Enhanced output display
+    this.outputContainer = this.add.container(W/2, H - 60).setAlpha(0);
+    const oBg = this.add.image(0, 0, 'output-bg');
+    const oTxt = this.add.text(0, 0, '→ Produced: 🫧 Oxygen + 🍬 Glucose!', { 
+      fontSize: '18px', fontFamily: 'Arial', color: '#a7f3d0', fontStyle: 'bold' 
+    }).setOrigin(0.5);
+    this.outputContainer.add([oBg, oTxt]);
+
+    // Enhanced explanation text
+    this.explanationText = this.add.text(W/2, H - 100, '', { 
+      fontSize: '14px', fontFamily: 'Arial', color: '#fde68a', 
+      wordWrap: { width: 600 }, align: 'center'
+    }).setOrigin(0.5).setAlpha(0);
+
+    // Enhanced equation display
+    const equationBg = this.add.graphics();
+    equationBg.fillStyle(0x22c55e, 0.1);
+    equationBg.fillRoundedRect(W/2 - 180, H - 25, 360, 20, 8);
+    
+    this.add.text(W/2, H - 15, '6CO₂ + 6H₂O + Light → C₆H₁₂O₆ + 6O₂', { 
+      fontSize: '13px', fontFamily: 'Arial', color: '#6ee7b7', fontStyle: 'italic' 
+    }).setOrigin(0.5);
+
+    // Enhanced instructions
+    this.add.text(W/2, 55, 'Drag inputs to the plant (or Arrow Keys + Space)', { 
+      fontSize: '13px', fontFamily: 'Arial', color: '#94a3b8' 
+    }).setOrigin(0.5);
+
+    // Keyboard controls
+    this.input.keyboard.on('keydown-LEFT', () => { this.kbIndex = (this.kbIndex - 1 + 3) % 3; this.updateFocus(); });
+    this.input.keyboard.on('keydown-RIGHT', () => { this.kbIndex = (this.kbIndex + 1) % 3; this.updateFocus(); });
+    this.input.keyboard.on('keydown-UP', () => { this.kbIndex = (this.kbIndex - 1 + 3) % 3; this.updateFocus(); });
+    this.input.keyboard.on('keydown-DOWN', () => { this.kbIndex = (this.kbIndex + 1) % 3; this.updateFocus(); });
+    this.input.keyboard.on('keydown-SPACE', () => this.kbAction());
+  }
+
+  updateFocus() {
+    const item = this.inputs[this.kbIndex];
+    this.focusRect.setPosition(item.x, item.y);
+    
+    // Pulse effect for focused item
+    this.tweens.add({
+      targets: this.focusRect,
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 200,
+      yoyo: true
+    });
+  }
+
+  kbAction() {
+    if (this.kbHolding) {
+      this.deliverInput(this.kbHolding);
+      this.kbHolding = null;
+    } else {
+      const item = this.inputs[this.kbIndex];
+      if (item.visible && !this.delivered[item.label]) {
+        this.kbHolding = item;
+        this.tweens.add({ 
+          targets: item, 
+          x: W/2, 
+          y: H/2, 
+          duration: 400, 
+          ease: 'Back.easeOut',
+          onComplete: () => {
+            this.deliverInput(item);
+            this.kbHolding = null;
+          }
         });
-
-        // Instructions with better visibility
-        const instructionBg = this.add.graphics();
-        instructionBg.fillStyle(0x000000, 0.7);
-        instructionBg.fillRoundedRect(50, 560, 700, 35, 5);
-        
-        this.add.text(400, 577, 'Drag sunlight ☀, water 💧, and CO₂ to the plant to make oxygen and glucose!', { 
-            fontSize: '16px', 
-            fill: '#FFFFFF', 
-            fontWeight: 'bold' 
-        }).setOrigin(0.5);
-
-        // Accessibility toggle button
-        const accessBtn = this.add.graphics();
-        accessBtn.fillStyle(0x4CAF50);
-        accessBtn.fillRoundedRect(20, 60, 120, 30, 5);
-        
-        const accessZone = this.add.zone(80, 75, 120, 30)
-            .setInteractive()
-            .on('pointerdown', () => this.toggleHighContrast());
-        
-        this.accessText = this.add.text(80, 75, 'High Contrast', { 
-            fontSize: '12px', 
-            fill: '#FFFFFF', 
-            fontWeight: 'bold' 
-        }).setOrigin(0.5);
+      }
     }
+  }
 
-    toggleHighContrast() {
-        this.highContrast = !this.highContrast;
-        // This would typically update all visual elements for better contrast
-        // For now, we'll just update the text
-        this.accessText.setText(this.highContrast ? 'Normal Mode' : 'High Contrast');
-    }
+  deliverInput(obj) {
+    if (this.delivered[obj.label]) return;
+    this.delivered[obj.label] = true;
+    
+    // Enhanced checkmark with animation
+    this.checks[obj.label].setText(`✅ ${obj.label}`);
+    this.tweens.add({
+      targets: this.checks[obj.label],
+      scaleX: 1.3,
+      scaleY: 1.3,
+      duration: 200,
+      yoyo: true,
+      ease: 'Back.easeOut'
+    });
 
-    setupPlant() {
-        // Plant container with visual enhancement
-        this.plantZone = this.add.zone(400, 400, 160, 160).setRectangleDropZone(160, 160);
+    // Enhanced input absorption effect
+    this.tweens.add({
+      targets: obj, 
+      alpha: 0, 
+      scale: 0.3, 
+      x: W/2,
+      y: H/2,
+      duration: 500,
+      ease: 'Power2.easeIn',
+      onComplete: () => { 
+        obj.setVisible(false);
         
-        // Enhanced plant using created texture
-        this.plantSprite = this.add.image(400, 400, 'plant-texture').setScale(0.8);
-        
-        // Animated drop zone indicator
-        this.dropZoneGraphics = this.add.graphics();
-        this.updateDropZoneVisual();
-        
-        // Animate the drop zone
+        // Create absorption burst
+        const burst = this.add.image(W/2, H/2, 'burst').setScale(0);
         this.tweens.add({
-            targets: this.dropZoneGraphics,
-            alpha: 0.3,
-            duration: 1000,
-            yoyo: true,
-            repeat: -1
+          targets: burst,
+          scaleX: 1.5,
+          scaleY: 1.5,
+          alpha: 0,
+          duration: 400,
+          onComplete: () => burst.destroy()
         });
+      }
+    });
 
-        // Plant inputs tracker with visual indicators
-        this.plantInputs = { sun: false, water: false, co2: false };
-        this.inputIndicators = {};
-        
-        // Create input indicator positions around the plant
-        const indicatorPositions = {
-            sun: { x: 350, y: 350 },
-            water: { x: 450, y: 350 },
-            co2: { x: 400, y: 320 }
-        };
-        
-        Object.keys(indicatorPositions).forEach(input => {
-            const pos = indicatorPositions[input];
-            this.inputIndicators[input] = this.add.graphics();
-            this.inputIndicators[input].lineStyle(2, 0xFF0000, 0.5);
-            this.inputIndicators[input].strokeCircle(pos.x, pos.y, 15);
-        });
+    // Sound effect simulation with visual feedback
+    this.cameras.main.shake(100, 0.005);
+
+    if (this.delivered.Sunlight && this.delivered.Water && this.delivered['CO₂']) {
+      this.time.delayedCall(600, () => this.completeCycle());
     }
+  }
 
-    updateDropZoneVisual() {
-        this.dropZoneGraphics.clear();
-        
-        const allInputsCollected = this.plantInputs.sun && this.plantInputs.water && this.plantInputs.co2;
-        const color = allInputsCollected ? 0x00FF00 : 0xFFD700;
-        const alpha = allInputsCollected ? 0.8 : 0.5;
-        
-        this.dropZoneGraphics.lineStyle(4, color, alpha);
-        this.dropZoneGraphics.strokeRoundedRect(320, 320, 160, 160, 10);
-    }
+  completeCycle() {
+    this.cycles++;
+    this.score += 10;
+    this.scoreText.setText(`Score: ${this.score}`);
+    this.cycleText.setText(`Cycles: ${this.cycles}/${this.targetCycles}`);
+    
+    // Enhanced progress bar animation
+    const targetWidth = 300 * (this.cycles / this.targetCycles);
+    this.tweens.add({
+      targets: this.progressBar,
+      displayWidth: targetWidth,
+      duration: 800,
+      ease: 'Power2.easeOut'
+    });
 
-    setupInputSystem() {
-        this.inputs = [];
-        this.outputs = [];
-        this.inputTypes = [
-            { key: 'sun', texture: 'sun-texture', shape: 'sun' },
-            { key: 'water', texture: 'water-texture', shape: 'water' },
-            { key: 'co2', texture: 'co2-texture', shape: 'co2' }
-        ];
-    }
+    // Show outputs with enhanced animation
+    this.tweens.add({ 
+      targets: this.outputContainer, 
+      alpha: 1, 
+      y: H - 50,
+      duration: 600,
+      ease: 'Back.easeOut'
+    });
 
-    setupKeyboard() {
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.wasd = this.input.keyboard.addKeys('W,S,A,D,SPACE,TAB');
-        
-        // Enhanced keyboard cursor with better visibility
-        this.keyboardCursor = this.add.graphics();
-        this.keyboardCursor.lineStyle(4, 0xFFFF00);
-        this.keyboardCursor.strokeCircle(0, 0, 25);
-        this.keyboardCursor.lineStyle(2, 0x000000);
-        this.keyboardCursor.strokeCircle(0, 0, 23);
-        this.keyboardCursor.setPosition(100, 100).setVisible(false);
-    }
+    // Enhanced plant glow effect
+    this.tweens.add({ 
+      targets: this.plantGlow, 
+      alpha: 0.8, 
+      scale: 1.2,
+      duration: 400,
+      yoyo: true,
+      repeat: 2
+    });
 
-    setupTimer() {
-        this.time.addEvent({
-            delay: 1000,
-            callback: () => {
-                this.timeLeft--;
-                this.timerText.setText(`Time: ${this.timeLeft}s`);
-                
-                // Visual warning when time is running out
-                if (this.timeLeft <= 10) {
-                    this.timerText.setTint(0xFF0000);
-                    if (this.timeLeft <= 5) {
-                        this.cameras.main.shake(50, 0.01);
-                    }
-                }
-                
-                if (this.timeLeft <= 0) {
-                    this.endGame();
-                }
-            },
-            loop: true
-        });
-    }
+    // Create success particles
+    this.add.particles(W/2, H/2, 'sparkle', {
+      speed: { min: 50, max: 100 },
+      lifespan: 1000,
+      quantity: 12,
+      scale: { start: 0.8, end: 0 },
+      alpha: { start: 1, end: 0 },
+      emitZone: { type: 'edge', source: new Phaser.Geom.Rectangle(-50, -50, 100, 100), quantity: 12 }
+    });
 
-    spawnInputs() {
-        this.time.addEvent({
-            delay: 2500,
-            callback: this.spawnRandomInput,
-            callbackScope: this,
-            loop: true
-        });
+    const explanations = [
+      'Plants use sunlight, water, and CO₂ to make food and oxygen for all life!',
+      'Photosynthesis converts light energy into chemical energy stored in glucose.',
+      'Oxygen is released as a byproduct — it\'s what we breathe!',
+      'Without photosynthesis, there would be no food or oxygen for animals.',
+      'Excellent! You\'ve mastered the photosynthesis equation! 🌟'
+    ];
+    
+    this.explanationText.setText(explanations[Math.min(this.cycles - 1, 4)]);
+    this.tweens.add({ 
+      targets: this.explanationText, 
+      alpha: 1, 
+      y: H - 90,
+      duration: 500,
+      ease: 'Back.easeOut'
+    });
 
-        // Spawn initial inputs with staggered timing
-        this.inputTypes.forEach((type, index) => {
-            this.time.delayedCall(index * 800, () => this.spawnRandomInput(), [], this);
-        });
-    }
+    // Enhanced plant animation
+    this.tweens.add({ 
+      targets: this.plant, 
+      scaleX: 1.7, 
+      scaleY: 1.7, 
+      duration: 300, 
+      yoyo: true, 
+      repeat: 2,
+      ease: 'Back.easeOut'
+    });
 
-    spawnRandomInput() {
-        if (this.inputs.length >= 8) return;
+    // Camera flash effect
+    this.cameras.main.flash(200, 255, 255, 255, false, (camera, progress) => {
+      if (progress === 1 && this.cycles >= this.targetCycles) {
+        this.time.delayedCall(1500, () => this.scene.start('QuizScene', { score: this.score }));
+      } else if (progress === 1) {
+        this.time.delayedCall(1300, () => this.resetInputs());
+      }
+    });
+  }
 
-        const inputType = Phaser.Utils.Array.GetRandom(this.inputTypes);
-        const x = Phaser.Math.Between(80, 200);
-        const y = Phaser.Math.Between(120, 250);
+  resetInputs() {
+    this.delivered = { Sunlight: false, Water: false, 'CO₂': false };
+    Object.values(this.checks).forEach(c => c.setText(''));
+    
+    this.tweens.add({ 
+      targets: [this.outputContainer, this.explanationText], 
+      alpha: 0, 
+      y: "+=20",
+      duration: 400 
+    });
 
-        const input = this.createInputSprite(x, y, inputType);
-        this.inputs.push(input);
-
-        // Enhanced removal with fade effect
-        this.time.delayedCall(18000, () => {
-            if (input && input.active) {
-                this.tweens.add({
-                    targets: input,
-                    alpha: 0,
-                    scale: 0.5,
-                    duration: 1000,
-                    onComplete: () => {
-                        this.inputs = this.inputs.filter(i => i !== input);
-                        if (input.active) input.destroy();
-                    }
-                });
-            }
-        });
-    }
-
-    createInputSprite(x, y, inputType) {
-        const input = this.add.image(x, y, inputType.texture);
-        input.setScale(0.6);
-        input.inputType = inputType.key;
-        input.setInteractive({ draggable: true });
-
-        // Enhanced visual feedback
-        input.on('pointerover', () => {
-            input.setTint(0xCCCCCC);
-            input.setScale(0.7);
-        });
-
-        input.on('pointerout', () => {
-            input.clearTint();
-            input.setScale(0.6);
-        });
-
-        input.on('dragstart', () => {
-            input.setTint(0x888888);
-            input.setScale(0.8);
-            this.audioManager.playDrop();
-        });
-
-        input.on('drag', (pointer, dragX, dragY) => {
-            input.x = dragX;
-            input.y = dragY;
-            
-            // Visual feedback when near drop zone
-            const distance = Phaser.Math.Distance.Between(dragX, dragY, 400, 400);
-            if (distance < 100) {
-                this.dropZoneGraphics.setTint(0x00FF00);
-            } else {
-                this.dropZoneGraphics.clearTint();
-            }
-        });
-
-        input.on('dragend', () => {
-            input.clearTint();
-            input.setScale(0.6);
-            this.dropZoneGraphics.clearTint();
-            this.checkPlantDrop(input);
-        });
-
-        // Floating animation
-        this.tweens.add({
-            targets: input,
-            y: y - 5,
-            duration: 2000,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
-
-        return input;
-    }
-
-    checkPlantDrop(input) {
-        const plantBounds = new Phaser.Geom.Rectangle(320, 320, 160, 160);
-        const inputBounds = input.getBounds();
-
-        if (Phaser.Geom.Rectangle.Overlaps(plantBounds, inputBounds)) {
-            this.addInputToPlant(input);
-        }
-    }
-
-    addInputToPlant(input) {
-        const inputType = input.inputType;
-        
-        if (!this.plantInputs[inputType]) {
-            this.plantInputs[inputType] = true;
-            this.score += 10;
-            this.updateScore();
-
-            // Update visual indicator
-            this.inputIndicators[inputType].clear();
-            this.inputIndicators[inputType].lineStyle(3, 0x00FF00);
-            this.inputIndicators[inputType].fillStyle(0x00FF00, 0.3);
-            
-            const pos = Object.keys(this.inputIndicators).indexOf(inputType);
-            const positions = [
-                { x: 350, y: 350 },
-                { x: 450, y: 350 },
-                { x: 400, y: 320 }
-            ];
-            
-            this.inputIndicators[inputType].fillCircle(positions[pos].x, positions[pos].y, 15);
-
-            // Remove input with effect
-            this.tweens.add({
-                targets: input,
-                scale: 1.5,
-                alpha: 0,
-                duration: 500,
-                onComplete: () => {
-                    this.inputs = this.inputs.filter(i => i !== input);
-                    input.destroy();
-                }
-            });
-
-            this.audioManager.playSuccess();
-            this.showInputFeedback(inputType);
-            this.updateDropZoneVisual();
-
-            // Check for complete photosynthesis
-            if (this.plantInputs.sun && this.plantInputs.water && this.plantInputs.co2) {
-                this.time.delayedCall(500, () => this.completePhotosynthesis(), [], this);
-            }
-        }
-    }
-
-    showInputFeedback(inputType) {
-        const messages = {
-            sun: 'Sunlight absorbed! ☀️\nPlants need light energy!',
-            water: 'Water collected! 💧\nRoots drink from soil!',
-            co2: 'CO₂ captured! 🫧\nTaken from the air!'
-        };
-
-        const colors = {
-            sun: '#FFD700',
-            water: '#4169E1',
-            co2: '#808080'
-        };
-
-        const feedback = this.add.text(400, 280, messages[inputType], {
-            fontSize: '16px', 
-            fill: colors[inputType], 
-            fontWeight: 'bold',
-            align: 'center',
-            stroke: '#FFFFFF',
-            strokeThickness: 2
-        }).setOrigin(0.5);
-
-        this.tweens.add({
-            targets: feedback,
-            y: 230,
-            alpha: 0,
-            scale: 1.2,
-            duration: 2000,
-            ease: 'Power2',
-            onComplete: () => feedback.destroy()
-        });
-    }
-
-    completePhotosynthesis() {
-        this.score += 50;
-        this.updateScore();
-        this.audioManager.playComplete();
-
-        // Reset plant inputs with animation
-        this.plantInputs = { sun: false, water: false, co2: false };
-        
-        Object.values(this.inputIndicators).forEach(indicator => {
-            indicator.clear();
-            indicator.lineStyle(2, 0xFF0000, 0.5);
-        });
-        
-        const positions = [
-            { x: 350, y: 350 },
-            { x: 450, y: 350 },
-            { x: 400, y: 320 }
-        ];
-        
-        positions.forEach((pos, index) => {
-            const keys = Object.keys(this.inputIndicators);
-            this.inputIndicators[keys[index]].strokeCircle(pos.x, pos.y, 15);
-        });
-
-        // Enhanced plant animation
-        this.tweens.add({
-            targets: this.plantSprite,
-            scale: 1.2,
-            duration: 300,
-            yoyo: true,
-            onComplete: () => {
-                this.createOutput(350, 320, 'oxygen');
-                this.createOutput(450, 320, 'glucose');
-            }
-        });
-
-        this.updateDropZoneVisual();
-
-        // Enhanced success message
-        const successBg = this.add.graphics();
-        successBg.fillStyle(0x000000, 0.8);
-        successBg.fillRoundedRect(200, 150, 400, 100, 10);
-        
-        const message = this.add.text(400, 200, 'PHOTOSYNTHESIS COMPLETE!', {
-            fontSize: '20px', 
-            fill: '#FFD700', 
-            fontWeight: 'bold',
-            align: 'center'
-        }).setOrigin(0.5);
-
-        const explanation = this.add.text(400, 225, 'Plants made oxygen (air we breathe)\nand glucose (food for growth)!', {
-            fontSize: '14px', 
-            fill: '#FFFFFF', 
-            align: 'center'
-        }).setOrigin(0.5);
-
-        this.tweens.add({
-            targets: [successBg, message, explanation],
-            alpha: 0,
-            duration: 4000,
-            delay: 1000,
-            onComplete: () => {
-                successBg.destroy();
-                message.destroy();
-                explanation.destroy();
-            }
-        });
-    }
-
-    createOutput(x, y, type) {
-        let output;
-        
-        if (type === 'oxygen') {
-            output = this.add.image(x, y, 'oxygen-texture').setScale(0.8);
-        } else if (type === 'glucose') {
-            output = this.add.image(x, y, 'glucose-texture').setScale(0.8);
-        }
-
-        // Enhanced floating animation
-        this.tweens.add({
-            targets: output,
-            y: y - 150,
-            alpha: 0,
-            scale: 1.5,
-            duration: 3000,
-            ease: 'Power2',
-            onComplete: () => output.destroy()
-        });
-
-        // Particle effect
-        this.createParticles(x, y, type === 'oxygen' ? 0x87CEEB : 0xDEB887);
-    }
-
-    createParticles(x, y, color) {
-        for (let i = 0; i < 8; i++) {
-            const particle = this.add.circle(x, y, 3, color);
-            const angle = (i * 45) * Math.PI / 180;
-            const distance = Phaser.Math.Between(30, 60);
-            
-            this.tweens.add({
-                targets: particle,
-                x: x + Math.cos(angle) * distance,
-                y: y + Math.sin(angle) * distance - 20,
-                alpha: 0,
-                duration: 1500,
-                delay: i * 50,
-                onComplete: () => particle.destroy()
-            });
-        }
-    }
-
-    updateScore() {
-        this.scoreText.setText(`Score: ${this.score}`);
-        
-        // Score animation
-        this.tweens.add({
-            targets: this.scoreText,
-            scale: 1.2,
-            duration: 200,
-            yoyo: true
-        });
-    }
-
-    update() {
-        this.handleKeyboardInput();
-    }
-
-    handleKeyboardInput() {
-        const speed = 4;
-        
-        if (this.cursors.up.isDown || this.wasd.W.isDown) {
-            this.accessibilityMode = true;
-            this.keyboardCursor.setVisible(true);
-            this.keyboardCursor.y = Math.max(50, this.keyboardCursor.y - speed);
-        }
-        if (this.cursors.down.isDown || this.wasd.S.isDown) {
-            this.accessibilityMode = true;
-            this.keyboardCursor.setVisible(true);
-            this.keyboardCursor.y = Math.min(550, this.keyboardCursor.y + speed);
-        }
-        if (this.cursors.left.isDown || this.wasd.A.isDown) {
-            this.accessibilityMode = true;
-            this.keyboardCursor.setVisible(true);
-            this.keyboardCursor.x = Math.max(50, this.keyboardCursor.x - speed);
-        }
-        if (this.cursors.right.isDown || this.wasd.D.isDown) {
-            this.accessibilityMode = true;
-            this.keyboardCursor.setVisible(true);
-            this.keyboardCursor.x = Math.min(750, this.keyboardCursor.x + speed);
-        }
-
-        if (Phaser.Input.Keyboard.JustDown(this.wasd.SPACE) && this.accessibilityMode) {
-            this.handleKeyboardDrop();
-        }
-    }
-
-    handleKeyboardDrop() {
-        let nearestInput = null;
-        let nearestDistance = Infinity;
-
-        this.inputs.forEach(input => {
-            const distance = Phaser.Math.Distance.Between(
-                this.keyboardCursor.x, this.keyboardCursor.y,
-                input.x, input.y
-            );
-            if (distance < nearestDistance && distance < 120) {
-                nearestDistance = distance;
-                nearestInput = input;
-            }
-        });
-
-        if (nearestInput) {
-            // Move input to plant
-            this.tweens.add({
-                targets: nearestInput,
-                x: 400,
-                y: 400,
-                duration: 500,
-                onComplete: () => this.checkPlantDrop(nearestInput)
-            });
-        }
-    }
-
-    endGame() {
-        this.scene.start('ResultsScene', { score: this.score });
-    }
+    this.inputs.forEach(item => {
+      item.setVisible(true);
+      item.setAlpha(1);
+      item.setScale(1);
+      
+      this.tweens.add({
+        targets: item,
+        x: item.homeX,
+        y: item.homeY,
+        duration: 500,
+        ease: 'Back.easeOut'
+      });
+    });
+    
+    this.updateFocus();
+  }
 }
 
-class ResultsScene extends Phaser.Scene {
-    constructor() {
-        super({ key: 'ResultsScene' });
+class QuizScene extends Phaser.Scene {
+  constructor() { super('QuizScene'); }
+  
+  init(data) { this.gameScore = data.score || 0; }
+  
+  preload() {
+    this.createQuizAssets();
+  }
+  
+  createQuizAssets() {
+    // Create quiz button textures
+    const btnNormal = this.add.graphics();
+    btnNormal.fillStyle(0x312e81);
+    btnNormal.fillRoundedRect(0, 0, 500, 50, 8);
+    btnNormal.lineStyle(2, 0x6366f1);
+    btnNormal.strokeRoundedRect(0, 0, 500, 50, 8);
+    btnNormal.generateTexture('quiz-btn-normal', 500, 50);
+    btnNormal.destroy();
+    
+    const btnHover = this.add.graphics();
+    btnHover.fillStyle(0x4338ca);
+    btnHover.fillRoundedRect(0, 0, 500, 50, 8);
+    btnHover.lineStyle(2, 0x8b5cf6);
+    btnHover.strokeRoundedRect(0, 0, 500, 50, 8);
+    btnHover.generateTexture('quiz-btn-hover', 500, 50);
+    btnHover.destroy();
+    
+    const btnCorrect = this.add.graphics();
+    btnCorrect.fillStyle(0x16a34a);
+    btnCorrect.fillRoundedRect(0, 0, 500, 50, 8);
+    btnCorrect.lineStyle(3, 0x4ade80);
+    btnCorrect.strokeRoundedRect(0, 0, 500, 50, 8);
+    btnCorrect.generateTexture('quiz-btn-correct', 500, 50);
+    btnCorrect.destroy();
+    
+    const btnIncorrect = this.add.graphics();
+    btnIncorrect.fillStyle(0xdc2626);
+    btnIncorrect.fillRoundedRect(0, 0, 500, 50, 8);
+    btnIncorrect.lineStyle(3, 0xf87171);
+    btnIncorrect.strokeRoundedRect(0, 0, 500, 50, 8);
+    btnIncorrect.generateTexture('quiz-btn-incorrect', 500, 50);
+    btnIncorrect.destroy();
+  }
+  
+  create() {
+    // Enhanced background
+    const bgGraphics = this.add.graphics();
+    bgGraphics.fillGradientStyle(0x1e1b4b, 0x312e81, 0x1e1b4b, 0x4c1d95, 1);
+    bgGraphics.fillRect(0, 0, W, H);
+    
+    // Background particles
+    this.add.particles(0, 0, 'sparkle', {
+      x: { min: 0, max: W },
+      y: { min: 0, max: H },
+      speed: { min: 10, max: 30 },
+      lifespan: 8000,
+      quantity: 1,
+      alpha: { start: 0.4, end: 0 },
+      scale: { start: 0.2, end: 0.6 }
+    });
+    
+    this.questions = [
+      {
+        q: 'What gas do plants absorb during photosynthesis?',
+        opts: ['Oxygen', 'Carbon Dioxide (CO₂)', 'Nitrogen', 'Hydrogen'],
+        answer: 1
+      },
+      {
+        q: 'What is the energy source for photosynthesis?',
+        opts: ['Water', 'Soil nutrients', 'Sunlight', 'Wind'],
+        answer: 2
+      },
+      {
+        q: 'What gas do plants release during photosynthesis?',
+        opts: ['Carbon Dioxide', 'Nitrogen', 'Helium', 'Oxygen'],
+        answer: 3
+      }
+    ];
+    
+    this.qIndex = 0;
+    this.quizScore = 0;
+    this.kbIndex = 0;
+    this.answered = false;
+
+    // Enhanced title
+    const titleShadow = this.add.text(W/2 + 2, 32, '📝 Knowledge Check', { 
+      fontSize: '28px', fontFamily: 'Arial', color: '#1e1b4b', fontStyle: 'bold' 
+    }).setOrigin(0.5);
+    
+    const title = this.add.text(W/2, 30, '📝 Knowledge Check', { 
+      fontSize: '28px', fontFamily: 'Arial', color: '#c4b5fd', fontStyle: 'bold' 
+    }).setOrigin(0.5);
+    
+    // Question container
+    const questionBg = this.add.graphics();
+    questionBg.fillStyle(0x4c1d95, 0.3);
+    questionBg.fillRoundedRect(W/2 - 325, 80, 650, 60, 12);
+    questionBg.lineStyle(2, 0x8b5cf6, 0.6);
+    questionBg.strokeRoundedRect(W/2 - 325, 80, 650, 60, 12);
+    
+    this.questionText = this.add.text(W/2, 110, '', { 
+      fontSize: '20px', fontFamily: 'Arial', color: '#e2e8f0', 
+      wordWrap: { width: 620 }, align: 'center'
+    }).setOrigin(0.5);
+    
+    // Enhanced option buttons
+    this.optionBtns = [];
+    this.optionTexts = [];
+    this.focusRects = [];
+
+    for (let i = 0; i < 4; i++) {
+      const y = 200 + i * 70;
+      const bg = this.add.image(W/2, y, 'quiz-btn-normal').setInteractive({ useHandCursor: true });
+      const txt = this.add.text(W/2, y, '', { 
+        fontSize: '17px', fontFamily: 'Arial', color: '#e0e7ff' 
+      }).setOrigin(0.5);
+      
+      const focus = this.add.graphics();
+      focus.lineStyle(3, 0xfbbf24);
+      focus.strokeRoundedRect(W/2 - 255, y - 25, 510, 60, 12);
+      focus.setVisible(false);
+      
+      bg.on('pointerover', () => { 
+        if (!this.answered) {
+          bg.setTexture('quiz-btn-hover');
+          this.tweens.add({ targets: bg, scaleX: 1.02, scaleY: 1.02, duration: 100 });
+        }
+      });
+      
+      bg.on('pointerout', () => { 
+        if (!this.answered) {
+          bg.setTexture('quiz-btn-normal');
+          this.tweens.add({ targets: bg, scaleX: 1, scaleY: 1, duration: 100 });
+        }
+      });
+      
+      bg.on('pointerdown', () => {
+        if (!this.answered) {
+          this.tweens.add({ 
+            targets: bg, 
+            scaleX: 0.98, 
+            scaleY: 0.98, 
+            duration: 50, 
+            yoyo: true,
+            onComplete: () => this.selectAnswer(i)
+          });
+        }
+      });
+      
+      this.optionBtns.push(bg);
+      this.optionTexts.push(txt);
+      this.focusRects.push(focus);
     }
 
-    init(data) {
-        this.finalScore = data.score;
+    // Enhanced feedback text
+    this.feedbackText = this.add.text(W/2, 500, '', { 
+      fontSize: '20px', fontFamily: 'Arial', color: '#fff', fontStyle: 'bold' 
+    }).setOrigin(0.5);
+    
+    this.progressText = this.add.text(W/2, 550, '', { 
+      fontSize: '16px', fontFamily: 'Arial', color: '#a5b4fc' 
+    }).setOrigin(0.5);
+
+    // Keyboard controls
+    this.input.keyboard.on('keydown-UP', () => { 
+      if (!this.answered) { 
+        this.kbIndex = (this.kbIndex - 1 + 4) % 4; 
+        this.updateQuizFocus(); 
+      }
+    });
+    
+    this.input.keyboard.on('keydown-DOWN', () => { 
+      if (!this.answered) { 
+        this.kbIndex = (this.kbIndex + 1) % 4; 
+        this.updateQuizFocus(); 
+      }
+    });
+    
+    this.input.keyboard.on('keydown-ENTER', () => { 
+      if (!this.answered) this.selectAnswer(this.kbIndex); 
+    });
+    
+    this.input.keyboard.on('keydown-SPACE', () => { 
+      if (!this.answered) this.selectAnswer(this.kbIndex); 
+    });
+
+    this.showQuestion();
+  }
+
+  updateQuizFocus() {
+    this.focusRects.forEach((r, i) => r.setVisible(i === this.kbIndex));
+    
+    // Pulse effect for focused option
+    const focusedRect = this.focusRects[this.kbIndex];
+    this.tweens.add({
+      targets: focusedRect,
+      alpha: 0.8,
+      duration: 200,
+      yoyo: true
+    });
+  }
+
+  showQuestion() {
+    this.answered = false;
+    const q = this.questions[this.qIndex];
+    
+    // Animate question appearance
+    this.questionText.setAlpha(0).setText(`Q${this.qIndex + 1}: ${q.q}`);
+    this.tweens.add({ targets: this.questionText, alpha: 1, duration: 500 });
+    
+    q.opts.forEach((o, i) => {
+      this.optionTexts[i].setText(`${String.fromCharCode(65 + i)}. ${o}`);
+      this.optionBtns[i].setTexture('quiz-btn-normal').setScale(1).setInteractive();
+      
+      // Stagger option appearance
+      this.optionBtns[i].setAlpha(0);
+      this.optionTexts[i].setAlpha(0);
+      
+      this.tweens.add({
+        targets: [this.optionBtns[i], this.optionTexts[i]],
+        alpha: 1,
+        delay: i * 100,
+        duration: 400,
+        ease: 'Back.easeOut'
+      });
+    });
+    
+    this.feedbackText.setText('');
+    this.progressText.setText(`Question ${this.qIndex + 1} of ${this.questions.length}`);
+    this.kbIndex = 0;
+    this.updateQuizFocus();
+  }
+
+  selectAnswer(idx) {
+    if (this.answered) return;
+    this.answered = true;
+    const q = this.questions[this.qIndex];
+    const correct = idx === q.answer;
+
+    this.focusRects.forEach(r => r.setVisible(false));
+
+    if (correct) {
+      this.quizScore++;
+      this.optionBtns[idx].setTexture('quiz-btn-correct');
+      this.feedbackText.setText('✅ Excellent!').setColor('#4ade80');
+      
+      // Success effect
+      this.add.particles(W/2, 200 + idx * 70, 'sparkle', {
+        speed: { min: 30, max: 60 },
+        lifespan: 800,
+        quantity: 8,
+        scale: { start: 0.6, end: 0 },
+        alpha: { start: 1, end: 0 }
+      });
+      
+      this.cameras.main.flash(150, 34, 197, 94, false);
+    } else {
+      this.optionBtns[idx].setTexture('quiz-btn-incorrect');
+      this.optionBtns[q.answer].setTexture('quiz-btn-correct');
+      this.feedbackText.setText(`❌ Correct answer: ${String.fromCharCode(65 + q.answer)}. ${q.opts[q.answer]}`).setColor('#fca5a5');
+      
+      // Shake effect for wrong answer
+      this.cameras.main.shake(200, 0.01);
     }
 
-    preload() {
-        // Reuse textures from menu scene if needed
-        if (!this.textures.exists('bg-gradient')) {
-            this.createResultsBG();
+    // Animate feedback
+    this.tweens.add({
+      targets: this.feedbackText,
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 200,
+      yoyo: true,
+      ease: 'Back.easeOut'
+    });
+
+    this.optionBtns.forEach(b => b.disableInteractive());
+
+    this.time.delayedCall(2500, () => {
+      this.qIndex++;
+      if (this.qIndex < this.questions.length) {
+        this.optionBtns.forEach(b => b.setInteractive());
+        this.showQuestion();
+      } else {
+        this.showResults();
+      }
+    });
+  }
+
+  showResults() {
+    // Results overlay
+    const overlay = this.add.rectangle(W/2, H/2, W, H, 0x0f172a, 0.95).setDepth(10);
+    
+    // Results container
+    const resultsContainer = this.add.container(W/2, H/2).setDepth(11);
+    
+    // Results background
+    const resultsBg = this.add.graphics();
+    resultsBg.fillStyle(0x1e1b4b, 0.9);
+    resultsBg.fillRoundedRect(-350, -250, 700, 500, 20);
+    resultsBg.lineStyle(3, 0x8b5cf6);
+    resultsBg.strokeRoundedRect(-350, -250, 700, 500, 20);
+    resultsContainer.add(resultsBg);
+    
+    const total = this.gameScore + this.quizScore * 10;
+    const lines = [
+      { text: '🎉 Lab Complete! 🎉', size: '32px', color: '#fde68a', bold: true },
+      { text: '', size: '', color: '' },
+      { text: `Photosynthesis Cycles: ${this.gameScore / 10}/5`, size: '20px', color: '#a7f3d0' },
+      { text: `Quiz Score: ${this.quizScore}/${this.questions.length}`, size: '20px', color: '#a7f3d0' },
+      { text: `Total Score: ${total}`, size: '24px', color: '#fbbf24', bold: true },
+      { text: '', size: '', color: '' },
+      { text: 'Photosynthesis Equation:', size: '18px', color: '#c4b5fd' },
+      { text: '6CO₂ + 6H₂O + Sunlight → C₆H₁₂O₆ + 6O₂', size: '16px', color: '#86efac', italic: true },
+      { text: '', size: '', color: '' },
+      { text: 'Plants convert light energy into chemical energy,', size: '16px', color: '#e2e8f0' },
+      { text: 'producing oxygen we breathe and glucose for food!', size: '16px', color: '#e2e8f0' },
+      { text: '', size: '', color: '' },
+      { text: 'Thanks for learning with us! 🌱', size: '18px', color: '#4ade80' }
+    ];
+    
+    lines.forEach((line, i) => {
+      if (!line.text) return;
+      
+      const style = {
+        fontSize: line.size,
+        fontFamily: 'Arial',
+        color: line.color,
+        fontStyle: line.bold ? 'bold' : line.italic ? 'italic' : 'normal'
+      };
+      
+      const textObj = this.add.text(0, -200 + i * 35, line.text, style).setOrigin(0.5);
+      resultsContainer.add(textObj);
+      
+      // Stagger text appearance
+      textObj.setAlpha(0);
+      this.tweens.add({
+        targets: textObj,
+        alpha: 1,
+        y: textObj.y + 10,
+        delay: i * 150,
+        duration: 500,
+        ease: 'Back.easeOut'
+      });
+    });
+    
+    // Restart button
+    const restartBtn = this.add.image(0, 180, 'button-normal').setInteractive({ useHandCursor: true });
+    const restartText = this.add.text(0, 180, 'PLAY AGAIN', { 
+      fontSize: '18px', fontFamily: 'Arial', color: '#fff', fontStyle: 'bold' 
+    }).setOrigin(0.5);
+    
+    resultsContainer.add([restartBtn, restartText]);
+    
+    restartBtn.on('pointerover', () => {
+      restartBtn.setTexture('button-hover');
+      this.tweens.add({ targets: restartBtn, scaleX: 1.05, scaleY: 1.05, duration: 100 });
+    });
+    
+    restartBtn.on('pointerout', () => {
+      restartBtn.setTexture('button-normal');
+      this.tweens.add({ targets: restartBtn, scaleX: 1, scaleY: 1, duration: 100 });
+    });
+    
+    restartBtn.on('pointerdown', () => {
+      this.tweens.add({
+        targets: restartBtn,
+        scaleX: 0.95,
+        scaleY: 0.95,
+        duration: 50,
+        yoyo: true,
+        onComplete: () => {
+          this.scene.start('MenuScene');
         }
-    }
-
-    createResultsBG() {
-        const bgTexture = this.textures.createCanvas('results-bg', 800, 600);
-        const bgCanvas = bgTexture.getCanvas();
-        const bgCtx = bgCanvas.getContext('2d');
-        
-        const gradient = bgCtx.createRadialGradient(400, 300, 50, 400, 300, 400);
-        gradient.addColorStop(0, '#32CD32');
-        gradient.addColorStop(1, '#006400');
-        
-        bgCtx.fillStyle = gradient;
-        bgCtx.fillRect(0, 0, 800, 600);
-        
-        bgTexture.refresh();
-    }
-
-    create() {
-        // Background
-        if (this.textures.exists('results-bg')) {
-            this.add.image(400, 300, 'results-bg');
-        } else {
-            this.add.rectangle(400, 300, 800, 600, 0x228B22);
-        }
-        
-        // Decorative elements
-        if (this.textures.exists('plant-texture')) {
-            this.add.image(200, 200, 'plant-texture').setScale(0.5);
-            this.add.image(600, 200, 'plant-texture').setScale(0.5).setFlipX(true);
-        }
-        
-        if (this.textures.exists('oxygen-texture')) {
-            for (let i = 0; i < 5; i++) {
-                const x = 100 + i * 150;
-                const y = 100 + Math.sin(i) * 50;
-                const oxygen = this.add.image(x, y, 'oxygen-texture').setScale(0.6);
-                
-                this.tweens.add({
-                    targets: oxygen,
-                    y: y - 20,
-                    duration: 2000,
-                    yoyo: true,
-                    repeat: -1,
-                    delay: i * 300
-                });
-            }
-        }
-
-        // Title with enhanced styling
-        const title = this.add.text(400, 120, 'FACTORY COMPLETE!', { 
-            fontSize: '42px', 
-            fill: '#FFD700', 
-            fontWeight: 'bold',
-            stroke: '#228B22',
-            strokeThickness: 4
-        }).setOrigin(0.5);
-
-        // Score display with better visual hierarchy
-        this.add.text(400, 200, `Final Score: ${this.finalScore}`, { 
-            fontSize: '28px', 
-            fill: '#FFFFFF',
-            stroke: '#228B22',
-            strokeThickness: 2
-        }).setOrigin(0.5);
-
-        // Performance feedback
-        let message = '';
-        let messageColor = '#FFFFFF';
-        
-        if (this.finalScore >= 300) {
-            message = 'PHOTOSYNTHESIS EXPERT!\nYou understand how plants make food perfectly!';
-            messageColor = '#FFD700';
-        } else if (this.finalScore >= 150) {
-            message = 'GREAT WORK!\nYou helped plants make oxygen and glucose!';
-            messageColor = '#90EE90';
-        } else if (this.finalScore >= 50) {
-            message = 'GOOD START!\nKeep learning about photosynthesis!';
-            messageColor = '#87CEEB';
-        } else {
-            message = 'KEEP TRYING!\nRemember: Plants need sunlight, water, and CO₂!';
-            messageColor = '#FFA500';
-        }
-
-        this.add.text(400, 280, message, { 
-            fontSize: '20px', 
-            fill: messageColor, 
-            align: 'center',
-            fontWeight: 'bold',
-            stroke: '#000000',
-            strokeThickness: 1
-        }).setOrigin(0.5);
-
-        // Educational reminder
-        const reminderBg = this.add.graphics();
-        reminderBg.fillStyle(0x000000, 0.7);
-        reminderBg.fillRoundedRect(100, 360, 600, 80, 10);
-        
-        this.add.text(400, 400, 'Remember: Photosynthesis is how plants make their own food\nusing sunlight, water, and CO₂ to create oxygen and glucose!', { 
-            fontSize: '16px', 
-            fill: '#FFFFFF', 
-            align: 'center',
-            fontWeight: 'bold'
-        }).setOrigin(0.5);
-
-        // Enhanced play again button
-        const playAgainBtn = this.add.graphics();
-        playAgainBtn.fillStyle(0x4CAF50);
-        playAgainBtn.fillRoundedRect(250, 480, 150, 50, 10);
-        playAgainBtn.lineStyle(3, 0x388E3C);
-        playAgainBtn.strokeRoundedRect(250, 480, 150, 50, 10);
-
-        const playAgainZone = this.add.zone(325, 505, 150, 50)
-            .setInteractive()
-            .on('pointerover', () => {
-                playAgainBtn.clear();
-                playAgainBtn.fillStyle(0x66BB6A);
-                playAgainBtn.fillRoundedRect(250, 480, 150, 50, 10);
-                playAgainBtn.lineStyle(3, 0x388E3C);
-                playAgainBtn.strokeRoundedRect(250, 480, 150, 50, 10);
-            })
-            .on('pointerout', () => {
-                playAgainBtn.clear();
-                playAgainBtn.fillStyle(0x4CAF50);
-                playAgainBtn.fillRoundedRect(250, 480, 150, 50, 10);
-                playAgainBtn.lineStyle(3, 0x388E3C);
-                playAgainBtn.strokeRoundedRect(250, 480, 150, 50, 10);
-            })
-            .on('pointerdown', () => this.scene.start('GameScene'));
-
-        this.add.text(325, 505, 'PLAY AGAIN', { 
-            fontSize: '16px', 
-            fill: '#FFFFFF', 
-            fontWeight: 'bold' 
-        }).setOrigin(0.5);
-
-        // Menu button
-        const menuBtn = this.add.graphics();
-        menuBtn.fillStyle(0x2196F3);
-        menuBtn.fillRoundedRect(400, 480, 150, 50, 10);
-        menuBtn.lineStyle(3, 0x1976D2);
-        menuBtn.strokeRoundedRect(400, 480, 150, 50, 10);
-
-        const menuZone = this.add.zone(475, 505, 150, 50)
-            .setInteractive()
-            .on('pointerover', () => {
-                menuBtn.clear();
-                menuBtn.fillStyle(0x42A5F5);
-                menuBtn.fillRoundedRect(400, 480, 150, 50, 10);
-                menuBtn.lineStyle(3, 0x1976D2);
-                menuBtn.strokeRoundedRect(400, 480, 150, 50, 10);
-            })
-            .on('pointerout', () => {
-                menuBtn.clear();
-                menuBtn.fillStyle(0x2196F3);
-                menuBtn.fillRoundedRect(400, 480, 150, 50, 10);
-                menuBtn.lineStyle(3, 0x1976D2);
-                menuBtn.strokeRoundedRect(400, 480, 150, 50, 10);
-            })
-            .on('pointerdown', () => this.scene.start('MenuScene'));
-
-        this.add.text(475, 505, 'MAIN MENU', { 
-            fontSize: '16px', 
-            fill: '#FFFFFF', 
-            fontWeight: 'bold' 
-        }).setOrigin(0.5);
-    }
+      });
+    });
+    
+    // Entrance animation
+    resultsContainer.setScale(0);
+    this.tweens.add({
+      targets: resultsContainer,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 600,
+      ease: 'Back.easeOut'
+    });
+    
+    // Success particles
+    this.add.particles(W/2, H/2, 'sparkle', {
+      speed: { min: 100, max: 200 },
+      lifespan: 2000,
+      quantity: 20,
+      scale: { start: 1, end: 0 },
+      alpha: { start: 1, end: 0 },
+      emitZone: { type: 'edge', source: new Phaser.Geom.Circle(0, 0, 200), quantity: 20 }
+    }).setDepth(12);
+    
+    this.input.keyboard.on('keydown-ENTER', () => this.scene.start('MenuScene'));
+  }
 }
 
-const config = {
-    type: Phaser.AUTO,
-    width: 800,
-    height: 600,
-    backgroundColor: '#87CEEB',
-    scene: [MenuScene, GameScene, ResultsScene],
-    physics: {
-        default: 'arcade',
-        arcade: { debug: false }
-    }
-};
-
-new Phaser.Game(config);
+// Game configuration with enhanced settings
+new Phaser.Game({
+  type: Phaser.AUTO,
+  width: W,
+  height: H,
+  backgroundColor: '#1a1a2e',
+  parent: 'game-container',
+  scene: [MenuScene, GameScene, QuizScene],
+  scale: { 
+    mode: Phaser.Scale.FIT, 
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    min: { width: 400, height: 300 },
+    max: { width: 1200, height: 900 }
+  },
+  physics: {
+    default: 'arcade',
+    arcade: { debug: false }
+  }
+});
 </script>
-
+</div>
 </body>
 </html>

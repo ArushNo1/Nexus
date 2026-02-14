@@ -5,11 +5,11 @@ from langchain_anthropic import ChatAnthropic
 from utils.config import settings
 
 MODEL_MAP: dict[str, str] = {
-    "game_planner": "claude-sonnet-4-20250514",
-    "design_evaluator": "claude-sonnet-4-20250514",
-    "game_coder": "claude-sonnet-4-20250514",
-    "asset_generator": "claude-sonnet-4-20250514",
-    "game_player": "claude-sonnet-4-20250514",
+    "game_planner": "claude-sonnet-4-5",
+    "design_evaluator": "claude-sonnet-4-5",
+    "game_coder": "claude-opus-4-6",
+    "asset_generator": "claude-sonnet-4-5",
+    "game_player": "claude-sonnet-4-5",
 }
 
 
