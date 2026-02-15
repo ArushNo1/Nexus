@@ -93,18 +93,19 @@ async function extractText(file: File): Promise<string> {
     // PDF
     if (file.type === 'application/pdf' || fileName.endsWith('.pdf')) {
         // @ts-ignore
-        const pdfParse = require('pdf-parse');
+        const { PDFParse } = require('pdf-parse');
         const buffer = Buffer.from(await file.arrayBuffer());
-        const data = await pdfParse(buffer);
-        return data.text;
+        const parser = new PDFParse({ data: buffer, verbosity: 0 });
+        const result = await parser.getText();
+        return result.text;
     }
 
     // PPTX / DOCX (Office formats)
     if (fileName.endsWith('.pptx') || fileName.endsWith('.docx') || fileName.endsWith('.xlsx')) {
         // @ts-ignore
-        const officeParser = require('officeparser');
+        const { parseOffice } = require('officeparser');
         const buffer = Buffer.from(await file.arrayBuffer());
-        return await officeParser.parseOfficeAsync(buffer);
+        return await parseOffice(buffer);
     }
 
     // Plain text fallback: TXT, MD, JSON, CSV, etc.

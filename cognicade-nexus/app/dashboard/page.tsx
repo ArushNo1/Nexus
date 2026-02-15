@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import {
     Users,
     BookOpen,
-    Plus,
     Play,
     Settings,
     Trophy,
@@ -13,18 +12,17 @@ import {
     ArrowRight,
     BarChart3,
     Target,
-    Edit
+    Trash2
 } from 'lucide-react';
 import Link from 'next/link';
 import Sidebar from '@/components/sidebar';
-import DashboardNavbar from '@/components/ui/dashboard-navbar';
 import { createClient } from '@/lib/supabase/client';
 import { getDashboardStats, getRecentLessons, getStudentDashboardStats, getStudentRecentLessons } from '@/lib/services/classrooms';
 
 const TEACHER_QUICK_ACTIONS = [
-    { label: 'Create New Lesson', icon: Plus, href: '/create', color: 'emerald', glow: 'rgba(52,211,153,0.3)' },
+    { label: 'My Classrooms', icon: Users, href: '/classrooms', color: 'emerald', glow: 'rgba(52,211,153,0.3)' },
     { label: 'View Analytics', icon: BarChart3, href: '/analytics', color: 'blue', glow: 'rgba(59,130,246,0.3)' },
-    { label: 'Manage Students', icon: Users, href: '/students', color: 'purple', glow: 'rgba(168,85,247,0.3)' },
+    { label: 'My Lessons', icon: BookOpen, href: '/lessons', color: 'purple', glow: 'rgba(168,85,247,0.3)' },
     { label: 'Settings', icon: Settings, href: '/settings', color: 'slate', glow: 'rgba(148,163,184,0.3)' },
 ];
 
@@ -184,8 +182,6 @@ export default function Dashboard() {
                 className="min-h-screen transition-[margin] duration-300"
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
-                {/* Dashboard Navbar */}
-                <DashboardNavbar />
 
                 <div className="px-8 py-12">
                     {/* Header */}
@@ -280,8 +276,8 @@ export default function Dashboard() {
                                 </div>
                                 {recentLessons.length === 0 ? (
                                     <div className="text-center py-12 bg-[#0d281e] border border-emerald-500/20 rounded-2xl">
-                                        <p className="text-slate-400">No lessons created yet.</p>
-                                        <Link href="/create" className="text-emerald-400 mt-2 block hover:underline">Create your first lesson</Link>
+                                        <p className="text-slate-400">No lessons yet.</p>
+                                        <Link href="/classrooms" className="text-emerald-400 mt-2 block hover:underline">Go to your classrooms to create lessons</Link>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -338,11 +334,18 @@ export default function Dashboard() {
                                                                 </button>
                                                             </Link>
                                                             {userRole === 'teacher' && (
-                                                                <Link href={`/create?id=${lesson.id}`}>
-                                                                    <button className="px-4 py-2 bg-slate-500/10 text-slate-400 rounded-lg hover:bg-slate-500/20 transition-all text-sm font-medium font-sans-clean border border-slate-500/20">
-                                                                        <Edit size={16} />
-                                                                    </button>
-                                                                </Link>
+                                                                <button
+                                                                    onClick={async (e) => {
+                                                                        e.stopPropagation();
+                                                                        if (!confirm('Are you sure you want to delete this lesson? This cannot be undone.')) return;
+                                                                        const supabase = createClient();
+                                                                        await supabase.from('lessons').delete().eq('id', lesson.id);
+                                                                        setRecentLessons(prev => prev.filter(l => l.id !== lesson.id));
+                                                                    }}
+                                                                    className="px-4 py-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-all text-sm font-medium font-sans-clean border border-red-500/20"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
                                                             )}
                                                         </div>
                                                     </div>
@@ -355,9 +358,6 @@ export default function Dashboard() {
                         </>
                     )}
 
-                    {/* Floating Game Elements */}
-                    <img src="/coin.png" alt="" className="fixed bottom-20 right-20 w-12 opacity-20 animate-float-gentle pointer-events-none" style={{ imageRendering: 'pixelated' }} />
-                    <img src="/coin.png" alt="" className="fixed top-32 right-40 w-8 opacity-15 animate-float-gentle pointer-events-none" style={{ imageRendering: 'pixelated', animationDelay: '1s' }} />
                 </div>
             </div>
         </div>

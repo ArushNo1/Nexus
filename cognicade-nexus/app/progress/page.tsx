@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Sidebar from '@/components/sidebar';
-import DashboardNavbar from '@/components/ui/dashboard-navbar';
 import { Target, TrendingUp, Award, Clock } from 'lucide-react';
 
 export default function ProgressPage() {
@@ -46,7 +45,6 @@ export default function ProgressPage() {
                 className="min-h-screen transition-[margin] duration-300"
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
-                <DashboardNavbar />
 
                 <div className="px-8 py-12">
                     <div className="mb-8">
