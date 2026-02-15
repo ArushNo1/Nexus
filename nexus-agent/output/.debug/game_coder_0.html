@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Virtual Testing Lab: Logic Quest</title>
+    <title>Digital Testing Lab: Knowledge Gate</title>
     <style>
         * {
             margin: 0;
@@ -25,28 +25,16 @@
 </head>
 
 <body>
-    <!-- JSDoc Header: Educational Objectives -->
-    <script>
-        /**
-         * LESSON: Software Testing & Logic Gates
-         * 
-         * OBJECTIVES:
-         * 1. Navigate a "Test Environment" (Platformer Levels).
-         * 2. Collect "Data Packets" (Score) and maintain "Integrity" (HP).
-         * 3. Validate system state using Logic Gates at the end of each phase.
-         * 
-         * MECHANICS:
-         * - Run/Jump: Standard platforming controls.
-         * - Logic Gates: Evaluate a boolean condition (e.g., "PACKETS > 5?") and choose the correct door.
-         * - Dynamic Validation: The correct door depends on your gameplay performance.
-         */
-    </script>
-
     <script src="https://unpkg.com/kaplay@3001/dist/kaplay.js"></script>
     <script>
-        // ============================================================
-        //  VIRTUAL TESTING LAB
-        // ============================================================
+        /**
+         * EDUCATIONAL OBJECTIVES
+         * ----------------------
+         * Topic: Programming Basics (Variables & Logic)
+         * Mechanic: The "Knowledge Gate" requires players to answer a question to progress.
+         *           - Correct Answer: Level Complete
+         *           - Incorrect Answer: System Reboot (Retry Section)
+         */
 
         // ----- 1. GAME CONFIG -----
         const CONFIG = {
@@ -60,38 +48,34 @@
             playerStartPos: { x: 50, y: 0 },
             playerHealth: 3,
 
-            // Camera
-            cameraFollow: true,
-
-            // Visuals (Neon/Cyberpunk Palette)
-            bgColor: [10, 10, 25],          // Deep Midnight Blue
-            floorColor: [40, 60, 100],      // Steel Blue
-            platformColor: [0, 200, 200],   // Cyan
-            hazardColor: [255, 0, 100],     // Neon Magenta
-            coinColor: [255, 255, 0],       // Bright Yellow
-            portalColor: [150, 0, 255],     // Electric Purple
-            doorColor: [100, 100, 255],     // Door Blue
+            // Visuals - Digital/Neon Theme
+            bgColor: [10, 10, 25],      // Deep Midnight
+            floorColor: [0, 255, 255],  // Neon Cyan
+            platformColor: [255, 0, 255], // Neon Magenta
+            hazardColor: [255, 50, 50],   // Glitch Red
+            coinColor: [255, 255, 0],     // Data Yellow
+            gateColor: [100, 255, 100],   // Success Green (base tint)
         };
 
-        // ----- 2. LOGIC DATA -----
-        // Defines the puzzle for each level.
-        const LOGIC_DATA = [
+        // ----- 2. LESSON CONTENT (The Knowledge Gates) -----
+        const QUESTIONS = [
             {
-                prompt: "PACKETS > 5?",
-                options: ["TRUE", "FALSE"],
-                // Check if collected coins > 5
-                check: (score, hp) => score > 5
+                q: "What stores a value?",
+                a: "Variable",
+                b: "Loop",
+                correct: "a"
             },
             {
-                prompt: "INTEGRITY == 3?",
-                options: ["YES", "NO"],
-                // Check if HP is full (3)
-                check: (score, hp) => hp === 3
-            },
+                q: "Which is a Boolean?",
+                a: "\"True\"",
+                b: "true",
+                correct: "b"
+            }
         ];
 
         // ----- 3. LEVEL MAPS -----
-        // Modified to ensure space for double doors at the end.
+        // 1 = Gate A (Left), 2 = Gate B (Right)
+        // Gates are placed at the end where '>' used to be.
         const LEVELS = [
             // --- Level 1 ---
             [
@@ -105,25 +89,25 @@
                 "                           ------       ",
                 "    $  $                           ==== ",
                 "   ------                               ",
-                "                   $                    ",
-                "  @              =====     ===      >   ",
-                "========   ^^^  ========  ======  ======",
+                "                   $              1   2 ",
+                "  @              =====     ===   =======",
+                "========   ^^^  ========  ====== =======",
             ],
             // --- Level 2 ---
             [
                 "                                        ",
                 "                                        ",
-                "                                      > ",
-                "                       $  $          ===",
+                "                                        ",
+                "                       $  $             ",
                 "                      ------            ",
                 "           $                   $        ",
                 "          ---              ------       ",
-                "                                        ",
-                "    $         $     $                   ",
-                "   ---    ------  -----                 ",
-                "                                        ",
-                "  @                          ===        ",
-                "=====  ^^^  ====  ^^^  ====  ^^^^^^  ===",
+                "                                     1  ",
+                "    $         $     $               ==  ",
+                "   ---    ------  -----            ==   ",
+                "                                  == 2  ",
+                "  @                              ====== ",
+                "=====  ^^^  ====  ^^^  ====  ^^^ =======",
             ],
         ];
 
@@ -135,6 +119,7 @@
             scale: 1,
             crisp: true,
             global: true,
+            letterbox: true,
             buttons: {
                 jump: { keyboard: ["space", "w", "up"], gamepad: ["south"] },
                 left: { keyboard: ["a", "left"], gamepad: ["dpad-left"] },
@@ -142,17 +127,27 @@
             },
         });
 
-        // ----- 5. TILE SIZE -----
+        // ----- 5. ASSETS & HELPERS -----
         const TILE = 32;
 
-        // ----- 6. HELPER: Build Level -----
-        // Now accepts levelIdx to configure the specific logic doors for this level
-        function buildLevel(mapData, levelIdx) {
-            const objects = { coins: [], hazards: [], platforms: [], doors: [] };
-            let spawnPos = vec2(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y);
+        // Custom "Flash" effect for reboot
+        function flashScreen() {
+            const f = add([
+                rect(width(), height()),
+                pos(0, 0),
+                color(255, 50, 50),
+                opacity(0.5),
+                fixed(),
+                z(999),
+                lifespan(0.2, { fade: 0.2 }), // Fades out over 0.2s
+            ]);
+        }
 
-            // Access logic data for this level
-            const currentLogic = LOGIC_DATA[levelIdx] || LOGIC_DATA[0];
+        // ----- 6. BUILD LEVEL -----
+        function buildLevel(mapData, levelIdx) {
+            const objects = { coins: [], hazards: [], platforms: [], portals: [] };
+            let spawnPos = vec2(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y);
+            const currentQ = QUESTIONS[levelIdx] || { a: "A", b: "B", correct: "a" };
 
             for (let row = 0; row < mapData.length; row++) {
                 for (let col = 0; col < mapData[row].length; col++) {
@@ -161,7 +156,7 @@
                     const y = row * TILE;
 
                     switch (ch) {
-                        // Ground Block (Circuit Board Style)
+                        // Ground Block (Circuitry)
                         case "=":
                             add([
                                 rect(TILE, TILE),
@@ -169,12 +164,12 @@
                                 area(),
                                 body({ isStatic: true }),
                                 color(...CONFIG.floorColor),
-                                outline(1, rgb(0, 200, 200)), // Circuit outline
+                                outline(2, rgb(0, 0, 50)),
                                 "ground",
                             ]);
                             break;
 
-                        // One-way Platform
+                        // One-way Platform (Hologram)
                         case "-":
                             add([
                                 rect(TILE, TILE / 2),
@@ -182,7 +177,7 @@
                                 area(),
                                 body({ isStatic: true }),
                                 color(...CONFIG.platformColor),
-                                outline(1, rgb(0, 50, 50)),
+                                opacity(0.8),
                                 "platform",
                             ]);
                             break;
@@ -192,160 +187,157 @@
                             spawnPos = vec2(x, y);
                             break;
 
-                        // Collectible (Data Packet)
+                        // Collectible (Data Bit)
                         case "$":
-                            const packet = add([
-                                rect(18, 22, { radius: 2 }),
+                            const coin = add([
+                                rect(12, 12),
                                 pos(x + TILE / 2, y + TILE / 2),
                                 anchor("center"),
                                 area(),
                                 color(...CONFIG.coinColor),
-                                outline(2, rgb(0, 0, 0)),
+                                outline(1, rgb(255, 255, 255)),
+                                rotate(45), // Diamond shape
                                 z(5),
                                 "coin",
                             ]);
-                            // Add "101" text to look like data
-                            packet.add([
-                                text("101", { size: 8 }),
-                                anchor("center"),
-                                color(0, 0, 0),
-                            ]);
-                            objects.coins.push(packet);
+                            // Animation: spin
+                            coin.onUpdate(() => {
+                                coin.angle += 2;
+                            });
+                            objects.coins.push(coin);
                             break;
 
-                        // Hazard (Code Bug)
+                        // Hazard (Corrupted File)
                         case "^":
-                            // Floating Bug Enemy
-                            const bug = add([
-                                // Diamond shape
-                                polygon([vec2(-10, 0), vec2(0, -10), vec2(10, 0), vec2(0, 10)]),
-                                pos(x + TILE / 2, y + TILE / 2),
-                                anchor("center"),
-                                area({ shape: new Polygon([vec2(-8, 0), vec2(0, -8), vec2(8, 0), vec2(0, 8)]) }),
+                            const hazard = add([
+                                rect(TILE, TILE),
+                                pos(x, y),
+                                area({ shape: new Rect(vec2(4, 4), TILE - 8, TILE - 8) }),
                                 color(...CONFIG.hazardColor),
-                                outline(1, rgb(255, 255, 255)),
+                                opacity(0.9),
                                 "hazard",
-                                "bug", // Tag for movement logic
-                                { startY: y + TILE / 2 } // Remember spawn Y
                             ]);
+                            // Animation: Glitch effect
+                            hazard.onUpdate(() => {
+                                if (rand() < 0.05) {
+                                    hazard.pos.x = x + rand(-2, 2);
+                                    hazard.opacity = rand(0.5, 1);
+                                } else {
+                                    hazard.pos.x = x;
+                                }
+                            });
                             break;
 
-                        // Level Exit (Logic Gates)
-                        case ">":
-                            // Spawn two doors instead of one portal
-                            // Door 1 (Left) - Option 0
-                            add([
-                                rect(40, 64),
-                                pos(x - 24, y - 32),
-                                area(),
-                                color(...CONFIG.portalColor),
-                                outline(2, rgb(255, 255, 255)),
-                                anchor("bot"),
-                                "door",
-                                { value: 0 } // Represents index 0 in options
-                            ]).add([
-                                text(currentLogic.options[0], { size: 10 }),
-                                pos(0, -40),
-                                anchor("center"),
-                                color(255, 255, 255)
-                            ]);
+                        // Knowledge Gate A
+                        case "1":
+                            makeGate(x, y, "a", currentQ.a);
+                            break;
 
-                            // Door 2 (Right) - Option 1
-                            add([
-                                rect(40, 64),
-                                pos(x + 56, y - 32),
-                                area(),
-                                color(...CONFIG.portalColor),
-                                outline(2, rgb(255, 255, 255)),
-                                anchor("bot"),
-                                "door",
-                                { value: 1 } // Represents index 1 in options
-                            ]).add([
-                                text(currentLogic.options[1], { size: 10 }),
-                                pos(0, -40),
-                                anchor("center"),
-                                color(255, 255, 255)
-                            ]);
+                        // Knowledge Gate B
+                        case "2":
+                            makeGate(x, y, "b", currentQ.b);
                             break;
                     }
                 }
             }
-            return { spawnPos };
+
+            // Helper to create gates
+            function makeGate(x, y, type, labelText) {
+                const gate = add([
+                    rect(TILE, TILE * 2),
+                    pos(x, y - TILE), // Sit on floor
+                    area(),
+                    body({ isStatic: true }), // Acts as a wall you bump into
+                    color(50, 50, 80),
+                    outline(2, rgb(...CONFIG.platformColor)),
+                    "portal",
+                    { answerType: type }, // Custom property to check answer
+                ]);
+
+                // Gate Label (A or B)
+                gate.add([
+                    text(type.toUpperCase(), { size: 24, font: "monospace" }),
+                    pos(TILE / 2, TILE / 2),
+                    anchor("center"),
+                    color(255, 255, 255),
+                ]);
+
+                // Answer Text (floating above)
+                add([
+                    text(labelText, { size: 14, width: 200, align: "center", font: "monospace" }),
+                    pos(x + TILE / 2, y - TILE - 20),
+                    anchor("center"),
+                    color(200, 200, 255),
+                ]);
+            }
+
+            return { spawnPos, objects };
         }
 
         // ----- 7. MAIN GAME SCENE -----
         scene("game", (levelIdx = 0) => {
             setGravity(CONFIG.gravity);
 
-            // Setup Level
-            const { spawnPos } = buildLevel(LEVELS[levelIdx], levelIdx);
-            const currentLogic = LOGIC_DATA[levelIdx] || LOGIC_DATA[0];
+            // Level Setup
+            const { spawnPos, objects } = buildLevel(LEVELS[levelIdx], levelIdx);
+            const currentQ = QUESTIONS[levelIdx] || { q: "Level Complete", correct: "a" };
 
             let score = 0;
             let hp = CONFIG.playerHealth;
 
-            // --- Player (QA Drone) ---
+            // --- Player Object (Data Probe) ---
             const player = add([
-                rect(24, 24, { radius: 4 }), // Drone Body
+                rect(24, 24),
                 pos(spawnPos),
                 area(),
                 body(),
                 anchor("botleft"),
-                scale(1),
-                color(200, 200, 220),
-                outline(2, rgb(0, 255, 255)),
+                color(0, 100, 255),
+                outline(2, rgb(200, 240, 255)),
                 z(10),
                 { facing: 1 },
                 "player",
             ]);
 
-            // Drone Eye
+            // Player "Eye" (for visual direction)
             const eye = player.add([
-                rect(16, 6),
-                pos(12, -16),
-                anchor("center"),
+                rect(8, 6),
+                pos(14, -16),
                 color(0, 255, 255),
+                anchor("center"),
             ]);
 
             // --- HUD ---
             const hpLabel = add([
-                text(`INTEGRITY: ${hp}`, { size: 16, font: "monospace" }),
+                text(`HP: ${hp}`, { size: 18, font: "monospace" }),
                 pos(16, 12),
                 fixed(),
                 z(100),
-                color(255, 100, 100),
+                color(255, 50, 50),
             ]);
 
             const scoreLabel = add([
-                text(`PACKETS: ${score}`, { size: 16, font: "monospace" }),
+                text(`BITS: ${score}`, { size: 18, font: "monospace" }),
                 pos(16, 36),
                 fixed(),
                 z(100),
                 color(...CONFIG.coinColor),
             ]);
 
-            // Logic Prompt Display (Top Center)
-            add([
-                text(`TEST_PHASE: ${levelIdx + 1}`, { size: 14 }),
-                pos(width() / 2, 16),
-                anchor("top"),
+            const qLabel = add([
+                text(`Q: ${currentQ.q}`, { size: 16, width: 400, align: "right", font: "monospace" }),
+                pos(width() - 16, 12),
+                anchor("topright"),
                 fixed(),
-                color(100, 100, 255)
-            ]);
-            
-            add([
-                text(currentLogic.prompt, { size: 20 }),
-                pos(width() / 2, 40),
-                anchor("top"),
-                fixed(),
-                color(255, 255, 255)
+                z(100),
+                color(200, 200, 255),
             ]);
 
-            // --- Movement ---
+            // --- Controls ---
             onButtonDown("left", () => {
                 player.move(-CONFIG.moveSpeed, 0);
                 player.facing = -1;
-                eye.pos.x = 8; // Move eye left relative to center
+                eye.pos.x = 8; // Move eye left
             });
 
             onButtonDown("right", () => {
@@ -360,80 +352,62 @@
                 }
             });
 
-            // --- Bug Animation ---
-            onUpdate("bug", (b) => {
-                // Sine wave floating movement
-                b.pos.y = b.startY + Math.sin(time() * 5) * 10;
+            // Cap fall speed
+            player.onUpdate(() => {
+                if (player.vel.y > CONFIG.maxFallSpeed) player.vel.y = CONFIG.maxFallSpeed;
             });
 
-            // Camera Follow
-            if (CONFIG.cameraFollow) {
-                player.onUpdate(() => {
-                    camPos(
-                        lerp(camPos().x, player.pos.x + 100, 0.05),
-                        lerp(camPos().y, player.pos.y - 50, 0.05),
-                    );
-                    // Prevent falling through map forever
-                    if (player.pos.y > 1000) {
-                        hurtPlayer();
-                    }
-                });
-            }
+            // Camera Tracking
+            player.onUpdate(() => {
+                camPos(
+                    lerp(camPos().x, player.pos.x + 100, 0.08),
+                    lerp(camPos().y, player.pos.y - 50, 0.08),
+                );
+            });
 
             // --- Interactions ---
 
-            // Collect Data Packet
+            // Collect Coin
             player.onCollide("coin", (coin) => {
                 destroy(coin);
                 score++;
-                scoreLabel.text = `PACKETS: ${score}`;
-                // Small visual pop
-                add([
-                    text("+1", { size: 12 }),
-                    pos(coin.pos),
-                    color(...CONFIG.coinColor),
-                    move(vec2(0, -100), 50),
-                    lifespan(0.5, { fade: 0.5 })
-                ]);
+                scoreLabel.text = `BITS: ${score}`;
             });
 
-            // Hit Hazard (Bug)
+            // Hazard / Damage
             player.onCollide("hazard", () => {
                 hurtPlayer();
             });
 
+            // Fall Death
+            player.onUpdate(() => {
+                if (player.pos.y > LEVELS[levelIdx].length * TILE + 300) {
+                    hurtPlayer();
+                }
+            });
+
             function hurtPlayer() {
+                shake(5);
                 hp--;
-                hpLabel.text = `INTEGRITY: ${hp}`;
-                shake(10);
-                
+                hpLabel.text = `HP: ${hp}`;
                 if (hp <= 0) {
                     go("gameover", { score, level: levelIdx });
                 } else {
-                    player.pos = spawnPos.clone();
-                    player.vel = vec2(0, 0);
-                    // Flash red
-                    const flashOverlay = add([
-                        rect(width(), height()),
-                        fixed(),
-                        color(255, 0, 0),
-                        opacity(0.3),
-                        lifespan(0.1, { fade: 0.1 })
-                    ]);
+                    respawn();
                 }
             }
 
-            // --- Logic Door Interaction ---
-            player.onCollide("door", (door) => {
-                // Evaluate the logic condition based on current stats
-                const isConditionTrue = currentLogic.check(score, hp);
-                
-                // Map boolean result to the correct door index (0 for True/Yes, 1 for False/No)
-                // Assuming options[0] is the affirmative answer
-                const correctIndex = isConditionTrue ? 0 : 1;
+            function respawn() {
+                player.pos = spawnPos.clone();
+                player.vel = vec2(0, 0);
+                flashScreen();
+            }
 
-                if (door.value === correctIndex) {
-                    // CORRECT!
+            // --- KNOWLEDGE GATE MECHANIC ---
+            player.onCollide("portal", (portal) => {
+                // Check answer
+                if (portal.answerType === currentQ.correct) {
+                    // Correct!
                     const nextLevel = levelIdx + 1;
                     if (nextLevel < LEVELS.length) {
                         go("game", nextLevel);
@@ -441,84 +415,74 @@
                         go("win", { score });
                     }
                 } else {
-                    // WRONG!
-                    shake(20);
+                    // Incorrect - Reboot System
+                    shake(10);
+                    // Visual feedback
                     add([
-                        text("LOGIC ERROR", { size: 48 }),
-                        pos(width()/2, height()/2),
+                        text("SYSTEM ERROR", { size: 32, font: "monospace" }),
+                        pos(center()),
                         anchor("center"),
                         fixed(),
                         color(255, 0, 0),
-                        lifespan(1)
+                        lifespan(1, { fade: 1 }),
+                        opacity(1),
                     ]);
-                    // Penalize or Reset? Let's reset the level to reinforce learning
-                    wait(1, () => {
-                        go("game", levelIdx);
-                    });
+                    respawn();
                 }
             });
 
-            // Background Decor (Digital Rain / Stars)
-            for (let i = 0; i < 30; i++) {
+            // Background deco (digital rain style stars)
+            for (let i = 0; i < 50; i++) {
                 add([
                     rect(2, rand(4, 10)),
-                    pos(rand(0, width() * 2), rand(-200, height())),
-                    color(0, 255, 100),
-                    opacity(rand(0.1, 0.3)),
+                    pos(rand(0, width() * 4), rand(-200, height() * 2)),
+                    color(0, 100, 0),
+                    opacity(0.3),
                     z(-10),
-                    fixed(), // Make them move with camera in a parallax way if we didn't use fixed...
-                             // actually let's not fix them so they scroll
-                    "bg_particle"
+                    "rain",
                 ]);
             }
         });
 
-        // ----- 8. END SCENES -----
+        // ----- 8. END SCREENS -----
         scene("gameover", ({ score, level }) => {
             add([
-                text("SYSTEM FAILURE", { size: 48 }),
+                text("SYSTEM FAILURE", { size: 48, font: "monospace" }),
                 pos(center()),
                 anchor("center"),
-                color(255, 0, 100),
+                color(255, 50, 50),
             ]);
             add([
-                text(`Packets Recovered: ${score}`, { size: 24 }),
-                pos(center().x, center().y + 60),
+                text("Press SPACE to Reboot", { size: 18, font: "monospace" }),
+                pos(center().x, center().y + 80),
                 anchor("center"),
-            ]);
-            add([
-                text("Press SPACE to Reboot", { size: 18 }),
-                pos(center().x, center().y + 120),
-                anchor("center"),
-                color(100, 200, 200),
+                color(200, 200, 200),
             ]);
             onKeyPress("space", () => go("game", level));
+            onClick(() => go("game", level));
         });
 
         scene("win", ({ score }) => {
             add([
-                text("TEST SUITE PASSED", { size: 48 }),
+                text("TEST COMPLETE", { size: 48, font: "monospace" }),
                 pos(center()),
                 anchor("center"),
                 color(100, 255, 100),
             ]);
             add([
-                text(`Total Data: ${score}`, { size: 24 }),
+                text(`Data Bits Collected: ${score}`, { size: 24, font: "monospace" }),
                 pos(center().x, center().y + 60),
                 anchor("center"),
+                color(255, 255, 0),
             ]);
             add([
-                text("All Logic Gates Validated", { size: 18 }),
-                pos(center().x, center().y + 100),
+                text("Press SPACE to Restart", { size: 18, font: "monospace" }),
+                pos(center().x, center().y + 120),
                 anchor("center"),
-                color(150, 150, 255),
-            ]);
-            add([
-                text("Press SPACE to Restart", { size: 18 }),
-                pos(center().x, center().y + 160),
-                anchor("center"),
+                color(150, 150, 180),
             ]);
             onKeyPress("space", () => go("game", 0));
+            onClick(() => go("game", 0));
         });
 
         // ----- 9. START -----

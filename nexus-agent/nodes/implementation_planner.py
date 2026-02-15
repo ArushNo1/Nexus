@@ -10,6 +10,7 @@ from utils.logger import get_logger
 from utils.debug import dump_debug_state
 from utils.prompts import load_prompt, render_template
 from tools.kaplay_docs_rag import search_kaplay_docs
+from utils.supabase import update_game
 
 log = get_logger("implementation_planner")
 
@@ -74,5 +75,10 @@ async def implementation_planner_node(state: AgentState) -> dict:
 
     log.info("[bold magenta]Node 2.5 — Implementation Planner[/bold magenta] | done → status: coding")
     dump_debug_state("implementation_planner", {**state, **result})
+
+    # Push status to Supabase
+    game_id = state.get("game_id")
+    if game_id:
+        update_game(game_id, {"status": "coding"})
 
     return result

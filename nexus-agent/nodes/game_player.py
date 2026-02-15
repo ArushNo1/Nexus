@@ -10,6 +10,7 @@ from utils.logger import get_logger
 from utils.debug import dump_debug_state
 from utils.prompts import load_prompt, render_template
 from tools.puppeteer_runner import run_game_headless
+from utils.supabase import update_game
 
 log = get_logger("game_player")
 
@@ -69,5 +70,16 @@ async def game_player_node(state: AgentState) -> dict:
     verdict = "SHIP" if approved else "FIX"
     log.info(f"[bold red]Node 5 — Game Player[/bold red] | done → verdict: {verdict} | runtime errors: {len(runtime_errors)} | total errors: {len(errors)}")
     dump_debug_state("game_player", {**state, **result})
+
+    # Push status + errors to Supabase
+    game_id = state.get("game_id")
+    if game_id:
+        update_data = {
+            "status": "done" if approved else "coding",
+            "errors": errors if errors else None,
+        }
+        if approved:
+            update_data["html_src"] = state["game_code"]
+        update_game(game_id, update_data)
 
     return result

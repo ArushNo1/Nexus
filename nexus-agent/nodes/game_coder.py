@@ -8,6 +8,7 @@ from utils.logger import get_logger
 from utils.debug import dump_debug_state
 from utils.prompts import load_prompt, render_template
 from tools.kaplay_docs_rag import search_kaplay_docs
+from utils.supabase import update_game
 
 log = get_logger("game_coder")
 
@@ -86,5 +87,13 @@ async def game_coder_node(state: AgentState) -> dict:
     debug_dir.mkdir(parents=True, exist_ok=True)
     iteration = state.get("code_iteration", 0)
     (debug_dir / f"game_coder_{iteration}.html").write_text(code)
+
+    # Push status + code to Supabase
+    game_id = state.get("game_id")
+    if game_id:
+        update_game(game_id, {
+            "status": "playtesting",
+            "html_src": code,
+        })
 
     return result
