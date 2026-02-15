@@ -88,7 +88,8 @@ export default function LessonsPage() {
             <ChalkEquations />
             <Sidebar />
 
-            <div
+            <main
+                id="main-content"
                 className="min-h-screen transition-[margin] duration-300"
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
@@ -185,7 +186,7 @@ export default function LessonsPage() {
                         </div>
                     )}
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

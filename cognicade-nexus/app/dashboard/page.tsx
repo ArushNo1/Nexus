@@ -113,7 +113,8 @@ export default function Dashboard() {
             <ChalkEquations />
             <Sidebar />
 
-            <div
+            <main
+                id="main-content"
                 className="min-h-screen transition-[margin] duration-300 flex flex-col"
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
@@ -212,6 +213,7 @@ export default function Dashboard() {
                                                                     await supabase.from('lessons').delete().eq('id', lesson.id);
                                                                     setLessons(prev => prev.filter(l => l.id !== lesson.id));
                                                                 }}
+                                                                aria-label={`Delete lesson: ${lesson.title}`}
                                                                 className="px-3 py-3 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500/20 transition-all text-sm border border-red-500/20"
                                                             >
                                                                 <Trash2 size={14} />
@@ -227,7 +229,7 @@ export default function Dashboard() {
                         )}
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

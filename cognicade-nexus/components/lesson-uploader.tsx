@@ -162,6 +162,9 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             {/* Drop zone */}
             <div
+              role="button"
+              tabIndex={0}
+              aria-label={file ? `Selected file: ${file.name}. Press to change.` : "Drop your lesson plan here or press to browse"}
               className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
                 dragOver
                   ? "border-emerald-400 bg-emerald-500/10"
@@ -170,6 +173,7 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
                     : "border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.02]"
               }`}
               onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); }}}
               onDragOver={(e) => {
                 e.preventDefault();
                 setDragOver(true);
@@ -183,6 +187,7 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
                 accept=".pdf,.txt,.md,.json,.pptx,.docx"
                 onChange={handleFileChange}
                 className="hidden"
+                aria-label="Upload lesson plan file"
               />
 
               {file ? (
@@ -276,8 +281,8 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
 
             {/* Error */}
             {error && (
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-                <span className="text-red-400 shrink-0 mt-0.5 text-lg">✕</span>
+              <div role="alert" className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                <span className="text-red-400 shrink-0 mt-0.5 text-lg" aria-hidden="true">✕</span>
                 <p className="text-red-400 text-sm font-sans-clean">{error}</p>
               </div>
             )}

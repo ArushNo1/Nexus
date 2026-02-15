@@ -15,7 +15,7 @@ export default function ChalkEquations() {
                 }
                 .animate-chalk-drift { animation: chalk-drift var(--dur, 6s) ease-in-out infinite; }
             `}</style>
-            <div className="fixed inset-0 pointer-events-none select-none font-serif-display text-white z-0 overflow-hidden">
+            <div aria-hidden="true" className="fixed inset-0 pointer-events-none select-none font-serif-display text-white z-0 overflow-hidden">
                 <span className="absolute top-[8%] left-[5%] text-3xl opacity-[0.04] animate-chalk-drift" style={{ '--rot': '12deg', '--dur': '7s' } as React.CSSProperties}>∫ x² dx</span>
                 <span className="absolute top-[15%] right-[8%] text-4xl opacity-[0.05] animate-chalk-drift" style={{ '--rot': '-6deg', '--dur': '8s' } as React.CSSProperties}>E = mc²</span>
                 <span className="absolute top-[35%] left-[3%] text-2xl opacity-[0.04] animate-chalk-drift" style={{ '--rot': '5deg', '--dur': '9s', animationDelay: '1s' } as React.CSSProperties}>C₆H₁₂O₆</span>

@@ -221,7 +221,8 @@ export default function LessonDetailPage() {
         `}</style>
         <ChalkEquations />
         <Sidebar />
-        <div
+        <main
+          id="main-content"
           className="min-h-screen transition-[margin] duration-300"
           style={{ marginLeft: "var(--sidebar-width, 16rem)" }}
         >
@@ -231,7 +232,7 @@ export default function LessonDetailPage() {
               Loading lesson...
             </div>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
@@ -253,7 +254,8 @@ export default function LessonDetailPage() {
         `}</style>
         <ChalkEquations />
         <Sidebar />
-        <div
+        <main
+          id="main-content"
           className="min-h-screen transition-[margin] duration-300"
           style={{ marginLeft: "var(--sidebar-width, 16rem)" }}
         >
@@ -271,7 +273,7 @@ export default function LessonDetailPage() {
               </button>
             </Link>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
@@ -308,7 +310,8 @@ export default function LessonDetailPage() {
       <ChalkEquations />
       <Sidebar />
 
-      <div
+      <main
+        id="main-content"
         className="min-h-screen transition-[margin] duration-300"
         style={{ marginLeft: "var(--sidebar-width, 16rem)" }}
       >
@@ -774,7 +777,7 @@ export default function LessonDetailPage() {
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

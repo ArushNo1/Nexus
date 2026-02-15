@@ -552,6 +552,7 @@ export default function NexusLanding() {
         setIsMenuOpen={setIsMenuOpen}
       />
 
+      <main id="main-content">
       {/* ================= HERO SECTION (SPLIT WORLD) ================= */}
       {/* Section owns the gradient — no panel divs have any background */}
       <section
@@ -562,7 +563,7 @@ export default function NexusLanding() {
         }}
       >
         {/* === FULL-WIDTH GAME LAYER (behind everything) === */}
-        <div className="hidden lg:block absolute inset-0 z-0 pointer-events-none">
+        <div aria-hidden="true" className="hidden lg:block absolute inset-0 z-0 pointer-events-none">
           {/* Subtle vertical sky depth on right half */}
           <div className="absolute inset-y-0 right-0 w-1/2" />
           <div className="absolute inset-0 scanlines opacity-20 mix-blend-overlay" />
@@ -662,7 +663,7 @@ export default function NexusLanding() {
         </div>
 
         {/* === CHALK FORMULAS — full section width, no compositing boundary === */}
-        <div className="hidden lg:block absolute inset-0 pointer-events-none select-none font-serif-display text-white z-10">
+        <div aria-hidden="true" className="hidden lg:block absolute inset-0 pointer-events-none select-none font-serif-display text-white z-10">
           <span
             className="absolute top-[8%] left-[5%] text-3xl opacity-[0.08] animate-chalk-drift"
             style={{ "--rot": "12deg", "--dur": "7s" } as React.CSSProperties}
@@ -975,7 +976,7 @@ export default function NexusLanding() {
                 >
                   <img
                     src={`/game_samples/${num}.png`}
-                    alt={`Game sample ${num}`}
+                    alt={`${game.title} — ${game.subject} ${game.label} game`}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/50 group-hover:via-black/10 transition-all" />
@@ -1379,6 +1380,8 @@ export default function NexusLanding() {
           </div>
         </div>
       </section>
+
+      </main>
 
       {/* ================= FOOTER ================= */}
       <footer className="border-t border-white/5 py-10">

@@ -107,7 +107,8 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
             <ChalkEquations />
             <Sidebar />
 
-            <div
+            <main
+                id="main-content"
                 className="min-h-screen transition-[margin] duration-300"
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
@@ -115,7 +116,7 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
                 <div className="bg-[#0d281e]/90 backdrop-blur-md border-b border-white/5 sticky top-0 z-40">
                     <div className="px-8 py-4 flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <Link href="/classrooms" className="p-2 hover:bg-white/5 rounded-full transition-colors">
+                            <Link href="/classrooms" aria-label="Back to classrooms" className="p-2 hover:bg-white/5 rounded-full transition-colors">
                                 <ArrowLeft size={20} className="text-slate-400" />
                             </Link>
                             <div>
@@ -144,8 +145,11 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
 
                 <div className="px-8 py-8">
                     {/* Tabs */}
-                    <div className="flex gap-8 border-b border-white/10 mb-8">
+                    <div role="tablist" aria-label="Classroom sections" className="flex gap-8 border-b border-white/10 mb-8">
                         <button
+                            role="tab"
+                            aria-selected={activeTab === 'lessons'}
+                            aria-controls="panel-lessons"
                             onClick={() => setActiveTab('lessons')}
                             className={`pb-4 px-2 text-sm font-medium transition-colors relative ${activeTab === 'lessons' ? 'text-emerald-400' : 'text-slate-400 hover:text-white'}`}
                         >
@@ -159,6 +163,9 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
                             )}
                         </button>
                         <button
+                            role="tab"
+                            aria-selected={activeTab === 'students'}
+                            aria-controls="panel-students"
                             onClick={() => setActiveTab('students')}
                             className={`pb-4 px-2 text-sm font-medium transition-colors relative ${activeTab === 'students' ? 'text-emerald-400' : 'text-slate-400 hover:text-white'}`}
                         >
@@ -176,7 +183,7 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
                     {/* Content */}
                     <div>
                         {activeTab === 'lessons' && (
-                            <div className="space-y-4">
+                            <div id="panel-lessons" role="tabpanel" aria-labelledby="panel-lessons" className="space-y-4">
                                 {lessons.length === 0 ? (
                                     <div className="text-center py-20 bg-[#0d281e] border border-emerald-500/20 rounded-2xl">
                                         <BookOpen size={48} className="text-slate-600 mx-auto mb-4" />
@@ -207,7 +214,7 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
                                                     <span className="text-xs text-slate-500">
                                                         Added {new Date(lesson.created_at).toLocaleDateString()}
                                                     </span>
-                                                    <button className="p-2 bg-emerald-500 hover:bg-emerald-400 rounded-lg text-[#0d281e] transition-colors">
+                                                    <button aria-label={`Play lesson: ${lesson.title}`} className="p-2 bg-emerald-500 hover:bg-emerald-400 rounded-lg text-[#0d281e] transition-colors">
                                                         <Play size={16} fill="currentColor" />
                                                     </button>
                                                 </div>
@@ -219,7 +226,7 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
                         )}
 
                         {activeTab === 'students' && (
-                            <div className="bg-[#0d281e] border border-emerald-500/20 rounded-2xl overflow-hidden">
+                            <div id="panel-students" role="tabpanel" aria-labelledby="panel-students" className="bg-[#0d281e] border border-emerald-500/20 rounded-2xl overflow-hidden">
                                 {members.length === 0 ? (
                                     <div className="text-center py-20">
                                         <Users size={48} className="text-slate-600 mx-auto mb-4" />
@@ -269,7 +276,7 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
                         )}
                     </div>
                 </div>
-            </div>
+            </main>
             {isTeacher && userProfile && (
                 <AssignLessonModal
                     open={assignModalOpen}

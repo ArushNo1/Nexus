@@ -100,6 +100,7 @@ export default function AssignLessonModal({
                     <input
                         type="text"
                         placeholder="Search lessons..."
+                        aria-label="Search lessons"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50"
@@ -107,7 +108,7 @@ export default function AssignLessonModal({
                 </div>
 
                 {/* Lesson list */}
-                <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
+                <div aria-live="polite" className="max-h-72 overflow-y-auto space-y-2 pr-1">
                     {loading ? (
                         <div className="text-center py-8 text-slate-400 text-sm">Loading lessons...</div>
                     ) : filteredLessons.length === 0 ? (

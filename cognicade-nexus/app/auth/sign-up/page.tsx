@@ -65,7 +65,7 @@ export default function SignUpPage() {
             <div className="absolute bottom-1/3 left-1/4 w-72 h-72 bg-purple-500/[0.04] blur-[100px] rounded-full pointer-events-none" />
 
             {/* Floating chalk formulas */}
-            <div className="hidden lg:block fixed inset-0 pointer-events-none select-none font-serif-display text-white z-0 overflow-hidden">
+            <div aria-hidden="true" className="hidden lg:block fixed inset-0 pointer-events-none select-none font-serif-display text-white z-0 overflow-hidden">
                 <span className="absolute top-[15%] left-[5%] text-2xl opacity-[0.06] animate-chalk-drift" style={{ '--rot': '8deg', '--dur': '9s' } as React.CSSProperties}>∫x² dx</span>
                 <span className="absolute top-[35%] right-[6%] text-3xl opacity-[0.05] animate-chalk-drift" style={{ '--rot': '-5deg', '--dur': '7s', animationDelay: '2s' } as React.CSSProperties}>F = ma</span>
                 <span className="absolute bottom-[25%] left-[8%] text-xl opacity-[0.05] animate-chalk-drift" style={{ '--rot': '4deg', '--dur': '10s', animationDelay: '1s' } as React.CSSProperties}>∂²ψ/∂x²</span>
@@ -73,7 +73,7 @@ export default function SignUpPage() {
             </div>
 
             {/* Form */}
-            <div className="relative z-10 flex items-center justify-center min-h-screen pt-24 pb-12 px-6">
+            <main id="main-content" className="relative z-10 flex items-center justify-center min-h-screen pt-24 pb-12 px-6">
                 <div className="w-full max-w-md">
                     {/* Header */}
                     <div className="text-center mb-8">
@@ -134,7 +134,7 @@ export default function SignUpPage() {
 
                                 {/* Error */}
                                 {error && (
-                                    <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                                    <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20" role="alert">
                                         <p className="text-red-400 text-sm font-sans-clean">{error}</p>
                                     </div>
                                 )}
@@ -175,7 +175,7 @@ export default function SignUpPage() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

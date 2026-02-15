@@ -96,7 +96,8 @@ export default function Sidebar() {
     userRole === "teacher" ? TEACHER_NAV_ITEMS : STUDENT_NAV_ITEMS;
 
   return (
-    <div
+    <nav
+      aria-label="Main navigation"
       className={`fixed left-0 top-0 h-screen bg-[#0d281e] border-r border-white/10 flex flex-col transition-all duration-300 z-50 ${
         collapsed ? "w-20" : "w-64"
       }`}
@@ -116,6 +117,8 @@ export default function Sidebar() {
         {!collapsed && (
           <button
             onClick={() => setCollapsed(true)}
+            aria-label="Collapse sidebar"
+            aria-expanded="true"
             className="text-slate-400 hover:text-white transition-colors"
           >
             <ChevronLeft size={20} />
@@ -127,6 +130,8 @@ export default function Sidebar() {
       {collapsed && (
         <button
           onClick={() => setCollapsed(false)}
+          aria-label="Expand sidebar"
+          aria-expanded="false"
           className="absolute -right-3 top-24 bg-emerald-500 hover:bg-emerald-400 text-white rounded-full p-1 shadow-lg transition-all"
         >
           <ChevronRight size={16} />
@@ -223,7 +228,7 @@ export default function Sidebar() {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
                 return (
-                  <Link key={item.href} href={item.href}>
+                  <Link key={item.href} href={item.href} aria-current={isActive ? "page" : undefined}>
                     <div
                       className={`group flex items-center gap-3 px-3 py-3 rounded-lg transition-all cursor-pointer ${
                         isActive
@@ -260,7 +265,7 @@ export default function Sidebar() {
               const Icon = item.icon;
               const isActive = pathname === item.href;
               return (
-                <Link key={item.href} href={item.href}>
+                <Link key={item.href} href={item.href} aria-current={isActive ? "page" : undefined}>
                   <div
                     className={`group flex items-center gap-3 px-3 py-3 rounded-lg transition-all cursor-pointer mb-2 ${
                       isActive
@@ -282,6 +287,7 @@ export default function Sidebar() {
             {/* Logout Button */}
             <button
               onClick={handleLogout}
+              aria-label="Log out"
               className="w-full group flex items-center gap-3 px-3 py-3 rounded-lg text-red-400 hover:bg-red-500/10 transition-all"
             >
               <LogOut size={20} />
@@ -294,6 +300,6 @@ export default function Sidebar() {
           </div>
         </>
       )}
-    </div>
+    </nav>
   );
 }
