@@ -267,7 +267,9 @@ export default function Dashboard() {
                             {/* Recent Lessons */}
                             <div>
                                 <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-2xl font-serif-display text-white">Recent Lessons</h2>
+                                    <h2 className="text-2xl font-serif-display text-white">
+                                        {userRole === 'teacher' ? 'Recent Lessons' : 'Recent Lessons Played'}
+                                    </h2>
                                     <Link href="/lessons">
                                         <button className="text-emerald-400 text-sm font-medium hover:text-emerald-300 transition-colors flex items-center gap-2 font-sans-clean">
                                             View All <ArrowRight size={16} />

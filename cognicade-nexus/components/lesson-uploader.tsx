@@ -68,8 +68,8 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
         game: 'idle', video: 'idle', song: 'idle'
     });
     const [dragOver, setDragOver] = useState(false);
-    const [generateTutorial, setGenerateTutorial] = useState(true);
-    const [generateMusic, setGenerateMusic] = useState(true);
+    const generateTutorial = true;
+    const generateMusic = true;
     const [showJSON, setShowJSON] = useState(false);
     const [showSchema, setShowSchema] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -265,13 +265,12 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
                     <form onSubmit={handleSubmit} className="mt-8 space-y-6">
                         {/* Drop zone */}
                         <div
-                            className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
-                                dragOver
-                                    ? 'border-emerald-400 bg-emerald-500/10'
-                                    : file
-                                        ? 'border-emerald-500/30 bg-emerald-500/[0.04]'
-                                        : 'border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.02]'
-                            }`}
+                            className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${dragOver
+                                ? 'border-emerald-400 bg-emerald-500/10'
+                                : file
+                                    ? 'border-emerald-500/30 bg-emerald-500/[0.04]'
+                                    : 'border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.02]'
+                                }`}
                             onClick={() => fileInputRef.current?.click()}
                             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                             onDragLeave={() => setDragOver(false)}
@@ -328,39 +327,19 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
                                     <span className="text-[9px] font-pixel text-emerald-500/60 ml-1">ALWAYS</span>
                                 </div>
 
-                                {/* Video toggle */}
-                                <button
-                                    type="button"
-                                    onClick={() => setGenerateTutorial(!generateTutorial)}
-                                    className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all text-sm font-medium font-sans-clean ${
-                                        generateTutorial
-                                            ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
-                                            : 'bg-white/[0.02] border-white/10 text-slate-500 hover:border-white/20'
-                                    }`}
-                                >
+                                {/* Video — always on */}
+                                <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
                                     <Film size={16} />
-                                    Concept Video
-                                    <div className={`w-8 h-4 rounded-full relative transition-all ${generateTutorial ? 'bg-blue-500/40' : 'bg-white/10'}`}>
-                                        <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all ${generateTutorial ? 'left-4 bg-blue-400' : 'left-0.5 bg-slate-500'}`} />
-                                    </div>
-                                </button>
+                                    <span className="text-sm font-medium font-sans-clean">Concept Video</span>
+                                    <span className="text-[9px] font-pixel text-blue-500/60 ml-1">ALWAYS</span>
+                                </div>
 
-                                {/* Music toggle */}
-                                <button
-                                    type="button"
-                                    onClick={() => setGenerateMusic(!generateMusic)}
-                                    className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all text-sm font-medium font-sans-clean ${
-                                        generateMusic
-                                            ? 'bg-purple-500/10 border-purple-500/20 text-purple-400'
-                                            : 'bg-white/[0.02] border-white/10 text-slate-500 hover:border-white/20'
-                                    }`}
-                                >
+                                {/* Music — always on */}
+                                <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400">
                                     <Music size={16} />
-                                    Background Music
-                                    <div className={`w-8 h-4 rounded-full relative transition-all ${generateMusic ? 'bg-purple-500/40' : 'bg-white/10'}`}>
-                                        <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all ${generateMusic ? 'left-4 bg-purple-400' : 'left-0.5 bg-slate-500'}`} />
-                                    </div>
-                                </button>
+                                    <span className="text-sm font-medium font-sans-clean">Background Music</span>
+                                    <span className="text-[9px] font-pixel text-purple-500/60 ml-1">ALWAYS</span>
+                                </div>
                             </div>
                         </div>
 
@@ -368,11 +347,10 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
                         <button
                             type="submit"
                             disabled={!file || loading}
-                            className={`group flex items-center justify-center gap-3 w-full sm:w-auto px-10 py-4 rounded-xl font-bold text-base transition-all font-sans-clean ${
-                                !file || loading
-                                    ? 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
-                                    : 'bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none'
-                            }`}
+                            className={`group flex items-center justify-center gap-3 w-full sm:w-auto px-10 py-4 rounded-xl font-bold text-base transition-all font-sans-clean ${!file || loading
+                                ? 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
+                                : 'bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none'
+                                }`}
                         >
                             {loading ? (
                                 <>

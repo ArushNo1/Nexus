@@ -1,22 +1,18 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import { LessonUploader } from '@/components/lesson-uploader';
-import Sidebar from '@/components/sidebar';
 import { createClient } from '@/lib/supabase/client';
-import { getClassroomsForTeacher } from '@/lib/services/classrooms';
-import { Classroom } from '@/lib/types';
-import { ChevronDown, Loader2, Users } from 'lucide-react';
+import { LessonUploader } from '@/components/lesson-uploader';
+import CreateNavbar from '@/components/ui/create-navbar';
+import { Loader2 } from 'lucide-react';
 
 export default function CreateLessonPage() {
-    const [classrooms, setClassrooms] = useState<Classroom[]>([]);
-    const [selectedClassroom, setSelectedClassroom] = useState<string>('');
-    const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
     useEffect(() => {
-        const load = async () => {
+        const checkAuth = async () => {
             const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
 
@@ -31,21 +27,28 @@ export default function CreateLessonPage() {
                 .eq('id', user.id)
                 .single();
 
-            if (profile?.role !== 'teacher') {
+            if (!profile || profile.role !== 'teacher') {
+                console.error('Unauthorized access: Teachers only.');
                 router.push('/dashboard');
                 return;
             }
 
-            try {
-                const data = await getClassroomsForTeacher(supabase, user.id);
-                setClassrooms(data);
-            } catch (err) {
-                console.error('Failed to load classrooms:', err);
-            }
-            setLoading(false);
+            setIsAuthorized(true);
         };
-        load();
+
+        checkAuth();
     }, [router]);
+
+    if (isAuthorized === null) {
+        return (
+            <div className="min-h-screen bg-[#0a1f18] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 size={40} className="text-emerald-500 animate-spin" />
+                    <p className="text-emerald-400 font-pixel text-xs tracking-widest">VERIFYING AUTHORITY...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#0a1f18] text-slate-100 font-sans selection:bg-emerald-500/30">

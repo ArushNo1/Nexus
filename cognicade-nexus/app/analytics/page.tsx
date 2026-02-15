@@ -1,9 +1,50 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import Sidebar from '@/components/sidebar';
 import { BarChart3, TrendingUp, Users, Clock } from 'lucide-react';
 
 export default function AnalyticsPage() {
+    const router = useRouter();
+    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                router.push('/auth/login');
+                return;
+            }
+
+            const { data: profile } = await supabase
+                .from('user_profiles')
+                .select('role')
+                .eq('id', user.id)
+                .single();
+
+            if (!profile || profile.role !== 'teacher') {
+                router.push('/dashboard');
+                return;
+            }
+
+            setIsAuthorized(true);
+        };
+
+        checkAuth();
+    }, [router]);
+
+    if (isAuthorized === null) {
+        return (
+            <div className="min-h-screen bg-[#0a1f18] flex items-center justify-center">
+                <Loader2 size={40} className="text-emerald-500 animate-spin" />
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-[#0a1f18] text-slate-100">
             {/* Global Styles */}
