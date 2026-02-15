@@ -75,7 +75,7 @@ export default function LessonsPage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-[var(--page-bg)] text-slate-100">
+        <div className="min-h-screen bg-[var(--page-bg)] text-[var(--text-primary)]">
             {/* Global Styles */}
             <style jsx global>{`
                 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
@@ -100,10 +100,10 @@ export default function LessonsPage() {
                 <div className="px-8 py-12 relative z-10">
                     <div className="flex justify-between items-center mb-8">
                         <div>
-                            <h1 className="text-4xl font-serif-display text-white mb-2">
+                            <h1 className="text-4xl font-serif-display text-[var(--text-heading)] mb-2">
                                 {userRole === 'teacher' ? 'My Lessons' : 'Assigned Lessons'}
                             </h1>
-                            <p className="text-slate-400 font-sans-clean">
+                            <p className="text-[var(--text-subheading)] font-sans-clean">
                                 {userRole === 'teacher'
                                     ? 'View and manage all your created lessons'
                                     : 'View lessons assigned to you by your teachers'}
@@ -120,14 +120,14 @@ export default function LessonsPage() {
                     </div>
 
                     {loading ? (
-                        <p className="text-slate-400 font-sans-clean">Loading lessons...</p>
+                        <p className="text-[var(--text-secondary)] font-sans-clean">Loading lessons...</p>
                     ) : lessons.length === 0 ? (
                         <div className="bg-[var(--card-bg)] border-2 border-[var(--card-border)] rounded-2xl p-12 text-center">
-                            <BookOpen className="mx-auto text-emerald-400 mb-4" size={48} />
-                            <h3 className="text-white font-bold text-xl mb-2 font-sans-clean">
+                            <BookOpen className="mx-auto text-[var(--accent)] mb-4" size={48} />
+                            <h3 className="text-[var(--text-primary)] font-bold text-xl mb-2 font-sans-clean">
                                 {userRole === 'teacher' ? 'No Lessons Created' : 'No Lessons Assigned'}
                             </h3>
-                            <p className="text-slate-400 mb-4 font-sans-clean">
+                            <p className="text-[var(--text-secondary)] mb-4 font-sans-clean">
                                 {userRole === 'teacher'
                                     ? 'Create lessons for your classrooms'
                                     : 'Your teacher hasn\'t assigned any lessons yet'}
@@ -158,8 +158,8 @@ export default function LessonsPage() {
                                         </div>
 
                                         <div className="p-5">
-                                            <h3 className="text-lg font-bold text-white mb-1 font-sans-clean truncate">{lesson.title}</h3>
-                                            <p className="text-sm font-sans-clean mb-4 truncate text-slate-400">{lesson.subject || 'General'}</p>
+                                            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1 font-sans-clean truncate">{lesson.title}</h3>
+                                            <p className="text-sm font-sans-clean mb-4 truncate text-[var(--text-secondary)]">{lesson.subject || 'General'}</p>
 
                                             <div className="flex gap-3">
                                                 <Link href={`/lessons/${lesson.id}`} className="flex-1">

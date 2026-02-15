@@ -101,7 +101,7 @@ export default function SettingsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[var(--page-bg)] text-slate-100">
+            <div className="min-h-screen bg-[var(--page-bg)] text-[var(--text-primary)]">
                 <style jsx global>{`
                     @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
                     .font-pixel { font-family: 'Press Start 2P', cursive; }
@@ -112,7 +112,7 @@ export default function SettingsPage() {
             <Sidebar />
                 <main id="main-content" className="min-h-screen transition-[margin] duration-300" style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}>
                     <div className="flex items-center justify-center py-32">
-                        <div className="flex items-center gap-3 text-emerald-400 font-sans-clean">
+                        <div className="flex items-center gap-3 text-[var(--accent)] font-sans-clean">
                             <Loader2 size={24} className="animate-spin" />
                             Loading settings...
                         </div>
@@ -123,7 +123,7 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[var(--page-bg)] text-slate-100">
+        <div className="min-h-screen bg-[var(--page-bg)] text-[var(--text-primary)]">
             {/* Global Styles */}
             <style jsx global>{`
                 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
@@ -140,8 +140,8 @@ export default function SettingsPage() {
                 <div className="px-8 py-12">
                     {/* Header */}
                     <div className="mb-10">
-                        <h1 className="text-4xl font-serif-display text-white mb-2">Settings</h1>
-                        <p className="text-slate-400 font-sans-clean">Manage your account settings and preferences</p>
+                        <h1 className="text-4xl font-serif-display text-[var(--text-heading)] mb-2">Settings</h1>
+                        <p className="text-[var(--text-subheading)] font-sans-clean">Manage your account settings and preferences</p>
                     </div>
 
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
@@ -150,47 +150,47 @@ export default function SettingsPage() {
                             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-transparent pointer-events-none" />
                             <div className="relative z-10 p-8">
                                 <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                                        <User className="text-emerald-400" size={20} />
+                                    <div className="p-2.5 rounded-lg bg-[var(--accent-bg)] border border-[var(--accent-border)]">
+                                        <User className="text-[var(--accent)]" size={20} />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-serif-display text-white">Profile Information</h2>
-                                        <p className="text-slate-500 text-sm font-sans-clean">Update your personal information</p>
+                                        <h2 className="text-xl font-serif-display text-[var(--text-primary)]">Profile Information</h2>
+                                        <p className="text-[var(--text-muted)] text-sm font-sans-clean">Update your personal information</p>
                                     </div>
                                 </div>
 
                                 <div className="space-y-5">
                                     <div>
-                                        <label className="text-[10px] uppercase tracking-wider text-slate-500 font-pixel mb-2 block">Full Name</label>
+                                        <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-pixel mb-2 block">Full Name</label>
                                         <input
                                             type="text"
                                             value={formData.full_name}
                                             onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                                            className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white font-sans-clean text-sm focus:border-emerald-500/40 focus:outline-none transition-colors placeholder:text-slate-600"
+                                            className="w-full px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-[var(--input-text)] font-sans-clean text-sm focus:border-[var(--input-focus-border)] focus:outline-none transition-colors placeholder:text-[var(--input-placeholder)]"
                                             placeholder="Your full name"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] uppercase tracking-wider text-slate-500 font-pixel mb-2 block">Email</label>
+                                        <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-pixel mb-2 block">Email</label>
                                         <input
                                             type="email"
                                             value={formData.email}
                                             disabled
-                                            className="w-full px-4 py-3 bg-black/20 border border-white/5 rounded-xl text-slate-500 font-sans-clean text-sm cursor-not-allowed"
+                                            className="w-full px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border-disabled)] rounded-xl text-[var(--input-text-disabled)] font-sans-clean text-sm cursor-not-allowed"
                                         />
-                                        <p className="text-xs text-slate-600 font-sans-clean mt-1.5">Email cannot be changed</p>
+                                        <p className="text-xs text-[var(--text-secondary)] font-sans-clean mt-1.5">Email cannot be changed</p>
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] uppercase tracking-wider text-slate-500 font-pixel mb-2 block">Role</label>
+                                        <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-pixel mb-2 block">Role</label>
                                         <input
                                             type="text"
                                             value={userProfile?.role === 'teacher' ? 'Teacher' : 'Student'}
                                             disabled
-                                            className="w-full px-4 py-3 bg-black/20 border border-white/5 rounded-xl text-slate-500 font-sans-clean text-sm cursor-not-allowed capitalize"
+                                            className="w-full px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border-disabled)] rounded-xl text-[var(--input-text-disabled)] font-sans-clean text-sm cursor-not-allowed capitalize"
                                         />
-                                        <p className="text-xs text-slate-600 font-sans-clean mt-1.5">Role cannot be changed</p>
+                                        <p className="text-xs text-[var(--text-secondary)] font-sans-clean mt-1.5">Role cannot be changed</p>
                                     </div>
                                 </div>
                             </div>
@@ -205,10 +205,10 @@ export default function SettingsPage() {
                                         <School className="text-blue-400" size={20} />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-serif-display text-white">
+                                        <h2 className="text-xl font-serif-display text-[var(--text-primary)]">
                                             {userProfile?.role === 'teacher' ? 'School Information' : 'Academic Information'}
                                         </h2>
-                                        <p className="text-slate-500 text-sm font-sans-clean">
+                                        <p className="text-[var(--text-muted)] text-sm font-sans-clean">
                                             {userProfile?.role === 'teacher' ? 'Information about your school' : 'Your academic details'}
                                         </p>
                                     </div>
@@ -216,7 +216,7 @@ export default function SettingsPage() {
 
                                 <div className="space-y-5">
                                     <div>
-                                        <label className="text-[10px] uppercase tracking-wider text-slate-500 font-pixel mb-2 block">
+                                        <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-pixel mb-2 block">
                                             {userProfile?.role === 'teacher' ? 'School Name' : 'School / Institution'}
                                         </label>
                                         <input
@@ -224,12 +224,12 @@ export default function SettingsPage() {
                                             value={formData.school_name}
                                             onChange={(e) => setFormData({ ...formData, school_name: e.target.value })}
                                             placeholder={userProfile?.role === 'teacher' ? 'Lincoln High School' : 'Your school name'}
-                                            className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white font-sans-clean text-sm focus:border-blue-500/40 focus:outline-none transition-colors placeholder:text-slate-600"
+                                            className="w-full px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-[var(--input-text)] font-sans-clean text-sm focus:border-blue-500/40 focus:outline-none transition-colors placeholder:text-[var(--input-placeholder)]"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="text-[10px] uppercase tracking-wider text-slate-500 font-pixel mb-2 block">
+                                        <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-pixel mb-2 block">
                                             {userProfile?.role === 'teacher' ? 'Grades Taught' : 'Grade Level'}
                                         </label>
                                         <input
@@ -237,7 +237,7 @@ export default function SettingsPage() {
                                             value={formData.grade_level}
                                             onChange={(e) => setFormData({ ...formData, grade_level: e.target.value })}
                                             placeholder={userProfile?.role === 'teacher' ? '9-12' : '10th Grade'}
-                                            className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white font-sans-clean text-sm focus:border-blue-500/40 focus:outline-none transition-colors placeholder:text-slate-600"
+                                            className="w-full px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-[var(--input-text)] font-sans-clean text-sm focus:border-blue-500/40 focus:outline-none transition-colors placeholder:text-[var(--input-placeholder)]"
                                         />
                                     </div>
                                 </div>
@@ -254,8 +254,8 @@ export default function SettingsPage() {
                                             <UsersIcon className="text-purple-400" size={20} />
                                         </div>
                                         <div>
-                                            <h2 className="text-xl font-serif-display text-white">Classroom Join Codes</h2>
-                                            <p className="text-slate-500 text-sm font-sans-clean">Share these codes with your students to let them join your classrooms</p>
+                                            <h2 className="text-xl font-serif-display text-[var(--text-primary)]">Classroom Join Codes</h2>
+                                            <p className="text-[var(--text-muted)] text-sm font-sans-clean">Share these codes with your students to let them join your classrooms</p>
                                         </div>
                                     </div>
 
@@ -263,18 +263,18 @@ export default function SettingsPage() {
                                         {classrooms.map((classroom) => (
                                             <div
                                                 key={classroom.id}
-                                                className="flex items-center justify-between p-5 bg-black/20 rounded-xl border border-white/5 hover:border-purple-500/20 transition-colors"
+                                                className="flex items-center justify-between p-5 bg-[var(--input-bg)] rounded-xl border border-[var(--input-border)] hover:border-purple-500/20 transition-colors"
                                             >
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 mb-1.5">
-                                                        <h4 className="text-white font-medium font-sans-clean truncate">{classroom.name}</h4>
+                                                        <h4 className="text-[var(--text-primary)] font-medium font-sans-clean truncate">{classroom.name}</h4>
                                                         {classroom.is_active && (
-                                                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-400 font-pixel shrink-0">
+                                                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[var(--accent-bg)] text-[var(--accent)] font-pixel shrink-0">
                                                                 ACTIVE
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <div className="flex items-center gap-4 text-xs text-slate-500 font-sans-clean">
+                                                    <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)] font-sans-clean">
                                                         <span className="flex items-center gap-1">
                                                             <UsersIcon size={12} />
                                                             {classroom.member_count || 0} students
@@ -287,20 +287,20 @@ export default function SettingsPage() {
                                                 </div>
                                                 <div className="flex items-center gap-3 ml-4">
                                                     <div className="text-right">
-                                                        <p className="text-[9px] text-slate-600 mb-0.5 font-pixel">CODE</p>
+                                                        <p className="text-[9px] text-[var(--text-muted)] mb-0.5 font-pixel">CODE</p>
                                                         <span className="text-xl font-bold font-pixel text-purple-400 tracking-wider">
                                                             {classroom.join_code}
                                                         </span>
                                                     </div>
                                                     <button
                                                         onClick={() => copyJoinCode(classroom.join_code)}
-                                                        className="p-3 hover:bg-white/5 rounded-lg transition-colors"
+                                                        className="p-3 hover:bg-[var(--btn-secondary-hover)] rounded-lg transition-colors"
                                                         title="Copy join code"
                                                     >
                                                         {copiedCode === classroom.join_code ? (
-                                                            <CheckCircle size={18} className="text-emerald-400" />
+                                                            <CheckCircle size={18} className="text-[var(--accent)]" />
                                                         ) : (
-                                                            <Copy size={18} className="text-slate-400" />
+                                                            <Copy size={18} className="text-[var(--text-secondary)]" />
                                                         )}
                                                     </button>
                                                 </div>

@@ -27,7 +27,7 @@ export default function LibraryPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#0a1f18] text-slate-100">
+        <div className="min-h-screen bg-[var(--page-bg)] text-[var(--text-primary)]">
             {/* Global Styles */}
             <style jsx global>{`
                 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
@@ -48,22 +48,22 @@ export default function LibraryPage() {
 
                 <div className="px-8 py-12">
                     <div className="mb-8">
-                        <h1 className="text-4xl font-serif-display text-white mb-2">Game Library</h1>
-                        <p className="text-slate-400 font-sans-clean">Browse available game templates for your lessons</p>
+                        <h1 className="text-4xl font-serif-display text-[var(--text-heading)] mb-2">Game Library</h1>
+                        <p className="text-[var(--text-subheading)] font-sans-clean">Browse available game templates for your lessons</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {gameTypes.map((game, idx) => (
                             <div
                                 key={idx}
-                                className="bg-[#0d281e] border border-emerald-500/20 rounded-2xl p-6 hover:scale-[1.02] transition-all cursor-pointer group"
+                                className="bg-[var(--card-bg)] border border-[var(--accent-border)] rounded-2xl p-6 hover:scale-[1.02] transition-all cursor-pointer group"
                             >
-                                <div className="p-4 rounded-full bg-emerald-500/10 w-fit mb-4 group-hover:bg-emerald-500/20 transition-colors">
-                                    <game.icon className="text-emerald-400" size={32} />
+                                <div className="p-4 rounded-full bg-[var(--accent-bg)] w-fit mb-4 group-hover:bg-[var(--accent-dark)] transition-colors">
+                                    <game.icon className="text-[var(--accent)]" size={32} />
                                 </div>
-                                <h3 className="text-white font-bold text-xl mb-2 font-sans-clean">{game.name}</h3>
-                                <p className="text-slate-400 text-sm mb-4 font-sans-clean">{game.description}</p>
-                                <span className="text-emerald-400 text-sm font-medium font-sans-clean">Coming Soon</span>
+                                <h3 className="text-[var(--text-primary)] font-bold text-xl mb-2 font-sans-clean">{game.name}</h3>
+                                <p className="text-[var(--text-secondary)] text-sm mb-4 font-sans-clean">{game.description}</p>
+                                <span className="text-[var(--accent)] text-sm font-medium font-sans-clean">Coming Soon</span>
                             </div>
                         ))}
                     </div>

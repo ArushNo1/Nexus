@@ -142,7 +142,7 @@ export default function ClassroomsPage() {
     const isTeacher = userProfile?.role === 'teacher';
 
     return (
-        <div className="min-h-screen bg-[var(--page-bg)] text-slate-100">
+        <div className="min-h-screen bg-[var(--page-bg)] text-[var(--text-primary)]">
             <style jsx global>{`
                 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
                 .font-pixel { font-family: 'Press Start 2P', cursive; }
@@ -155,18 +155,29 @@ export default function ClassroomsPage() {
 
             <main
                 id="main-content"
-                className="min-h-screen transition-[margin] duration-300"
+                className="min-h-screen transition-[margin] duration-300 relative"
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
-                {/* Top Bar */}
-                <div className="bg-[var(--card-bg-translucent)] backdrop-blur-md border-b border-white/5 sticky top-0 z-40">
-                    <div className="px-8 py-4 flex justify-between items-center">
-                        <h1 className="text-2xl font-serif-display text-white">My Classrooms</h1>
+                {/* Ambient background glows — matches lessons page */}
+                <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-emerald-500/[0.03] blur-[120px] rounded-full pointer-events-none" />
+                <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-sky-500/[0.03] blur-[100px] rounded-full pointer-events-none" />
 
+                <div className="px-8 py-12 relative z-10">
+                    <div className="flex justify-between items-center mb-8">
+                        <div>
+                            <h1 className="text-4xl font-serif-display text-[var(--text-heading)] mb-2">
+                                {isTeacher ? 'My Classrooms' : 'My Classrooms'}
+                            </h1>
+                            <p className="text-[var(--text-subheading)] font-sans-clean">
+                                {isTeacher
+                                    ? 'Create and manage your classrooms'
+                                    : 'View classrooms you\'ve joined'}
+                            </p>
+                        </div>
                         {isTeacher ? (
                             <button
                                 onClick={() => setShowCreateModal(true)}
-                                className="flex items-center gap-2 px-5 py-2 bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-hover)] text-[var(--btn-primary-text)] font-bold rounded-lg transition-all shadow-[0_2px_0_var(--btn-primary-shadow)] hover:translate-y-[1px] hover:shadow-[0_1px_0_var(--btn-primary-shadow)]"
+                                className="flex items-center gap-2 px-5 py-3 bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-hover)] text-[var(--btn-primary-text)] font-bold rounded-xl transition-all shadow-[0_4px_0_var(--btn-primary-shadow)] hover:translate-y-[2px] hover:shadow-[0_2px_0_var(--btn-primary-shadow)] active:translate-y-[4px] active:shadow-none text-sm font-sans-clean"
                             >
                                 <Plus size={18} />
                                 Create Classroom
@@ -174,26 +185,26 @@ export default function ClassroomsPage() {
                         ) : (
                             <button
                                 onClick={() => setShowJoinModal(true)}
-                                className="flex items-center gap-2 px-5 py-2 bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-hover)] text-[var(--btn-primary-text)] font-bold rounded-lg transition-all shadow-[0_2px_0_var(--btn-primary-shadow)] hover:translate-y-[1px] hover:shadow-[0_1px_0_var(--btn-primary-shadow)]"
+                                className="flex items-center gap-2 px-5 py-3 bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-hover)] text-[var(--btn-primary-text)] font-bold rounded-xl transition-all shadow-[0_4px_0_var(--btn-primary-shadow)] hover:translate-y-[2px] hover:shadow-[0_2px_0_var(--btn-primary-shadow)] active:translate-y-[4px] active:shadow-none text-sm font-sans-clean"
                             >
                                 <UserPlus size={18} />
                                 Join Classroom
                             </button>
                         )}
                     </div>
-                </div>
 
-                <div className="px-8 py-12">
+                    {/* Main Content Card */}
+                    <div className="bg-[var(--card-bg)] border-2 border-[var(--card-border)] rounded-2xl p-8">
                     {loading ? (
                         <div className="text-center py-12">
-                            <p className="text-slate-400">Loading classrooms...</p>
+                            <p className="text-[var(--text-secondary)]">Loading classrooms...</p>
                         </div>
                     ) : classrooms.length === 0 ? (
                         <div className="text-center py-20">
                             <div className="mb-6">
-                                <Users size={64} className="text-slate-600 mx-auto mb-4" />
-                                <h2 className="text-2xl font-serif-display text-white mb-2">No Classrooms Yet</h2>
-                                <p className="text-slate-400 mb-6">
+                                <Users size={64} className="text-[var(--text-secondary)] mx-auto mb-4" />
+                                <h2 className="text-2xl font-serif-display text-[var(--text-primary)] mb-2">No Classrooms Yet</h2>
+                                <p className="text-[var(--text-secondary)] mb-6">
                                     {isTeacher
                                         ? "Create your first classroom to get started!"
                                         : "Join a classroom to see your lessons!"}
@@ -224,8 +235,8 @@ export default function ClassroomsPage() {
                                 >
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="flex-1">
-                                            <h3 className="text-xl font-bold text-white mb-1 font-sans-clean">{classroom.name}</h3>
-                                            <p className="text-slate-400 text-sm">{classroom.subject} • Grade {classroom.grade_level}</p>
+                                            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1 font-sans-clean">{classroom.name}</h3>
+                                            <p className="text-[var(--text-secondary)] text-sm">{classroom.subject} • Grade {classroom.grade_level}</p>
                                         </div>
                                         <div className={`px-2 py-1 rounded-full text-xs font-bold ${classroom.is_active ? 'bg-[var(--accent-bg)] text-[var(--accent)]' : 'bg-slate-500/20 text-slate-400'}`}>
                                             {classroom.is_active ? <CheckCircle size={14} /> : <XCircle size={14} />}
@@ -233,18 +244,18 @@ export default function ClassroomsPage() {
                                     </div>
 
                                     {classroom.description && (
-                                        <p className="text-slate-300 text-sm mb-4 line-clamp-2">{classroom.description}</p>
+                                            <p className="text-[var(--text-description)] text-sm mb-4 line-clamp-2">{classroom.description}</p>
                                     )}
 
                                     {/* Stats - Only visible to teachers normally, but let's show basic info */}
                                     <div className="flex gap-4 mb-4 text-sm">
                                         {isTeacher && (
-                                            <div className="flex items-center gap-2 text-slate-400">
+                                            <div className="flex items-center gap-2 text-[var(--text-secondary)]">
                                                 <Users size={16} />
                                                 <span>{classroom.member_count || 0} students</span>
                                             </div>
                                         )}
-                                        <div className="flex items-center gap-2 text-slate-400">
+                                        <div className="flex items-center gap-2 text-[var(--text-secondary)]">
                                             <BookOpen size={16} />
                                             <span>{classroom.lesson_count || 0} lessons</span>
                                         </div>
@@ -252,21 +263,21 @@ export default function ClassroomsPage() {
 
                                     {/* Join Code - Only for Teacher */}
                                     {isTeacher && (
-                                        <div className="bg-black/20 rounded-lg p-3 mb-4">
-                                            <p className="text-xs text-slate-500 mb-1">Join Code</p>
+                                        <div className="bg-[var(--input-bg)] rounded-lg p-3 mb-4">
+                                            <p className="text-xs text-[var(--text-muted)] mb-1">Join Code</p>
                                             <div className="flex items-center justify-between">
-                                                <span className="text-2xl font-bold font-pixel text-emerald-400 tracking-wider">
+                                                <span className="text-2xl font-bold font-pixel text-[var(--accent)] tracking-wider">
                                                     {classroom.join_code}
                                                 </span>
                                                 <button
                                                     onClick={() => copyJoinCode(classroom.join_code)}
-                                                    className="p-2 hover:bg-white/5 rounded-lg transition-colors"
+                                                    className="p-2 hover:bg-[var(--btn-secondary-hover)] rounded-lg transition-colors"
                                                     title="Copy join code"
                                                 >
                                                     {copiedCode === classroom.join_code ? (
-                                                        <CheckCircle size={18} className="text-emerald-400" />
+                                                        <CheckCircle size={18} className="text-[var(--accent)]" />
                                                     ) : (
-                                                        <Copy size={18} className="text-slate-400" />
+                                                        <Copy size={18} className="text-[var(--text-secondary)]" />
                                                     )}
                                                 </button>
                                             </div>
@@ -281,7 +292,7 @@ export default function ClassroomsPage() {
                                             </button>
                                         </Link>
                                         {isTeacher && (
-                                            <button className="px-4 py-2 bg-slate-500/10 text-slate-400 rounded-lg hover:bg-slate-500/20 transition-all border border-slate-500/20">
+                                            <button className="px-4 py-2 bg-[var(--btn-secondary-bg)] text-[var(--btn-secondary-text)] rounded-lg hover:bg-[var(--btn-secondary-hover)] transition-all border border-[var(--btn-secondary-border)]">
                                                 <Settings size={16} />
                                             </button>
                                         )}
@@ -290,6 +301,7 @@ export default function ClassroomsPage() {
                             ))}
                         </div>
                     )}
+                    </div>
                 </div>
             </main>
 
@@ -300,44 +312,44 @@ export default function ClassroomsPage() {
                         <form onSubmit={handleCreateClassroom}>
                             <div className="space-y-4 mb-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Classroom Name *</label>
+                                    <label className="block text-sm font-medium text-[var(--text-description)] mb-2">Classroom Name *</label>
                                     <input
                                         type="text"
                                         required
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:border-emerald-500/50"
+                                        className="w-full px-4 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg text-[var(--input-text)] focus:outline-none focus:border-[var(--input-focus-border)]"
                                         placeholder="e.g., Period 3 History"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Subject *</label>
+                                    <label className="block text-sm font-medium text-[var(--text-description)] mb-2">Subject *</label>
                                     <input
                                         type="text"
                                         required
                                         value={formData.subject}
                                         onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                                        className="w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:border-emerald-500/50"
+                                        className="w-full px-4 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg text-[var(--input-text)] focus:outline-none focus:border-[var(--input-focus-border)]"
                                         placeholder="e.g., World History"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Grade Level *</label>
+                                    <label className="block text-sm font-medium text-[var(--text-description)] mb-2">Grade Level *</label>
                                     <input
                                         type="text"
                                         required
                                         value={formData.grade_level}
                                         onChange={(e) => setFormData({ ...formData, grade_level: e.target.value })}
-                                        className="w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:border-emerald-500/50"
+                                        className="w-full px-4 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg text-[var(--input-text)] focus:outline-none focus:border-[var(--input-focus-border)]"
                                         placeholder="e.g., 9th Grade"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Description</label>
+                                    <label className="block text-sm font-medium text-[var(--text-description)] mb-2">Description</label>
                                     <textarea
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                        className="w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:border-emerald-500/50 resize-none"
+                                        className="w-full px-4 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg text-[var(--input-text)] focus:outline-none focus:border-[var(--input-focus-border)] resize-none"
                                         rows={3}
                                         placeholder="Optional description..."
                                     />
@@ -347,7 +359,7 @@ export default function ClassroomsPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowCreateModal(false)}
-                                    className="flex-1 px-4 py-2 bg-slate-500/10 text-slate-400 rounded-lg hover:bg-slate-500/20 transition-all border border-slate-500/20"
+                                    className="flex-1 px-4 py-2 bg-[var(--btn-secondary-bg)] text-[var(--btn-secondary-text)] rounded-lg hover:bg-[var(--btn-secondary-hover)] transition-all border border-[var(--btn-secondary-border)]"
                                     disabled={isSubmitting}
                                 >
                                     Cancel
@@ -369,28 +381,28 @@ export default function ClassroomsPage() {
             {showJoinModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
                     <div className="bg-[var(--card-bg)] border border-[var(--accent-border)] rounded-2xl p-8 max-w-md w-full mx-4">
-                        <h2 className="text-2xl font-serif-display text-white mb-6">Join Classroom</h2>
+                        <h2 className="text-2xl font-serif-display text-[var(--text-primary)] mb-6">Join Classroom</h2>
                         <form onSubmit={handleJoinClassroom}>
                             <div className="space-y-4 mb-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Class Code</label>
+                                    <label className="block text-sm font-medium text-[var(--text-description)] mb-2">Class Code</label>
                                     <input
                                         type="text"
                                         required
                                         value={joinCode}
                                         onChange={(e) => setJoinCode(e.target.value)}
-                                        className="w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:border-emerald-500/50 font-pixel tracking-wider text-center"
+                                        className="w-full px-4 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg text-[var(--input-text)] focus:outline-none focus:border-[var(--input-focus-border)] font-pixel tracking-wider text-center"
                                         placeholder="ABC123"
                                         maxLength={6}
                                     />
-                                    <p className="text-xs text-slate-400 mt-2">Enter the 6-character code provided by your teacher.</p>
+                                    <p className="text-xs text-[var(--text-secondary)] mt-2">Enter the 6-character code provided by your teacher.</p>
                                 </div>
                             </div>
                             <div className="flex gap-3">
                                 <button
                                     type="button"
                                     onClick={() => setShowJoinModal(false)}
-                                    className="flex-1 px-4 py-2 bg-slate-500/10 text-slate-400 rounded-lg hover:bg-slate-500/20 transition-all border border-slate-500/20"
+                                    className="flex-1 px-4 py-2 bg-[var(--btn-secondary-bg)] text-[var(--btn-secondary-text)] rounded-lg hover:bg-[var(--btn-secondary-hover)] transition-all border border-[var(--btn-secondary-border)]"
                                     disabled={isSubmitting}
                                 >
                                     Cancel

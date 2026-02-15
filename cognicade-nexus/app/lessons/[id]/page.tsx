@@ -206,7 +206,7 @@ export default function LessonDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a1f18] text-slate-100">
+      <div className="min-h-screen bg-[var(--page-bg)] text-[var(--text-primary)]">
         <style jsx global>{`
           @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap");
           .font-pixel {
@@ -227,7 +227,7 @@ export default function LessonDetailPage() {
           style={{ marginLeft: "var(--sidebar-width, 16rem)" }}
         >
           <div className="flex items-center justify-center py-32">
-            <div className="flex items-center gap-3 text-emerald-400 font-sans-clean">
+            <div className="flex items-center gap-3 text-[var(--accent)] font-sans-clean">
               <Loader2 size={24} className="animate-spin" />
               Loading lesson...
             </div>
@@ -239,7 +239,7 @@ export default function LessonDetailPage() {
 
   if (!lesson) {
     return (
-      <div className="min-h-screen bg-[#0a1f18] text-slate-100">
+      <div className="min-h-screen bg-[var(--page-bg)] text-[var(--text-primary)]">
         <style jsx global>{`
           @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap");
           .font-pixel {
@@ -260,15 +260,15 @@ export default function LessonDetailPage() {
           style={{ marginLeft: "var(--sidebar-width, 16rem)" }}
         >
           <div className="px-8 py-12 text-center">
-            <BookOpen className="mx-auto text-slate-500 mb-4" size={48} />
-            <h2 className="text-2xl font-serif-display text-white mb-2">
+            <BookOpen className="mx-auto text-[var(--text-muted)] mb-4" size={48} />
+            <h2 className="text-2xl font-serif-display text-[var(--text-primary)] mb-2">
               Lesson Not Found
             </h2>
-            <p className="text-slate-400 font-sans-clean mb-6">
+            <p className="text-[var(--text-secondary)] font-sans-clean mb-6">
               This lesson doesn't exist or you don't have access to it.
             </p>
             <Link href="/lessons">
-              <button className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none font-sans-clean">
+              <button className="px-6 py-3 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--page-bg)] font-bold rounded-lg transition-all shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none font-sans-clean">
                 Back to Lessons
               </button>
             </Link>
@@ -279,7 +279,7 @@ export default function LessonDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a1f18] text-slate-100">
+    <div className="min-h-screen bg-[var(--page-bg)] text-[var(--text-primary)]">
       {/* Global Styles */}
       <style jsx global>{`
         @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap");
@@ -319,7 +319,7 @@ export default function LessonDetailPage() {
           {/* Back button */}
           <Link
             href="/lessons"
-            className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors mb-8 font-sans-clean text-sm"
+            className="inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors mb-8 font-sans-clean text-sm"
           >
             <ArrowLeft size={16} />
             Back to Lessons
@@ -329,12 +329,12 @@ export default function LessonDetailPage() {
           <div className="mb-8">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h1 className="text-4xl font-serif-display text-white mb-3">
+                <h1 className="text-4xl font-serif-display text-[var(--text-heading)] mb-3">
                   {lesson.title}
                 </h1>
                 <div className="flex flex-wrap gap-3">
                   {lesson.subject && (
-                    <span className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-sans-clean flex items-center gap-1.5">
+                    <span className="px-3 py-1.5 rounded-lg bg-[var(--accent-bg)] border border-[var(--accent-border)] text-[var(--accent)] text-sm font-sans-clean flex items-center gap-1.5">
                       <BookOpen size={14} />
                       {lesson.subject}
                     </span>
@@ -346,7 +346,7 @@ export default function LessonDetailPage() {
                     </span>
                   )}
                   {lesson.created_at && (
-                    <span className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-400 text-sm font-sans-clean flex items-center gap-1.5">
+                    <span className="px-3 py-1.5 rounded-lg bg-[var(--btn-secondary-bg)] border border-[var(--input-border)] text-[var(--text-secondary)] text-sm font-sans-clean flex items-center gap-1.5">
                       <Clock size={14} />
                       {new Date(lesson.created_at).toLocaleDateString()}
                     </span>
@@ -378,7 +378,7 @@ export default function LessonDetailPage() {
           <div className="space-y-8">
             {/* Video Section */}
             {video && (
-              <div className="relative bg-[#0d281e] border border-blue-500/10 rounded-2xl overflow-hidden">
+              <div className="relative bg-[var(--card-bg)] border border-blue-500/10 rounded-2xl overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-transparent pointer-events-none" />
                 <div className="relative z-10 p-6">
                   <div className="flex items-center gap-3 mb-5">
@@ -386,11 +386,11 @@ export default function LessonDetailPage() {
                       <Film className="text-blue-400" size={18} />
                     </div>
                     <div>
-                      <h2 className="text-xl font-serif-display text-white">
+                      <h2 className="text-xl font-serif-display text-[var(--text-primary)]">
                         Concept Video
                       </h2>
                       {video.title && (
-                        <p className="text-slate-500 text-sm font-sans-clean">
+                        <p className="text-[var(--text-muted)] text-sm font-sans-clean">
                           {video.title}
                         </p>
                       )}
@@ -399,7 +399,7 @@ export default function LessonDetailPage() {
                       <span
                         className={`ml-auto px-2.5 py-1 rounded-full text-[10px] font-bold uppercase font-pixel ${
                           video.status === "completed"
-                            ? "bg-emerald-500/20 text-emerald-400"
+                            ? "bg-[var(--accent-bg)] text-[var(--accent)]"
                             : video.status === "failed"
                               ? "bg-red-500/20 text-red-400"
                               : "bg-yellow-500/20 text-yellow-400"
@@ -411,8 +411,7 @@ export default function LessonDetailPage() {
                   </div>
 
                   {video.video_url ? (
-                    <div className="rounded-xl overflow-hidden border border-white/10 bg-black">
-                      <video controls className="w-full" preload="auto">
+                    <div className="rounded-xl overflow-hidden border border-[var(--input-border)] bg-black">
                         <source src={video.video_url} type="video/mp4" />
                       </video>
                     </div>
@@ -437,7 +436,7 @@ export default function LessonDetailPage() {
                       <div className="mt-5">
                         <button
                           onClick={() => setShowScenes(!showScenes)}
-                          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-sans-clean"
+                          className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors text-sm font-sans-clean"
                         >
                           {showScenes ? (
                             <ChevronUp size={14} />
@@ -452,7 +451,7 @@ export default function LessonDetailPage() {
                             {video.scenes.map((scene: any, idx: number) => (
                               <div
                                 key={idx}
-                                className="bg-black/30 border border-white/5 rounded-xl p-4"
+                                className="bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl p-4"
                               >
                                 <div className="flex items-center gap-2 mb-2">
                                   <Play size={12} className="text-blue-400" />
@@ -460,7 +459,7 @@ export default function LessonDetailPage() {
                                     Scene {idx + 1}
                                   </span>
                                 </div>
-                                <p className="text-sm text-slate-300 font-sans-clean leading-relaxed">
+                                <p className="text-sm text-[var(--text-secondary)] font-sans-clean leading-relaxed">
                                   {scene.narration}
                                 </p>
                               </div>
@@ -475,19 +474,19 @@ export default function LessonDetailPage() {
 
             {/* Game Section */}
             {game && (
-              <div className="relative bg-[#0d281e] border border-emerald-500/10 rounded-2xl overflow-hidden">
+              <div className="relative bg-[var(--card-bg)] border border-emerald-500/10 rounded-2xl overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-transparent pointer-events-none" />
                 <div className="relative z-10 p-6">
                   <div className="flex items-center gap-3 mb-5">
-                    <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                      <Gamepad2 className="text-emerald-400" size={18} />
+                    <div className="p-2 rounded-lg bg-[var(--accent-bg)] border border-[var(--accent-border)]">
+                      <Gamepad2 className="text-[var(--accent)]" size={18} />
                     </div>
                     <div>
-                      <h2 className="text-xl font-serif-display text-white">
+                      <h2 className="text-xl font-serif-display text-[var(--text-primary)]">
                         Interactive Game
                       </h2>
                       {game.title && (
-                        <p className="text-slate-500 text-sm font-sans-clean">
+                        <p className="text-[var(--text-muted)] text-sm font-sans-clean">
                           {game.title}
                         </p>
                       )}
@@ -495,7 +494,7 @@ export default function LessonDetailPage() {
                     <span
                       className={`ml-auto px-2.5 py-1 rounded-full text-[10px] font-bold uppercase font-pixel ${
                         game.status === "done"
-                          ? "bg-emerald-500/20 text-emerald-400"
+                          ? "bg-[var(--accent-bg)] text-[var(--accent)]"
                           : game.status === "failed"
                             ? "bg-red-500/20 text-red-400"
                             : "bg-yellow-500/20 text-yellow-400"
@@ -506,8 +505,7 @@ export default function LessonDetailPage() {
                   </div>
 
                   {game.status === "done" && game.html_src ? (
-                    <div className="rounded-xl overflow-hidden border border-white/10 bg-black">
-                      <iframe
+                    <div className="rounded-xl overflow-hidden border border-[var(--input-border)] bg-black">
                         srcDoc={game.html_src}
                         title={game.title || "Educational Game"}
                         className="w-full border-0"
@@ -555,7 +553,7 @@ export default function LessonDetailPage() {
 
             {/* No video placeholder */}
             {!video && (
-              <div className="relative bg-[#0d281e] border border-blue-500/10 rounded-2xl p-8 text-center">
+              <div className="relative bg-[var(--card-bg)] border border-blue-500/10 rounded-2xl p-8 text-center">
                 {generatingVideo ? (
                   <>
                     <Loader2
@@ -565,7 +563,7 @@ export default function LessonDetailPage() {
                     <p className="text-blue-400 font-sans-clean font-medium">
                       Generating concept video...
                     </p>
-                    <p className="text-slate-500 text-sm font-sans-clean mt-1">
+                    <p className="text-[var(--text-muted)] text-sm font-sans-clean mt-1">
                       This may take a few minutes. The page will update
                       automatically.
                     </p>
@@ -573,10 +571,10 @@ export default function LessonDetailPage() {
                 ) : game?.status === "done" ? (
                   <>
                     <Film className="mx-auto text-slate-600 mb-3" size={40} />
-                    <p className="text-slate-400 font-sans-clean">
+                    <p className="text-[var(--text-secondary)] font-sans-clean">
                       No concept video generated yet.
                     </p>
-                    <p className="text-slate-500 text-sm font-sans-clean mt-1">
+                    <p className="text-[var(--text-muted)] text-sm font-sans-clean mt-1">
                       The game is ready — you can now generate a video for this
                       lesson.
                     </p>
@@ -592,7 +590,7 @@ export default function LessonDetailPage() {
                 ) : (
                   <>
                     <Film className="mx-auto text-slate-600 mb-3" size={40} />
-                    <p className="text-slate-500 font-sans-clean">
+                    <p className="text-[var(--text-muted)] font-sans-clean">
                       Video generation is available after the game finishes
                       generating.
                     </p>
@@ -609,17 +607,17 @@ export default function LessonDetailPage() {
 
             {/* No game placeholder */}
             {!game && (
-              <div className="relative bg-[#0d281e] border border-white/5 rounded-2xl p-8 text-center">
+              <div className="relative bg-[var(--card-bg)] border border-[var(--input-border)] rounded-2xl p-8 text-center">
                 {isGenerating ? (
                   <>
                     <Loader2
-                      className="mx-auto text-emerald-400 mb-3 animate-spin"
+                      className="mx-auto text-[var(--accent)] mb-3 animate-spin"
                       size={40}
                     />
-                    <p className="text-emerald-400 font-sans-clean font-medium">
+                    <p className="text-[var(--accent)] font-sans-clean font-medium">
                       Generating interactive game...
                     </p>
-                    <p className="text-slate-500 text-sm font-sans-clean mt-1">
+                    <p className="text-[var(--text-muted)] text-sm font-sans-clean mt-1">
                       This may take a few minutes. The page will update
                       automatically.
                     </p>
@@ -630,12 +628,12 @@ export default function LessonDetailPage() {
                       className="mx-auto text-slate-600 mb-3"
                       size={40}
                     />
-                    <p className="text-slate-400 font-sans-clean">
+                    <p className="text-[var(--text-secondary)] font-sans-clean">
                       No game generated for this lesson yet.
                     </p>
                     {userRole === "teacher" && (
                       <Link href={`/create?id=${lesson.id}`}>
-                        <button className="mt-4 px-5 py-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-all text-sm font-medium font-sans-clean">
+                        <button className="mt-4 px-5 py-2.5 bg-[var(--accent-bg)] border border-[var(--accent-border)] text-[var(--accent)] hover:bg-[var(--accent-bg)] rounded-lg transition-all text-sm font-medium font-sans-clean">
                           Generate Game
                         </button>
                       </Link>
@@ -648,14 +646,14 @@ export default function LessonDetailPage() {
             {/* Lesson Info, Objectives, Design Doc, Key Takeaways — bottom row */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {/* Lesson Info Card */}
-              <div className="relative bg-[#0d281e] border border-emerald-500/10 rounded-2xl overflow-hidden">
+              <div className="relative bg-[var(--card-bg)] border border-emerald-500/10 rounded-2xl overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-transparent pointer-events-none" />
                 <div className="relative z-10 p-6">
                   <div className="flex items-center gap-3 mb-5">
-                    <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                      <BookOpen className="text-emerald-400" size={18} />
+                    <div className="p-2 rounded-lg bg-[var(--accent-bg)] border border-[var(--accent-border)]">
+                      <BookOpen className="text-[var(--accent)]" size={18} />
                     </div>
-                    <h2 className="text-xl font-serif-display text-white">
+                    <h2 className="text-xl font-serif-display text-[var(--text-primary)]">
                       Lesson Info
                     </h2>
                   </div>
@@ -675,12 +673,12 @@ export default function LessonDetailPage() {
                       .map((item, i) => (
                         <div
                           key={i}
-                          className="px-4 py-3 rounded-xl bg-black/20 border border-white/5"
+                          className="px-4 py-3 rounded-xl bg-[var(--input-bg)] border border-[var(--input-border)]"
                         >
-                          <p className="text-[10px] uppercase tracking-wider text-slate-500 font-pixel mb-1">
+                          <p className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-pixel mb-1">
                             {item.label}
                           </p>
-                          <p className="text-white font-medium font-sans-clean text-sm">
+                          <p className="text-[var(--text-primary)] font-medium font-sans-clean text-sm">
                             {item.value}
                           </p>
                         </div>
@@ -691,14 +689,14 @@ export default function LessonDetailPage() {
 
               {/* Objectives Card */}
               {lesson.objectives && lesson.objectives.length > 0 && (
-                <div className="relative bg-[#0d281e] border border-emerald-500/10 rounded-2xl overflow-hidden">
+                <div className="relative bg-[var(--card-bg)] border border-emerald-500/10 rounded-2xl overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-transparent pointer-events-none" />
                   <div className="relative z-10 p-6">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                        <Target className="text-emerald-400" size={18} />
+                      <div className="p-2 rounded-lg bg-[var(--accent-bg)] border border-[var(--accent-border)]">
+                        <Target className="text-[var(--accent)]" size={18} />
                       </div>
-                      <h2 className="text-xl font-serif-display text-white">
+                      <h2 className="text-xl font-serif-display text-[var(--text-primary)]">
                         Objectives
                       </h2>
                     </div>
@@ -707,11 +705,11 @@ export default function LessonDetailPage() {
                       {lesson.objectives.map((obj: string, i: number) => (
                         <li
                           key={i}
-                          className="flex items-start gap-2.5 text-sm text-slate-300 font-sans-clean"
+                          className="flex items-start gap-2.5 text-sm text-[var(--text-secondary)] font-sans-clean"
                         >
                           <CheckCircle2
                             size={14}
-                            className="text-emerald-400 shrink-0 mt-0.5"
+                            className="text-[var(--accent)] shrink-0 mt-0.5"
                           />
                           {obj}
                         </li>
@@ -723,20 +721,20 @@ export default function LessonDetailPage() {
 
               {/* Game Design Document Card */}
               {game?.design_doc_data && (
-                <div className="relative bg-[#0d281e] border border-purple-500/10 rounded-2xl overflow-hidden">
+                <div className="relative bg-[var(--card-bg)] border border-purple-500/10 rounded-2xl overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-transparent pointer-events-none" />
                   <div className="relative z-10 p-6">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
                         <FileText className="text-purple-400" size={18} />
                       </div>
-                      <h2 className="text-xl font-serif-display text-white">
+                      <h2 className="text-xl font-serif-display text-[var(--text-primary)]">
                         Game Details
                       </h2>
                     </div>
 
-                    <div className="bg-black/30 border border-white/5 rounded-xl p-4 overflow-auto max-h-[400px]">
-                      <pre className="text-xs font-mono text-slate-400 whitespace-pre-wrap break-words">
+                    <div className="bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl p-4 overflow-auto max-h-[400px]">
+                      <pre className="text-xs font-mono text-[var(--text-secondary)] whitespace-pre-wrap break-words">
                         {game.design_doc_data}
                       </pre>
                     </div>
@@ -746,14 +744,14 @@ export default function LessonDetailPage() {
 
               {/* Video Key Takeaways */}
               {video?.key_takeaways && video.key_takeaways.length > 0 && (
-                <div className="relative bg-[#0d281e] border border-blue-500/10 rounded-2xl overflow-hidden">
+                <div className="relative bg-[var(--card-bg)] border border-blue-500/10 rounded-2xl overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-transparent pointer-events-none" />
                   <div className="relative z-10 p-6">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
                         <Star className="text-blue-400" size={18} />
                       </div>
-                      <h2 className="text-xl font-serif-display text-white">
+                      <h2 className="text-xl font-serif-display text-[var(--text-primary)]">
                         Key Takeaways
                       </h2>
                     </div>
@@ -761,7 +759,7 @@ export default function LessonDetailPage() {
                       {video.key_takeaways.map((point: string, i: number) => (
                         <li
                           key={i}
-                          className="flex items-start gap-2.5 text-sm text-slate-300 font-sans-clean"
+                          className="flex items-start gap-2.5 text-sm text-[var(--text-secondary)] font-sans-clean"
                         >
                           <Star
                             size={12}

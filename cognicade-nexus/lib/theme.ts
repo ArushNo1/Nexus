@@ -16,63 +16,88 @@
  */
 
 export const theme = {
-  // ─── Sidebar (Wooden Frame) ──────────────────────
+  // ─── Sidebar (Forest) ────────────────────────────
   sidebar: {
-    bg: '#286f25',                              // Main sidebar background
-    border: '#2c1810',                          // Border color & active item bg
-    borderFaint: 'rgba(44,24,16,0.4)',          // Faint border (hover states)
+    bg: '#0d4a3a',                              // Forest dark background
+    border: '#064e3b',                          // Forest darker border
+    borderFaint: 'rgba(6,78,59,0.4)',           // Forest faint border (hover states)
     text: '#ffffff',                            // Primary text
     textSecondary: 'rgba(255,255,255,0.7)',     // Secondary text
     textTertiary: 'rgba(255,255,255,0.6)',      // Tertiary / muted text
-    hover: '#4e3429',                           // Expand button hover
-    activeBorder: 'rgba(255,255,255,0.2)',      // Active item border
+    hover: '#155e4d',                           // Forest hover
+    activeBorder: 'rgba(76,221,176,0.3)',       // Mint active border
   },
 
-  // ─── Page (Chalkboard) ───────────────────────────
+  // ─── Page (Dark Forest) ───────────────────────────
   page: {
-    bg: '#0a1f18',                              // Main page background
-    cardBg: '#0d281e',                          // Card / panel background
-    cardBgTranslucent: 'rgba(13,40,30,0.9)',    // Translucent card (navbars)
-    cardBorder: '#3e2723',                      // Card border color
+    bg: '#f0f4f1',                              // Dark forest background
+    cardBg: '#064e3b',                          // Forest card background
+    cardBgTranslucent: 'rgba(13,40,30,0.95)',   // Translucent forest (navbars)
+    cardBorder: 'rgba(16,185,129,0.2)',         // Emerald tint border
   },
 
-  // ─── Accent (Chalk Colors) ──────────────────────
+  // ─── Text (Light on Dark) ───────────────────────
+  text: {
+    heading: '#064e3b',                          // Forest green — page headings
+    subheading: '#7a8a82',                       // Dark gray-green — page subtitles
+    primary: '#f0f4f1',                         // Soft off-white — body text
+    secondary: '#c8d5e0',                       // Light slate — descriptions, icons
+    muted: '#94a3b8',                           // Slate-400 — labels, hints, disabled
+    description: '#c8d5e0',                     // Light slate — paragraph descriptions
+  },
+
+  // ─── Accent (Mint & Emerald) ─────────────────────
   accent: {
-    color: '#34d399',                           // Primary accent (emerald-400)
-    hover: '#10b981',                           // Accent hover (emerald-500)
-    bg: 'rgba(16,185,129,0.1)',                 // Accent background tint
-    border: 'rgba(16,185,129,0.2)',             // Accent border
-    muted: '#6ee7b7',                           // Muted accent (emerald-300)
-    dark: 'rgba(6,78,59,0.3)',                  // Dark accent overlay
+    color: '#4cddb0',                           // Mint primary
+    hover: '#2b9e7a',                           // Forest hover
+    bg: 'rgba(76,221,176,0.1)',                 // Mint background tint
+    border: 'rgba(76,221,176,0.2)',             // Mint border
+    muted: '#6ee7b7',                           // Bright mint
+    dark: 'rgba(13,74,58,0.15)',                // Forest dark overlay
+  },
+
+  // ─── Inputs ──────────────────────────────────────
+  input: {
+    bg: 'rgba(0,0,0,0.2)',                      // Dark translucent
+    border: 'rgba(255,255,255,0.1)',            // Faint white
+    borderDisabled: 'rgba(255,255,255,0.05)',   // Fainter white
+    focusBorder: 'rgba(16,185,129,0.5)',        // Emerald focus
+    text: '#ffffff',                            // White
+    textDisabled: '#64748b',                    // Slate-500
+    placeholder: '#64748b',                     // Slate-500
   },
 
   // ─── Buttons ─────────────────────────────────────
   button: {
-    primaryBg: '#10b981',                       // Primary button bg
-    primaryHover: '#34d399',                    // Primary hover
-    primaryText: '#0d281e',                     // Primary button text
-    primaryShadow: '#065f46',                   // Primary 3D shadow
+    primaryBg: '#4cddb0',                       // Mint button bg
+    primaryHover: '#2b9e7a',                    // Forest hover
+    primaryText: '#ffffff',                     // White text on mint
+    primaryShadow: '#064e3b',                   // Forest shadow
+    secondaryBg: 'rgba(255,255,255,0.05)',      // Faint white
+    secondaryHover: 'rgba(255,255,255,0.1)',    // Slightly brighter
+    secondaryText: '#94a3b8',                   // Slate-400
+    secondaryBorder: 'rgba(255,255,255,0.1)',   // Faint white
     dangerBg: 'rgba(239,68,68,0.1)',            // Danger button bg
     dangerHover: 'rgba(239,68,68,0.2)',         // Danger hover
-    dangerText: '#f87171',                      // Danger text
+    dangerText: '#f87171',                      // Red-400 (visible on dark)
     dangerBorder: 'rgba(239,68,68,0.2)',        // Danger border
   },
 
   // ─── Status Badges ──────────────────────────────
   status: {
-    activeBg: 'rgba(6,78,59,0.3)',              // Active badge bg
-    activeText: '#6ee7b7',                      // Active badge text
-    draftBg: 'rgba(100,116,139,0.2)',           // Draft badge bg
-    draftText: '#cbd5e1',                       // Draft badge text
-    draftBorder: 'rgba(100,116,139,0.3)',       // Draft badge border
+    activeBg: 'rgba(76,221,176,0.15)',          // Mint active badge bg
+    activeText: '#4cddb0',                      // Mint text (visible on dark)
+    draftBg: 'rgba(148,163,184,0.1)',           // Slate tint
+    draftText: '#94a3b8',                       // Slate-400
+    draftBorder: 'rgba(148,163,184,0.2)',       // Slate border
   },
 
   // ─── Progress Bar ────────────────────────────────
   progress: {
-    bg: 'rgba(0,0,0,0.2)',                      // Track background
-    from: '#ffffff',                            // Gradient start
-    to: '#e2e8f0',                              // Gradient end
-    icon: '#facc15',                            // Zap icon color
+    bg: 'rgba(255,255,255,0.1)',                // Faint white track
+    from: '#4cddb0',                            // Mint gradient start
+    to: '#2b9e7a',                              // Forest gradient end
+    icon: '#4cddb0',                            // Mint zap icon
   },
 };
 
@@ -96,6 +121,13 @@ export function getThemeCSSVariables(): string {
     --card-bg-translucent: ${theme.page.cardBgTranslucent};
     --card-border: ${theme.page.cardBorder};
 
+    --text-heading: ${theme.text.heading};
+    --text-subheading: ${theme.text.subheading};
+    --text-primary: ${theme.text.primary};
+    --text-secondary: ${theme.text.secondary};
+    --text-muted: ${theme.text.muted};
+    --text-description: ${theme.text.description};
+
     --accent: ${theme.accent.color};
     --accent-hover: ${theme.accent.hover};
     --accent-bg: ${theme.accent.bg};
@@ -103,10 +135,22 @@ export function getThemeCSSVariables(): string {
     --accent-muted: ${theme.accent.muted};
     --accent-dark: ${theme.accent.dark};
 
+    --input-bg: ${theme.input.bg};
+    --input-border: ${theme.input.border};
+    --input-border-disabled: ${theme.input.borderDisabled};
+    --input-focus-border: ${theme.input.focusBorder};
+    --input-text: ${theme.input.text};
+    --input-text-disabled: ${theme.input.textDisabled};
+    --input-placeholder: ${theme.input.placeholder};
+
     --btn-primary-bg: ${theme.button.primaryBg};
     --btn-primary-hover: ${theme.button.primaryHover};
     --btn-primary-text: ${theme.button.primaryText};
     --btn-primary-shadow: ${theme.button.primaryShadow};
+    --btn-secondary-bg: ${theme.button.secondaryBg};
+    --btn-secondary-hover: ${theme.button.secondaryHover};
+    --btn-secondary-text: ${theme.button.secondaryText};
+    --btn-secondary-border: ${theme.button.secondaryBorder};
     --btn-danger-bg: ${theme.button.dangerBg};
     --btn-danger-hover: ${theme.button.dangerHover};
     --btn-danger-text: ${theme.button.dangerText};

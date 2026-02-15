@@ -91,7 +91,7 @@ export default function Dashboard() {
     const marqueeItems = lessons.length > 0 ? [...lessons, ...lessons, ...lessons] : [];
 
     return (
-        <div className="min-h-screen bg-[var(--page-bg)] text-slate-100 font-sans selection:bg-emerald-500/30 overflow-x-hidden">
+        <div className="min-h-screen bg-[var(--page-bg)] text-[var(--text-primary)] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
             <style jsx global>{`
                 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
                 .font-pixel { font-family: 'Press Start 2P', cursive; }
@@ -134,12 +134,12 @@ export default function Dashboard() {
                     {/* Header */}
                     <div className="mb-10">
                         <div className="flex items-center gap-3 mb-3 flex-wrap">
-                            <h1 className="text-5xl font-serif-display text-white">Welcome back,</h1>
-                            <span className="text-5xl font-serif-display text-emerald-400 italic">
+                            <h1 className="text-5xl font-serif-display text-[var(--text-heading)]">Welcome back,</h1>
+                            <span className="text-5xl font-serif-display text-[var(--accent)] italic">
                                 {userName || (userRole === 'teacher' ? 'Educator' : 'Student')}
                             </span>
                         </div>
-                        <p className="text-slate-400 text-lg font-sans-clean">
+                        <p className="text-[var(--text-subheading)] text-lg font-sans-clean">
                             {userRole === 'teacher'
                                 ? "Here are your lessons."
                                 : "Here are your assigned lessons."}
@@ -149,9 +149,9 @@ export default function Dashboard() {
                     {/* Lessons */}
                     <div className="flex-1 flex flex-col">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-serif-display text-white">My Lessons</h2>
+                            <h2 className="text-2xl font-serif-display text-[var(--text-heading)]">My Lessons</h2>
                             <Link href="/lessons">
-                                <button className="text-emerald-400 text-sm font-medium hover:text-emerald-300 transition-colors flex items-center gap-2 font-sans-clean">
+                                <button className="text-[var(--accent)] text-sm font-medium hover:text-[var(--accent-hover)] transition-colors flex items-center gap-2 font-sans-clean">
                                     View All <ArrowRight size={16} />
                                 </button>
                             </Link>
@@ -159,13 +159,13 @@ export default function Dashboard() {
 
                         {loading ? (
                             <div className="flex-1 flex items-center justify-center">
-                                <Loader2 size={32} className="text-emerald-500 animate-spin" />
+                                <Loader2 size={32} className="text-[var(--accent)] animate-spin" />
                             </div>
                         ) : lessons.length === 0 ? (
                             <div className="flex-1 flex items-center justify-center">
                                 <div className="text-center py-16 bg-[var(--card-bg)] border-2 border-[var(--card-border)] rounded-2xl px-12">
-                                    <p className="text-slate-400 font-sans-clean mb-2">No lessons yet.</p>
-                                    <Link href="/classrooms" className="text-emerald-400 hover:text-emerald-300 transition-colors font-sans-clean text-sm">
+                                    <p className="text-[var(--text-secondary)] font-sans-clean mb-2">No lessons yet.</p>
+                                    <Link href="/classrooms" className="text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors font-sans-clean text-sm">
                                         Go to your classrooms to get started
                                     </Link>
                                 </div>
@@ -209,8 +209,8 @@ export default function Dashboard() {
 
                                                 {/* Content */}
                                                 <div className="p-5 relative z-10">
-                                                    <h3 className="text-white font-bold text-lg mb-1 font-sans-clean truncate">{lesson.title}</h3>
-                                                    <p className="text-sm font-sans-clean mb-5 truncate text-slate-400">{lesson.subject || 'Unspecified Subject'}</p>
+                                                    <h3 className="text-[var(--text-primary)] font-bold text-lg mb-1 font-sans-clean truncate">{lesson.title}</h3>
+                                                    <p className="text-sm font-sans-clean mb-5 truncate text-[var(--text-secondary)]">{lesson.subject || 'Unspecified Subject'}</p>
 
                                                     <div className="flex gap-2">
                                                         <Link href={`/lessons/${lesson.id}`} className="flex-1">

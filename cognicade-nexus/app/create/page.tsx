@@ -57,15 +57,15 @@ export default function CreateLessonPage() {
         return (
             <div className="min-h-screen bg-[var(--page-bg)] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader2 size={40} className="text-emerald-500 animate-spin" />
-                    <p className="text-emerald-400 font-pixel text-xs tracking-widest">VERIFYING AUTHORITY...</p>
+                    <Loader2 size={40} className="text-[var(--accent)] animate-spin" />
+                    <p className="text-[var(--accent)] font-pixel text-xs tracking-widest">VERIFYING AUTHORITY...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[var(--page-bg)] text-slate-100 font-sans selection:bg-emerald-500/30">
+        <div className="min-h-screen bg-[var(--page-bg)] text-[var(--text-primary)] font-sans selection:bg-emerald-500/30">
             {/* Global Styles */}
             <style jsx global>{`
                 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
@@ -90,11 +90,11 @@ export default function CreateLessonPage() {
                 <div className="px-8 py-12 relative z-10">
                     {/* Header */}
                     <div className="mb-10">
-                        <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-4 font-pixel">Lesson Creator</p>
-                        <h1 className="text-4xl lg:text-5xl font-serif-display text-white leading-tight mb-3">
-                            Build your <span className="text-emerald-400 italic">game</span>
+                        <p className="text-[var(--accent)] text-[10px] font-bold uppercase tracking-[0.3em] mb-4 font-pixel">Lesson Creator</p>
+                        <h1 className="text-4xl lg:text-5xl font-serif-display text-[var(--text-primary)] leading-tight mb-3">
+                            Build your <span className="text-[var(--accent)] italic">game</span>
                         </h1>
-                        <p className="text-slate-400 text-lg font-sans-clean leading-relaxed max-w-2xl">
+                        <p className="text-[var(--text-secondary)] text-lg font-sans-clean leading-relaxed max-w-2xl">
                             Upload a lesson plan and watch it transform into an interactive educational experience with video, music, and gameplay.
                         </p>
                     </div>
@@ -104,14 +104,14 @@ export default function CreateLessonPage() {
                         {/* Optional Classroom Selector */}
                         {!loading && classrooms.length > 0 && (
                             <div className="mb-6 max-w-xs">
-                                <label className="text-[10px] uppercase tracking-wider text-slate-500 font-pixel mb-2 block">
+                                <label className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] font-pixel mb-2 block">
                                     Classroom
                                 </label>
                                 <div className="relative">
                                     <select
                                         value={selectedClassroom}
                                         onChange={(e) => setSelectedClassroom(e.target.value)}
-                                        className="w-full appearance-none px-3 py-2.5 bg-[var(--card-bg)] border-2 border-[var(--card-border)] rounded-lg text-white font-sans-clean text-xs focus:border-emerald-500/40 focus:outline-none transition-colors cursor-pointer pr-8"
+                                        className="w-full appearance-none px-3 py-2.5 bg-[var(--card-bg)] border-2 border-[var(--card-border)] rounded-lg text-[var(--input-text)] font-sans-clean text-xs focus:border-[var(--input-focus-border)] focus:outline-none transition-colors cursor-pointer pr-8"
                                     >
                                         <option value="">None</option>
                                         {classrooms.map((c) => (
@@ -120,7 +120,7 @@ export default function CreateLessonPage() {
                                             </option>
                                         ))}
                                     </select>
-                                    <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                                    <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
                                 </div>
                             </div>
                         )}
@@ -128,8 +128,8 @@ export default function CreateLessonPage() {
                         {/* Lesson Uploader */}
                         <Suspense fallback={
                             <div className="text-center py-12">
-                                <div className="inline-flex items-center gap-3 px-5 py-3 bg-[var(--card-bg)] border-2 border-[var(--card-border)] rounded-xl text-emerald-400 text-sm font-sans-clean">
-                                    <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                                <div className="inline-flex items-center gap-3 px-5 py-3 bg-[var(--card-bg)] border-2 border-[var(--card-border)] rounded-xl text-[var(--accent)] text-sm font-sans-clean">
+                                    <div className="w-4 h-4 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
                                     Loading...
                                 </div>
                             </div>
