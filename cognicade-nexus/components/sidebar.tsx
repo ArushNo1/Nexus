@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Home,
     BookOpen,
@@ -17,14 +17,25 @@ import {
     Plus
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
-const NAV_ITEMS = [
+const TEACHER_NAV_ITEMS = [
     { label: 'Dashboard', href: '/dashboard', icon: Home },
+    { label: 'My Classrooms', href: '/classrooms', icon: Users },
     { label: 'Create Lesson', href: '/create', icon: Plus },
     { label: 'My Lessons', href: '/lessons', icon: BookOpen },
     { label: 'Analytics', href: '/analytics', icon: BarChart3 },
     { label: 'Students', href: '/students', icon: Users },
+    { label: 'Achievements', href: '/achievements', icon: Trophy },
+    { label: 'Game Library', href: '/library', icon: Gamepad2 },
+];
+
+const STUDENT_NAV_ITEMS = [
+    { label: 'Dashboard', href: '/dashboard', icon: Home },
+    { label: 'My Classrooms', href: '/classrooms', icon: Users },
+    { label: 'Assigned Lessons', href: '/lessons', icon: BookOpen },
+    { label: 'My Progress', href: '/progress', icon: Target },
     { label: 'Achievements', href: '/achievements', icon: Trophy },
     { label: 'Game Library', href: '/library', icon: Gamepad2 },
 ];
@@ -35,7 +46,40 @@ const BOTTOM_ITEMS = [
 
 export default function Sidebar() {
     const [collapsed, setCollapsed] = useState(false);
+    const [userRole, setUserRole] = useState<'student' | 'teacher' | null>(null);
+    const [userProfile, setUserProfile] = useState<any>(null);
     const pathname = usePathname();
+    const router = useRouter();
+
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('user_profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile) {
+                    setUserProfile(profile);
+                    setUserRole(profile.role);
+                }
+            }
+        };
+
+        fetchUserProfile();
+    }, []);
+
+    const handleLogout = async () => {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        router.push('/auth/login');
+    };
+
+    const navItems = userRole === 'teacher' ? TEACHER_NAV_ITEMS : STUDENT_NAV_ITEMS;
 
     return (
         <div
@@ -70,15 +114,19 @@ export default function Sidebar() {
             )}
 
             {/* User Stats Card */}
-            {!collapsed && (
+            {!collapsed && userProfile && (
                 <div className="mx-4 mt-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
                     <div className="flex items-center gap-3 mb-3">
                         <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 font-bold font-sans-clean">
-                            ED
+                            {userProfile.full_name
+                                ? userProfile.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+                                : userRole === 'teacher' ? 'ED' : 'ST'}
                         </div>
                         <div>
-                            <div className="text-white font-bold text-sm font-sans-clean">Educator</div>
-                            <div className="text-slate-400 text-xs font-sans-clean">Level 12</div>
+                            <div className="text-white font-bold text-sm font-sans-clean">
+                                {userProfile.full_name || (userRole === 'teacher' ? 'Educator' : 'Student')}
+                            </div>
+                            <div className="text-slate-400 text-xs font-sans-clean capitalize">{userRole}</div>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -94,7 +142,7 @@ export default function Sidebar() {
             {/* Navigation Items */}
             <nav className="flex-1 overflow-y-auto py-6 px-3">
                 <div className="space-y-1">
-                    {NAV_ITEMS.map((item) => {
+                    {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = pathname === item.href;
                         return (
@@ -143,6 +191,7 @@ export default function Sidebar() {
 
                 {/* Logout Button */}
                 <button
+                    onClick={handleLogout}
                     className="w-full group flex items-center gap-3 px-3 py-3 rounded-lg text-red-400 hover:bg-red-500/10 transition-all"
                 >
                     <LogOut size={20} />

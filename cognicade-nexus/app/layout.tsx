@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Cognicade Nexus",
   description: "The fastest way to build games with AI.",
+  icons: {
+    icon: "/NEXUSLOGO.png",
+  },
 };
 
 const geistSans = Geist({
