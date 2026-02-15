@@ -75,7 +75,7 @@ export default function LessonsPage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-[#0a1f18] text-slate-100">
+        <div className="min-h-screen bg-[var(--page-bg)] text-slate-100">
             {/* Global Styles */}
             <style jsx global>{`
                 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
@@ -88,13 +88,21 @@ export default function LessonsPage() {
             <ChalkEquations />
             <Sidebar />
 
+<<<<<<< Updated upstream
             <main
                 id="main-content"
                 className="min-h-screen transition-[margin] duration-300"
+=======
+            <div
+                className="min-h-screen transition-[margin] duration-300 relative"
+>>>>>>> Stashed changes
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
+                {/* Ambient background glows — matches landing page */}
+                <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-emerald-500/[0.03] blur-[120px] rounded-full pointer-events-none" />
+                <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-sky-500/[0.03] blur-[100px] rounded-full pointer-events-none" />
 
-                <div className="px-8 py-12">
+                <div className="px-8 py-12 relative z-10">
                     <div className="flex justify-between items-center mb-8">
                         <div>
                             <h1 className="text-4xl font-serif-display text-white mb-2">
@@ -108,7 +116,7 @@ export default function LessonsPage() {
                         </div>
                         {userRole === 'teacher' && (
                             <Link href="/create">
-                                <button className="flex items-center gap-2 px-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-xl transition-all shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none text-sm font-sans-clean">
+                                <button className="flex items-center gap-2 px-5 py-3 bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-hover)] text-[var(--btn-primary-text)] font-bold rounded-xl transition-all shadow-[0_4px_0_var(--btn-primary-shadow)] hover:translate-y-[2px] hover:shadow-[0_2px_0_var(--btn-primary-shadow)] active:translate-y-[4px] active:shadow-none text-sm font-sans-clean">
                                     <Plus size={18} />
                                     Create Lesson
                                 </button>
@@ -119,20 +127,20 @@ export default function LessonsPage() {
                     {loading ? (
                         <p className="text-slate-400 font-sans-clean">Loading lessons...</p>
                     ) : lessons.length === 0 ? (
-                        <div className="bg-[#0d281e] border border-emerald-500/20 rounded-2xl p-12 text-center">
+                        <div className="bg-[var(--card-bg)] border-2 border-[var(--card-border)] rounded-2xl p-12 text-center">
                             <BookOpen className="mx-auto text-emerald-400 mb-4" size={48} />
                             <h3 className="text-white font-bold text-xl mb-2 font-sans-clean">
                                 {userRole === 'teacher' ? 'No Lessons Created' : 'No Lessons Assigned'}
                             </h3>
                             <p className="text-slate-400 mb-4 font-sans-clean">
                                 {userRole === 'teacher'
-                                    ? 'Create lessons from within your classrooms'
+                                    ? 'Create lessons for your classrooms'
                                     : 'Your teacher hasn\'t assigned any lessons yet'}
                             </p>
                             {userRole === 'teacher' && (
-                                <Link href="/classrooms">
-                                    <button className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none font-sans-clean">
-                                        Go to Classrooms
+                                <Link href="/create">
+                                    <button className="px-6 py-3 bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-hover)] text-[var(--btn-primary-text)] font-bold rounded-lg transition-all shadow-[0_4px_0_var(--btn-primary-shadow)] hover:translate-y-[2px] hover:shadow-[0_2px_0_var(--btn-primary-shadow)] active:translate-y-[4px] active:shadow-none font-sans-clean">
+                                        Create Lesson
                                     </button>
                                 </Link>
                             )}
@@ -142,7 +150,7 @@ export default function LessonsPage() {
                             {lessons.map((lesson, idx) => (
                                     <div
                                         key={lesson.id}
-                                        className="group relative bg-[#0d281e] border border-emerald-500/20 rounded-2xl hover:scale-[1.02] transition-all cursor-pointer overflow-hidden"
+                                        className="group relative bg-[var(--card-bg)] border-2 border-[var(--card-border)] rounded-2xl hover:scale-[1.02] transition-all cursor-pointer overflow-hidden hover:shadow-2xl"
                                     >
                                         {/* Thumbnail */}
                                         <div className="relative h-44 overflow-hidden">
@@ -151,16 +159,16 @@ export default function LessonsPage() {
                                                 alt={lesson.title}
                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                             />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-[#0d281e] via-transparent to-transparent" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-[var(--card-bg)] via-transparent to-transparent" />
                                         </div>
 
                                         <div className="p-5">
                                             <h3 className="text-lg font-bold text-white mb-1 font-sans-clean truncate">{lesson.title}</h3>
-                                            <p className="text-slate-400 text-sm font-sans-clean mb-4 truncate">{lesson.subject || 'General'}</p>
+                                            <p className="text-sm font-sans-clean mb-4 truncate text-slate-400">{lesson.subject || 'General'}</p>
 
                                             <div className="flex gap-3">
                                                 <Link href={`/lessons/${lesson.id}`} className="flex-1">
-                                                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl hover:bg-emerald-500/20 transition-all text-sm font-medium border border-emerald-500/20 font-sans-clean">
+                                                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all text-sm font-medium font-sans-clean bg-[var(--accent-bg)] text-[var(--accent)] border-2 border-[var(--card-border)] hover:bg-[var(--accent-bg)]">
                                                         <Play size={14} />
                                                         {userRole === 'teacher' ? 'View' : 'Launch'}
                                                     </button>
@@ -174,7 +182,7 @@ export default function LessonsPage() {
                                                             await supabase.from('lessons').delete().eq('id', lesson.id);
                                                             setLessons(prev => prev.filter(l => l.id !== lesson.id));
                                                         }}
-                                                        className="px-3 py-2.5 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500/20 transition-all text-sm border border-red-500/20"
+                                                        className="px-3 py-2.5 bg-[var(--btn-danger-bg)] text-[var(--btn-danger-text)] rounded-xl hover:bg-[var(--btn-danger-hover)] transition-all text-sm border-2 border-[var(--card-border)]"
                                                     >
                                                         <Trash2 size={14} />
                                                     </button>

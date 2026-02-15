@@ -55,7 +55,7 @@ export default function CreateLessonPage() {
 
     if (isAuthorized === null) {
         return (
-            <div className="min-h-screen bg-[#0a1f18] flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--page-bg)] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 size={40} className="text-emerald-500 animate-spin" />
                     <p className="text-emerald-400 font-pixel text-xs tracking-widest">VERIFYING AUTHORITY...</p>
@@ -65,7 +65,7 @@ export default function CreateLessonPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0a1f18] text-slate-100 font-sans selection:bg-emerald-500/30">
+        <div className="min-h-screen bg-[var(--page-bg)] text-slate-100 font-sans selection:bg-emerald-500/30">
             {/* Global Styles */}
             <style jsx global>{`
                 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
@@ -80,10 +80,14 @@ export default function CreateLessonPage() {
 
             <main
                 id="main-content"
-                className="min-h-screen transition-[margin] duration-300"
+                className="min-h-screen transition-[margin] duration-300 relative"
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
-                <div className="px-8 py-12">
+                {/* Ambient background glows — matches landing page */}
+                <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-emerald-500/[0.03] blur-[120px] rounded-full pointer-events-none" />
+                <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-sky-500/[0.03] blur-[100px] rounded-full pointer-events-none" />
+
+                <div className="px-8 py-12 relative z-10">
                     {/* Header */}
                     <div className="mb-10">
                         <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-4 font-pixel">Lesson Creator</p>
@@ -95,53 +99,36 @@ export default function CreateLessonPage() {
                         </p>
                     </div>
 
-                    {/* Classroom Selector */}
-                    <div className="mb-8">
-                        <label className="text-[10px] uppercase tracking-wider text-slate-500 font-pixel mb-3 block">
-                            Assign to Classroom <span className="text-red-400">*</span>
-                        </label>
-                        {loading ? (
-                            <div className="flex items-center gap-2 text-slate-400 font-sans-clean text-sm">
-                                <Loader2 size={16} className="animate-spin" />
-                                Loading classrooms...
-                            </div>
-                        ) : classrooms.length === 0 ? (
-                            <div className="bg-[#0d281e] border border-yellow-500/20 rounded-xl p-5">
-                                <p className="text-yellow-400 text-sm font-sans-clean mb-2">
-                                    You don't have any classrooms yet. Create a classroom first before making lessons.
-                                </p>
-                                <button
-                                    onClick={() => router.push('/classrooms')}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none text-sm font-sans-clean"
-                                >
-                                    <Users size={16} />
-                                    Go to Classrooms
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="relative max-w-md">
-                                <select
-                                    value={selectedClassroom}
-                                    onChange={(e) => setSelectedClassroom(e.target.value)}
-                                    className="w-full appearance-none px-4 py-3.5 bg-[#0d281e] border border-white/10 rounded-xl text-white font-sans-clean text-sm focus:border-emerald-500/40 focus:outline-none transition-colors cursor-pointer pr-10"
-                                >
-                                    <option value="">Select a classroom...</option>
-                                    {classrooms.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name}{c.subject ? ` — ${c.subject}` : ''} ({c.member_count || 0} students)
-                                        </option>
-                                    ))}
-                                </select>
-                                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                    {/* Main Creation Area */}
+                    <div className="max-w-4xl">
+                        {/* Optional Classroom Selector */}
+                        {!loading && classrooms.length > 0 && (
+                            <div className="mb-6 max-w-xs">
+                                <label className="text-[10px] uppercase tracking-wider text-slate-500 font-pixel mb-2 block">
+                                    Classroom
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        value={selectedClassroom}
+                                        onChange={(e) => setSelectedClassroom(e.target.value)}
+                                        className="w-full appearance-none px-3 py-2.5 bg-[var(--card-bg)] border-2 border-[var(--card-border)] rounded-lg text-white font-sans-clean text-xs focus:border-emerald-500/40 focus:outline-none transition-colors cursor-pointer pr-8"
+                                    >
+                                        <option value="">None</option>
+                                        {classrooms.map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name}{c.subject ? ` — ${c.subject}` : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                                </div>
                             </div>
                         )}
-                    </div>
 
-                    {/* Lesson Uploader — only visible when classroom is selected */}
-                    {selectedClassroom ? (
+                        {/* Lesson Uploader */}
                         <Suspense fallback={
                             <div className="text-center py-12">
-                                <div className="inline-flex items-center gap-3 px-5 py-3 bg-[#0d281e] border border-emerald-500/20 rounded-xl text-emerald-400 text-sm font-sans-clean">
+                                <div className="inline-flex items-center gap-3 px-5 py-3 bg-[var(--card-bg)] border-2 border-[var(--card-border)] rounded-xl text-emerald-400 text-sm font-sans-clean">
                                     <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
                                     Loading...
                                 </div>
@@ -149,15 +136,7 @@ export default function CreateLessonPage() {
                         }>
                             <LessonUploader classroomId={selectedClassroom} />
                         </Suspense>
-                    ) : classrooms.length > 0 ? (
-                        <div className="bg-[#0d281e] border border-white/5 rounded-2xl p-12 text-center">
-                            <Users className="mx-auto text-slate-600 mb-4" size={48} />
-                            <h3 className="text-white font-bold text-xl mb-2 font-sans-clean">Select a Classroom</h3>
-                            <p className="text-slate-400 font-sans-clean">
-                                Choose which classroom this lesson will be assigned to before uploading.
-                            </p>
-                        </div>
-                    ) : null}
+                    </div>
                 </div>
             </main>
         </div>

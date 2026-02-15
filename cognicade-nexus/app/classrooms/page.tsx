@@ -142,7 +142,7 @@ export default function ClassroomsPage() {
     const isTeacher = userProfile?.role === 'teacher';
 
     return (
-        <div className="min-h-screen bg-[#0a1f18] text-slate-100">
+        <div className="min-h-screen bg-[var(--page-bg)] text-slate-100">
             <style jsx global>{`
                 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
                 .font-pixel { font-family: 'Press Start 2P', cursive; }
@@ -159,14 +159,14 @@ export default function ClassroomsPage() {
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
                 {/* Top Bar */}
-                <div className="bg-[#0d281e]/90 backdrop-blur-md border-b border-white/5 sticky top-0 z-40">
+                <div className="bg-[var(--card-bg-translucent)] backdrop-blur-md border-b border-white/5 sticky top-0 z-40">
                     <div className="px-8 py-4 flex justify-between items-center">
                         <h1 className="text-2xl font-serif-display text-white">My Classrooms</h1>
 
                         {isTeacher ? (
                             <button
                                 onClick={() => setShowCreateModal(true)}
-                                className="flex items-center gap-2 px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_2px_0_#065f46] hover:translate-y-[1px] hover:shadow-[0_1px_0_#065f46]"
+                                className="flex items-center gap-2 px-5 py-2 bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-hover)] text-[var(--btn-primary-text)] font-bold rounded-lg transition-all shadow-[0_2px_0_var(--btn-primary-shadow)] hover:translate-y-[1px] hover:shadow-[0_1px_0_var(--btn-primary-shadow)]"
                             >
                                 <Plus size={18} />
                                 Create Classroom
@@ -174,7 +174,7 @@ export default function ClassroomsPage() {
                         ) : (
                             <button
                                 onClick={() => setShowJoinModal(true)}
-                                className="flex items-center gap-2 px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_2px_0_#065f46] hover:translate-y-[1px] hover:shadow-[0_1px_0_#065f46]"
+                                className="flex items-center gap-2 px-5 py-2 bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-hover)] text-[var(--btn-primary-text)] font-bold rounded-lg transition-all shadow-[0_2px_0_var(--btn-primary-shadow)] hover:translate-y-[1px] hover:shadow-[0_1px_0_var(--btn-primary-shadow)]"
                             >
                                 <UserPlus size={18} />
                                 Join Classroom
@@ -201,14 +201,14 @@ export default function ClassroomsPage() {
                                 {isTeacher ? (
                                     <button
                                         onClick={() => setShowCreateModal(true)}
-                                        className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all"
+                                        className="px-6 py-3 bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-hover)] text-[var(--btn-primary-text)] font-bold rounded-lg transition-all"
                                     >
                                         Create Your First Classroom
                                     </button>
                                 ) : (
                                     <button
                                         onClick={() => setShowJoinModal(true)}
-                                        className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all"
+                                        className="px-6 py-3 bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-hover)] text-[var(--btn-primary-text)] font-bold rounded-lg transition-all"
                                     >
                                         Join a Classroom
                                     </button>
@@ -220,14 +220,14 @@ export default function ClassroomsPage() {
                             {classrooms.map((classroom) => (
                                 <div
                                     key={classroom.id}
-                                    className="bg-[#0d281e] border border-emerald-500/20 rounded-2xl p-6 hover:scale-[1.02] transition-all cursor-pointer"
+                                    className="bg-[var(--card-bg)] border border-[var(--accent-border)] rounded-2xl p-6 hover:scale-[1.02] transition-all cursor-pointer"
                                 >
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="flex-1">
                                             <h3 className="text-xl font-bold text-white mb-1 font-sans-clean">{classroom.name}</h3>
                                             <p className="text-slate-400 text-sm">{classroom.subject} • Grade {classroom.grade_level}</p>
                                         </div>
-                                        <div className={`px-2 py-1 rounded-full text-xs font-bold ${classroom.is_active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                                        <div className={`px-2 py-1 rounded-full text-xs font-bold ${classroom.is_active ? 'bg-[var(--accent-bg)] text-[var(--accent)]' : 'bg-slate-500/20 text-slate-400'}`}>
                                             {classroom.is_active ? <CheckCircle size={14} /> : <XCircle size={14} />}
                                         </div>
                                     </div>
@@ -276,7 +276,7 @@ export default function ClassroomsPage() {
                                     {/* Actions */}
                                     <div className="flex gap-2">
                                         <Link href={`/classrooms/${classroom.id}`} className="flex-1">
-                                            <button className="w-full px-4 py-2 bg-emerald-500/10 text-emerald-400 rounded-lg hover:bg-emerald-500/20 transition-all text-sm font-medium border border-emerald-500/20">
+                                            <button className="w-full px-4 py-2 bg-[var(--accent-bg)] text-[var(--accent)] rounded-lg hover:brightness-125 transition-all text-sm font-medium border border-[var(--accent-border)]">
                                                 {isTeacher ? 'Manage' : 'View Lessons'}
                                             </button>
                                         </Link>
@@ -296,8 +296,7 @@ export default function ClassroomsPage() {
             {/* Create Classroom Modal */}
             {showCreateModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-[#0d281e] border border-emerald-500/20 rounded-2xl p-8 max-w-md w-full mx-4">
-                        <h2 className="text-2xl font-serif-display text-white mb-6">Create New Classroom</h2>
+                    <div className="bg-[var(--card-bg)] border border-[var(--accent-border)] rounded-2xl p-8 max-w-md w-full mx-4">
                         <form onSubmit={handleCreateClassroom}>
                             <div className="space-y-4 mb-6">
                                 <div>
@@ -355,7 +354,7 @@ export default function ClassroomsPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all disabled:opacity-50"
+                                    className="flex-1 px-4 py-2 bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-hover)] text-[var(--btn-primary-text)] font-bold rounded-lg transition-all disabled:opacity-50"
                                     disabled={isSubmitting}
                                 >
                                     {isSubmitting ? 'Creating...' : 'Create'}
@@ -369,7 +368,7 @@ export default function ClassroomsPage() {
             {/* Join Classroom Modal */}
             {showJoinModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="bg-[#0d281e] border border-emerald-500/20 rounded-2xl p-8 max-w-md w-full mx-4">
+                    <div className="bg-[var(--card-bg)] border border-[var(--accent-border)] rounded-2xl p-8 max-w-md w-full mx-4">
                         <h2 className="text-2xl font-serif-display text-white mb-6">Join Classroom</h2>
                         <form onSubmit={handleJoinClassroom}>
                             <div className="space-y-4 mb-6">
@@ -398,7 +397,7 @@ export default function ClassroomsPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all disabled:opacity-50"
+                                    className="flex-1 px-4 py-2 bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-hover)] text-[var(--btn-primary-text)] font-bold rounded-lg transition-all disabled:opacity-50"
                                     disabled={isSubmitting}
                                 >
                                     {isSubmitting ? 'Joining...' : 'Join Classroom'}

@@ -91,7 +91,7 @@ export default function Dashboard() {
     const marqueeItems = lessons.length > 0 ? [...lessons, ...lessons, ...lessons] : [];
 
     return (
-        <div className="min-h-screen bg-[#0a1f18] text-slate-100 font-sans selection:bg-emerald-500/30 overflow-x-hidden">
+        <div className="min-h-screen bg-[var(--page-bg)] text-slate-100 font-sans selection:bg-emerald-500/30 overflow-x-hidden">
             <style jsx global>{`
                 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
                 .font-pixel { font-family: 'Press Start 2P', cursive; }
@@ -108,6 +108,14 @@ export default function Dashboard() {
                 .animate-dashboard-marquee:hover {
                     animation-play-state: paused;
                 }
+
+                @keyframes float-gentle {
+                    0%, 100% { transform: translateY(0px) rotate(0deg); }
+                    50% { transform: translateY(-10px) rotate(1deg); }
+                }
+                .animate-float-gentle {
+                    animation: float-gentle 4s ease-in-out infinite;
+                }
             `}</style>
 
             <ChalkEquations />
@@ -115,10 +123,14 @@ export default function Dashboard() {
 
             <main
                 id="main-content"
-                className="min-h-screen transition-[margin] duration-300 flex flex-col"
+                className="min-h-screen transition-[margin] duration-300 flex flex-col relative"
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
-                <div className="flex-1 flex flex-col px-8 py-12">
+                {/* Ambient background glows — matches landing page */}
+                <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-emerald-500/[0.03] blur-[120px] rounded-full pointer-events-none animate-float-gentle" />
+                <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-sky-500/[0.03] blur-[100px] rounded-full pointer-events-none animate-float-gentle" style={{ animationDelay: '2s' }} />
+
+                <div className="flex-1 flex flex-col px-8 py-12 relative z-10">
                     {/* Header */}
                     <div className="mb-10">
                         <div className="flex items-center gap-3 mb-3 flex-wrap">
@@ -151,7 +163,7 @@ export default function Dashboard() {
                             </div>
                         ) : lessons.length === 0 ? (
                             <div className="flex-1 flex items-center justify-center">
-                                <div className="text-center py-16 bg-[#0d281e] border border-emerald-500/10 rounded-2xl px-12">
+                                <div className="text-center py-16 bg-[var(--card-bg)] border-2 border-[var(--card-border)] rounded-2xl px-12">
                                     <p className="text-slate-400 font-sans-clean mb-2">No lessons yet.</p>
                                     <Link href="/classrooms" className="text-emerald-400 hover:text-emerald-300 transition-colors font-sans-clean text-sm">
                                         Go to your classrooms to get started
@@ -161,9 +173,9 @@ export default function Dashboard() {
                         ) : (
                             <div className="relative overflow-hidden -mx-8 flex-1 flex items-center">
                                 {/* Left fade */}
-                                <div className="absolute left-0 top-0 h-full w-32 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, #0a1f18 30%, transparent)' }} />
+                                <div className="absolute left-0 top-0 h-full w-32 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, var(--page-bg) 30%, transparent)' }} />
                                 {/* Right fade */}
-                                <div className="absolute right-0 top-0 h-full w-32 z-10 pointer-events-none" style={{ background: 'linear-gradient(to left, #0a1f18 30%, transparent)' }} />
+                                <div className="absolute right-0 top-0 h-full w-32 z-10 pointer-events-none" style={{ background: 'linear-gradient(to left, var(--page-bg) 30%, transparent)' }} />
 
                                 <div className="flex gap-6 w-max animate-dashboard-marquee py-4 px-8">
                                     {marqueeItems.map((lesson, idx) => {
@@ -171,8 +183,11 @@ export default function Dashboard() {
                                         return (
                                             <div
                                                 key={`${lesson.id}-${idx}`}
-                                                className="group relative flex-shrink-0 w-[22rem] bg-[#0d281e] border border-white/5 rounded-2xl overflow-hidden hover:border-emerald-500/20 transition-all hover:scale-[1.03]"
+                                                className="group relative flex-shrink-0 w-[22rem] bg-[var(--card-bg)] border-2 border-[var(--card-border)] rounded-2xl overflow-hidden transition-all hover:scale-[1.03] hover:shadow-2xl"
                                             >
+                                                {/* Color accent gradient */}
+                                                <div className="absolute inset-0 bg-emerald-900/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
                                                 {/* Thumbnail */}
                                                 <div className="relative h-[18rem] overflow-hidden">
                                                     <img
@@ -180,12 +195,12 @@ export default function Dashboard() {
                                                         alt={lesson.title}
                                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                     />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-[#0d281e] via-transparent to-transparent" />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--card-bg)] via-transparent to-transparent" />
                                                     <div className="absolute top-3 right-3">
                                                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase font-sans-clean backdrop-blur-sm ${
                                                             lesson.status !== 'draft'
-                                                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                                                : 'bg-slate-500/20 text-slate-300 border border-slate-500/30'
+                                                                ? `bg-[var(--status-active-bg)] text-[var(--status-active-text)] border border-[var(--card-border)]`
+                                                                : `bg-[var(--status-draft-bg)] text-[var(--status-draft-text)] border border-[var(--status-draft-border)]`
                                                         }`}>
                                                             {lesson.status || 'active'}
                                                         </span>
@@ -193,13 +208,13 @@ export default function Dashboard() {
                                                 </div>
 
                                                 {/* Content */}
-                                                <div className="p-5">
+                                                <div className="p-5 relative z-10">
                                                     <h3 className="text-white font-bold text-lg mb-1 font-sans-clean truncate">{lesson.title}</h3>
-                                                    <p className="text-slate-500 text-sm font-sans-clean mb-5 truncate">{lesson.subject || 'Unspecified Subject'}</p>
+                                                    <p className="text-sm font-sans-clean mb-5 truncate text-slate-400">{lesson.subject || 'Unspecified Subject'}</p>
 
                                                     <div className="flex gap-2">
                                                         <Link href={`/lessons/${lesson.id}`} className="flex-1">
-                                                            <button className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-emerald-500/10 text-emerald-400 rounded-xl hover:bg-emerald-500/20 transition-all text-sm font-medium font-sans-clean border border-emerald-500/20">
+                                                            <button className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-[var(--accent-bg)] text-[var(--accent)] rounded-xl hover:brightness-125 transition-all text-sm font-medium font-sans-clean border-2 border-[var(--card-border)]">
                                                                 <Play size={14} />
                                                                 {userRole === 'teacher' ? 'View' : 'Launch'}
                                                             </button>
@@ -214,7 +229,7 @@ export default function Dashboard() {
                                                                     setLessons(prev => prev.filter(l => l.id !== lesson.id));
                                                                 }}
                                                                 aria-label={`Delete lesson: ${lesson.title}`}
-                                                                className="px-3 py-3 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500/20 transition-all text-sm border border-red-500/20"
+                                                                className="px-3 py-3 bg-[var(--btn-danger-bg)] text-[var(--btn-danger-text)] rounded-xl hover:bg-[var(--btn-danger-hover)] transition-all border border-[var(--btn-danger-border)]"
                                                             >
                                                                 <Trash2 size={14} />
                                                             </button>

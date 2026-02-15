@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Jersey_10, Fredericka_the_Great } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { getThemeCSSVariables } from "@/lib/theme";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -45,6 +46,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: getThemeCSSVariables() }} />
+      </head>
       <body
         className={`${geistSans.className} ${jersey10.variable} ${fredericka.variable} antialiased`}
       >

@@ -101,7 +101,7 @@ export default function SettingsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#0a1f18] text-slate-100">
+            <div className="min-h-screen bg-[var(--page-bg)] text-slate-100">
                 <style jsx global>{`
                     @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
                     .font-pixel { font-family: 'Press Start 2P', cursive; }
@@ -123,7 +123,7 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0a1f18] text-slate-100">
+        <div className="min-h-screen bg-[var(--page-bg)] text-slate-100">
             {/* Global Styles */}
             <style jsx global>{`
                 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;800&family=Press+Start+2P&display=swap');
@@ -146,7 +146,7 @@ export default function SettingsPage() {
 
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                         {/* Profile Information */}
-                        <div className="relative bg-[#0d281e] border border-emerald-500/10 rounded-2xl overflow-hidden">
+                        <div className="relative bg-[var(--card-bg)] border border-[var(--accent-border)] rounded-2xl overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-transparent pointer-events-none" />
                             <div className="relative z-10 p-8">
                                 <div className="flex items-center gap-3 mb-6">
@@ -197,7 +197,7 @@ export default function SettingsPage() {
                         </div>
 
                         {/* School Information */}
-                        <div className="relative bg-[#0d281e] border border-blue-500/10 rounded-2xl overflow-hidden">
+                        <div className="relative bg-[var(--card-bg)] border border-blue-500/10 rounded-2xl overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-transparent pointer-events-none" />
                             <div className="relative z-10 p-8">
                                 <div className="flex items-center gap-3 mb-6">
@@ -246,7 +246,7 @@ export default function SettingsPage() {
 
                         {/* Classroom Join Codes — spans full width */}
                         {userProfile?.role === 'teacher' && classrooms.length > 0 && (
-                            <div className="xl:col-span-2 relative bg-[#0d281e] border border-purple-500/10 rounded-2xl overflow-hidden">
+                            <div className="xl:col-span-2 relative bg-[var(--card-bg)] border border-purple-500/10 rounded-2xl overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-transparent pointer-events-none" />
                                 <div className="relative z-10 p-8">
                                     <div className="flex items-center gap-3 mb-6">
@@ -319,7 +319,7 @@ export default function SettingsPage() {
                                 className={`flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm transition-all font-sans-clean ${
                                     saving
                                         ? 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
-                                        : 'bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none'
+                                        : 'bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-hover)] text-[var(--btn-primary-text)] shadow-[0_4px_0_var(--btn-primary-shadow)] hover:translate-y-[2px] hover:shadow-[0_2px_0_var(--btn-primary-shadow)] active:translate-y-[4px] active:shadow-none'
                                 }`}
                             >
                                 <Save size={16} />
