@@ -64,7 +64,6 @@ export default function StudentsPage() {
                 className="min-h-screen transition-[margin] duration-300"
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
-                <DashboardNavbar />
 
                 <div className="px-8 py-12">
                     <div className="flex justify-between items-center mb-8">

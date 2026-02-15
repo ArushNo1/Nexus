@@ -4,12 +4,17 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { LessonUploader } from '@/components/lesson-uploader';
-import CreateNavbar from '@/components/ui/create-navbar';
-import { Loader2 } from 'lucide-react';
+import Sidebar from '@/components/sidebar';
+import { getClassroomsForTeacher } from '@/lib/services/classrooms';
+import { Classroom } from '@/lib/types';
+import { ChevronDown, Loader2, Users } from 'lucide-react';
 
 export default function CreateLessonPage() {
     const router = useRouter();
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+    const [classrooms, setClassrooms] = useState<Classroom[]>([]);
+    const [selectedClassroom, setSelectedClassroom] = useState<string>('');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -34,6 +39,14 @@ export default function CreateLessonPage() {
             }
 
             setIsAuthorized(true);
+
+            try {
+                const data = await getClassroomsForTeacher(supabase, user.id);
+                setClassrooms(data);
+            } catch (err) {
+                console.error('Failed to load classrooms:', err);
+            }
+            setLoading(false);
         };
 
         checkAuth();
@@ -59,81 +72,90 @@ export default function CreateLessonPage() {
                 .font-pixel { font-family: 'Press Start 2P', cursive; }
                 .font-serif-display { font-family: 'DM Serif Display', serif; }
                 .font-sans-clean { font-family: 'Inter', sans-serif; }
-
-                @keyframes float-gentle {
-                    0%, 100% { transform: translateY(0px); }
-                    50% { transform: translateY(-8px); }
-                }
-                .animate-float-gentle { animation: float-gentle 4s ease-in-out infinite; }
-
-                @keyframes pulse-glow {
-                    0%, 100% { box-shadow: 0 0 20px rgba(52,211,153,0.2); }
-                    50% { box-shadow: 0 0 40px rgba(52,211,153,0.4); }
-                }
-
-                @keyframes shimmer {
-                    0%   { background-position: -300% center; }
-                    100% { background-position:  300% center; }
-                }
-                .animate-shimmer {
-                    background: linear-gradient(90deg, #6ee7b7 0%, #fff 40%, #34d399 60%, #6ee7b7 100%);
-                    background-size: 300% auto;
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                    background-clip: text;
-                    animation: shimmer 4s linear infinite;
-                }
-
-                @keyframes chalk-drift {
-                    0% { transform: translateY(0px) rotate(var(--rot, 0deg)); }
-                    50% { transform: translateY(-12px) rotate(calc(var(--rot, 0deg) + 3deg)); }
-                    100% { transform: translateY(0px) rotate(var(--rot, 0deg)); }
-                }
-                .animate-chalk-drift { animation: chalk-drift var(--dur, 6s) ease-in-out infinite; }
             `}</style>
 
-            <CreateNavbar />
+            <Sidebar />
 
-            {/* Ambient background glows */}
-            <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-emerald-500/[0.04] blur-[120px] rounded-full pointer-events-none" />
-            <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-sky-500/[0.04] blur-[100px] rounded-full pointer-events-none" />
+            <div
+                className="min-h-screen transition-[margin] duration-300"
+                style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
+            >
+                <div className="px-8 py-12">
+                    {/* Header */}
+                    <div className="mb-10">
+                        <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-4 font-pixel">Lesson Creator</p>
+                        <h1 className="text-4xl lg:text-5xl font-serif-display text-white leading-tight mb-3">
+                            Build your <span className="text-emerald-400 italic">game</span>
+                        </h1>
+                        <p className="text-slate-400 text-lg font-sans-clean leading-relaxed max-w-2xl">
+                            Upload a lesson plan and watch it transform into an interactive educational experience with video, music, and gameplay.
+                        </p>
+                    </div>
 
-            {/* Floating chalk formulas */}
-            <div className="hidden lg:block fixed inset-0 pointer-events-none select-none font-serif-display text-white z-0 overflow-hidden">
-                <span className="absolute top-[12%] left-[4%] text-2xl opacity-[0.06] animate-chalk-drift" style={{ '--rot': '8deg', '--dur': '9s' } as React.CSSProperties}>f(x) = ax + b</span>
-                <span className="absolute top-[30%] right-[5%] text-3xl opacity-[0.05] animate-chalk-drift" style={{ '--rot': '-5deg', '--dur': '7s', animationDelay: '2s' } as React.CSSProperties}>E = mc</span>
-                <span className="absolute top-[60%] left-[6%] text-xl opacity-[0.05] animate-chalk-drift" style={{ '--rot': '4deg', '--dur': '10s', animationDelay: '1s' } as React.CSSProperties}>F = ma</span>
-                <span className="absolute top-[75%] right-[8%] text-2xl opacity-[0.06] animate-chalk-drift" style={{ '--rot': '-7deg', '--dur': '8s', animationDelay: '3s' } as React.CSSProperties}>a + b = c</span>
-            </div>
-
-            {/* Floating coins */}
-            <img src="/coin.png" alt="" className="fixed bottom-20 right-16 w-10 opacity-15 animate-float-gentle pointer-events-none z-0" style={{ imageRendering: 'pixelated' }} />
-            <img src="/coin.png" alt="" className="fixed top-32 left-12 w-7 opacity-10 animate-float-gentle pointer-events-none z-0" style={{ imageRendering: 'pixelated', animationDelay: '1.5s' }} />
-
-            <div className="relative z-10 pt-28 pb-16 px-6">
-                {/* Header */}
-                <header className="mb-12 text-center max-w-3xl mx-auto">
-                    <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-5 font-pixel">Lesson Creator</p>
-                    <h1 className="text-5xl lg:text-6xl font-serif-display text-white leading-tight mb-5">
-                        Build your <span className="text-emerald-400 italic">game</span>
-                    </h1>
-                    <p className="text-slate-400 text-lg font-sans-clean leading-relaxed max-w-xl mx-auto">
-                        Upload a lesson plan and watch it transform into an interactive educational experience with video, music, and gameplay.
-                    </p>
-                </header>
-
-                <main className="relative z-10 max-w-5xl mx-auto">
-                    <Suspense fallback={
-                        <div className="text-center py-12">
-                            <div className="inline-flex items-center gap-3 px-5 py-3 bg-[#0d281e] border border-emerald-500/20 rounded-xl text-emerald-400 text-sm font-sans-clean">
-                                <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-                                Loading...
+                    {/* Classroom Selector */}
+                    <div className="mb-8">
+                        <label className="text-[10px] uppercase tracking-wider text-slate-500 font-pixel mb-3 block">
+                            Assign to Classroom <span className="text-red-400">*</span>
+                        </label>
+                        {loading ? (
+                            <div className="flex items-center gap-2 text-slate-400 font-sans-clean text-sm">
+                                <Loader2 size={16} className="animate-spin" />
+                                Loading classrooms...
                             </div>
+                        ) : classrooms.length === 0 ? (
+                            <div className="bg-[#0d281e] border border-yellow-500/20 rounded-xl p-5">
+                                <p className="text-yellow-400 text-sm font-sans-clean mb-2">
+                                    You don't have any classrooms yet. Create a classroom first before making lessons.
+                                </p>
+                                <button
+                                    onClick={() => router.push('/classrooms')}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none text-sm font-sans-clean"
+                                >
+                                    <Users size={16} />
+                                    Go to Classrooms
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="relative max-w-md">
+                                <select
+                                    value={selectedClassroom}
+                                    onChange={(e) => setSelectedClassroom(e.target.value)}
+                                    className="w-full appearance-none px-4 py-3.5 bg-[#0d281e] border border-white/10 rounded-xl text-white font-sans-clean text-sm focus:border-emerald-500/40 focus:outline-none transition-colors cursor-pointer pr-10"
+                                >
+                                    <option value="">Select a classroom...</option>
+                                    {classrooms.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.name}{c.subject ? ` — ${c.subject}` : ''} ({c.member_count || 0} students)
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Lesson Uploader — only visible when classroom is selected */}
+                    {selectedClassroom ? (
+                        <Suspense fallback={
+                            <div className="text-center py-12">
+                                <div className="inline-flex items-center gap-3 px-5 py-3 bg-[#0d281e] border border-emerald-500/20 rounded-xl text-emerald-400 text-sm font-sans-clean">
+                                    <div className="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                                    Loading...
+                                </div>
+                            </div>
+                        }>
+                            <LessonUploader classroomId={selectedClassroom} />
+                        </Suspense>
+                    ) : classrooms.length > 0 ? (
+                        <div className="bg-[#0d281e] border border-white/5 rounded-2xl p-12 text-center">
+                            <Users className="mx-auto text-slate-600 mb-4" size={48} />
+                            <h3 className="text-white font-bold text-xl mb-2 font-sans-clean">Select a Classroom</h3>
+                            <p className="text-slate-400 font-sans-clean">
+                                Choose which classroom this lesson will be assigned to before uploading.
+                            </p>
                         </div>
-                    }>
-                        <LessonUploader />
-                    </Suspense>
-                </main>
+                    ) : null}
+                </div>
             </div>
         </div>
     );

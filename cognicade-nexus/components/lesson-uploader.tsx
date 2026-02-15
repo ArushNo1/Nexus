@@ -17,6 +17,11 @@ import {
     ChevronUp,
     Sparkles,
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+
+interface LessonUploaderProps {
+    classroomId: string;
+}
 
 interface GenerationStatus {
     game: 'idle' | 'loading' | 'done' | 'error';
@@ -54,7 +59,7 @@ const StatusBadge = ({ state, label, icon: Icon }: { state: string; label: strin
     );
 };
 
-export function LessonUploader() {
+export function LessonUploader({ classroomId }: LessonUploaderProps) {
     const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
@@ -125,7 +130,49 @@ export function LessonUploader() {
 
             const parsedData = await parseResponse.json();
             setStatus(prev => ({ ...prev, game: 'done' }));
-            setResult({ ...parsedData, generated: {} });
+
+            // Save lesson to Supabase and assign to classroom
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+
+            let lessonId: string | null = null;
+            if (user && parsedData.data?.lessonPlan) {
+                const lp = parsedData.data.lessonPlan;
+                const { data: lessonRow, error: lessonError } = await supabase
+                    .from('lessons')
+                    .insert({
+                        user_id: user.id,
+                        title: lp.title || file.name.replace(/\.[^.]+$/, ''),
+                        subject: lp.subject || null,
+                        grade_level: lp.gradeLevel || null,
+                        objectives: lp.objectives || [],
+                        content: parsedData.data,
+                    })
+                    .select('id')
+                    .single();
+
+                if (lessonError) {
+                    console.error('Failed to save lesson:', lessonError);
+                } else if (lessonRow) {
+                    lessonId = lessonRow.id;
+
+                    // Create lesson assignment for the classroom
+                    const { error: assignError } = await supabase
+                        .from('lesson_assignments')
+                        .insert({
+                            lesson_id: lessonRow.id,
+                            classroom_id: classroomId,
+                            assigned_by: user.id,
+                            is_published: true,
+                        });
+
+                    if (assignError) {
+                        console.error('Failed to assign lesson to classroom:', assignError);
+                    }
+                }
+            }
+
+            setResult({ ...parsedData, generated: {}, lessonId });
 
             const promises: Promise<void>[] = [];
 
@@ -135,7 +182,7 @@ export function LessonUploader() {
                     fetch('/api/generate-video', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ lessonData: parsedData.data }),
+                        body: JSON.stringify({ lessonData: parsedData.data, lessonId }),
                     })
                         .then(async (res) => {
                             if (!res.ok) {

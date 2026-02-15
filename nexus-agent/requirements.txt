@@ -9,3 +9,8 @@ langchain-google-genai
 beautifulsoup4
 requests
 html2text
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
+rich

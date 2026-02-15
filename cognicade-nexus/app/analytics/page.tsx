@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Sidebar from '@/components/sidebar';
-import DashboardNavbar from '@/components/ui/dashboard-navbar';
 import { BarChart3, TrendingUp, Users, Clock, Loader2 } from 'lucide-react';
 
 export default function AnalyticsPage() {
@@ -63,7 +62,6 @@ export default function AnalyticsPage() {
                 className="min-h-screen transition-[margin] duration-300"
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
-                <DashboardNavbar />
 
                 <div className="px-8 py-12">
                     <div className="mb-8">

@@ -673,42 +673,19 @@ export default function NexusLanding() {
             </section>
 
             {/* ================= FOOTER ================= */}
-            <footer className="bg-[#060c08] border-t border-white/5 py-16">
-                <div className="max-w-6xl mx-auto px-6">
-                    <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-12">
-                        {/* Brand */}
-                        <div>
-                            <div className="flex items-center gap-3 mb-4">
-                                <img src="/NEXUSLOGO.png" alt="Nexus" className="w-10 h-10 object-contain" />
-                                <span className="text-xl text-white font-serif-display">Nexus</span>
-                            </div>
-                            <p className="text-slate-600 text-sm max-w-xs leading-relaxed font-sans-clean">
-                                Transforming education through the power of play. For K-12 educators everywhere.
-                            </p>
-                        </div>
-                        {/* Links */}
-                        <div className="flex gap-14 text-sm">
-                            {[
-                                { heading: 'Product', links: ['Features', 'Pricing'] },
-                                { heading: 'Legal', links: ['Privacy', 'TOS', 'Legal'] },
-                                { heading: 'Company', links: ['Contact Us', 'Blog', 'Careers'] },
-                            ].map(col => (
-                                <div key={col.heading}>
-                                    <h4 className="text-slate-400 font-bold uppercase tracking-widest text-[9px] mb-4 font-sans-clean">{col.heading}</h4>
-                                    <ul className="space-y-3">
-                                        {col.links.map(l => (
-                                            <li key={l}>
-                                                <a href="#" className="text-slate-600 hover:text-white transition-colors font-sans-clean">{l}</a>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            ))}
-                        </div>
+            <footer className="border-t border-white/5 py-10">
+                <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        <img src="/NEXUSLOGO.png" alt="Nexus" className="w-8 h-8 object-contain" />
+                        <span className="text-white font-serif-display text-lg">Nexus</span>
                     </div>
-                    <div className="border-t border-white/5 pt-8 text-center text-slate-700 text-xs font-sans-clean">
-                        2026 Nexus. All rights reserved.
+                    <div className="flex gap-8 text-sm text-slate-500 font-sans-clean">
+                        <Link href="/landing" className="hover:text-slate-300 transition-colors">Home</Link>
+                        <Link href="/features" className="hover:text-slate-300 transition-colors">Features</Link>
+                        <Link href="/pricing" className="hover:text-slate-300 transition-colors">Pricing</Link>
+                        <Link href="/auth/login" className="hover:text-slate-300 transition-colors">Sign In</Link>
                     </div>
+                    <p className="text-xs text-slate-600 font-sans-clean">© 2025 Nexus. All rights reserved.</p>
                 </div>
             </footer>
         </div>

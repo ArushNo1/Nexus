@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Sidebar from '@/components/sidebar';
-import DashboardNavbar from '@/components/ui/dashboard-navbar';
-import { BookOpen, Play, Edit, Users, Star } from 'lucide-react';
+import { BookOpen, Play, Trash2, Users, Star } from 'lucide-react';
+import { createClient as createSupabaseClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
 export default function LessonsPage() {
@@ -81,7 +81,6 @@ export default function LessonsPage() {
                 className="min-h-screen transition-[margin] duration-300"
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
-                <DashboardNavbar />
 
                 <div className="px-8 py-12">
                     <div className="flex justify-between items-center mb-8">
@@ -95,13 +94,6 @@ export default function LessonsPage() {
                                     : 'View lessons assigned to you by your teachers'}
                             </p>
                         </div>
-                        {userRole === 'teacher' && (
-                            <Link href="/create">
-                                <button className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none font-sans-clean">
-                                    Create New Lesson
-                                </button>
-                            </Link>
-                        )}
                     </div>
 
                     {loading ? (
@@ -114,13 +106,13 @@ export default function LessonsPage() {
                             </h3>
                             <p className="text-slate-400 mb-4 font-sans-clean">
                                 {userRole === 'teacher'
-                                    ? 'Create your first lesson to get started'
-                                    : 'Your teacher hasnt assigned any lessons yet'}
+                                    ? 'Create lessons from within your classrooms'
+                                    : 'Your teacher hasn\'t assigned any lessons yet'}
                             </p>
                             {userRole === 'teacher' && (
-                                <Link href="/create">
+                                <Link href="/classrooms">
                                     <button className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none font-sans-clean">
-                                        Create Lesson
+                                        Go to Classrooms
                                     </button>
                                 </Link>
                             )}
@@ -162,11 +154,18 @@ export default function LessonsPage() {
                                                     </button>
                                                 </Link>
                                                 {userRole === 'teacher' && (
-                                                    <Link href={`/create?id=${lesson.id}`}>
-                                                        <button className="px-4 py-2 bg-slate-500/10 text-slate-400 rounded-lg hover:bg-slate-500/20 transition-all text-sm font-medium border border-slate-500/20">
-                                                            <Edit size={16} />
-                                                        </button>
-                                                    </Link>
+                                                    <button
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            if (!confirm('Are you sure you want to delete this lesson? This cannot be undone.')) return;
+                                                            const supabase = createSupabaseClient();
+                                                            await supabase.from('lessons').delete().eq('id', lesson.id);
+                                                            setLessons(prev => prev.filter(l => l.id !== lesson.id));
+                                                        }}
+                                                        className="px-4 py-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-all text-sm font-medium border border-red-500/20"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
                                                 )}
                                             </div>
                                         </div>
