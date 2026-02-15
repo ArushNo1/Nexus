@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Sidebar from '@/components/sidebar';
-import { BarChart3, TrendingUp, Users, Clock } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Clock, Loader2 } from 'lucide-react';
 
 export default function AnalyticsPage() {
     const router = useRouter();

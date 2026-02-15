@@ -4,12 +4,17 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { LessonUploader } from '@/components/lesson-uploader';
-import CreateNavbar from '@/components/ui/create-navbar';
-import { Loader2 } from 'lucide-react';
+import Sidebar from '@/components/sidebar';
+import { getClassroomsForTeacher } from '@/lib/services/classrooms';
+import { Classroom } from '@/lib/types';
+import { ChevronDown, Loader2, Users } from 'lucide-react';
 
 export default function CreateLessonPage() {
     const router = useRouter();
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+    const [classrooms, setClassrooms] = useState<Classroom[]>([]);
+    const [selectedClassroom, setSelectedClassroom] = useState<string>('');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -34,6 +39,14 @@ export default function CreateLessonPage() {
             }
 
             setIsAuthorized(true);
+
+            try {
+                const data = await getClassroomsForTeacher(supabase, user.id);
+                setClassrooms(data);
+            } catch (err) {
+                console.error('Failed to load classrooms:', err);
+            }
+            setLoading(false);
         };
 
         checkAuth();
