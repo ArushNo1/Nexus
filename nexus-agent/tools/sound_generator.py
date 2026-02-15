@@ -19,3 +19,18 @@ def generate_sound(effect_type: str) -> str:
     }
     params = presets.get(effect_type, presets["correct"])
     return f"// Web Audio placeholder for '{effect_type}': {params}"
+
+
+curl -X POST http://localhost:8000/api/generate \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-secret-key" \
+  -d '{
+    "lesson_plan": {
+      "title": "Math Addition Game",
+      "objective": "Practice basic addition skills",
+      "target_grade": "1-2",
+      "content": "Students will solve simple addition problems (1-10)",
+      "mechanics": "Click on the correct answer to score points"
+    },
+    "user_id": "test-user-123"
+  }'
