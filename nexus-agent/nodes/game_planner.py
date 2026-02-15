@@ -15,7 +15,10 @@ from utils.supabase import update_game
 
 log = get_logger("game_planner")
 
-VALID_GAME_TYPES = {"beatemup", "fighter", "maze", "platformer", "shootemup"}
+VALID_GAME_TYPES = {
+    "beatemup", "breakout", "fighter", "match3", "maze",
+    "platformer", "quizrunner", "shootemup", "towerdefense", "typingword",
+}
 TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
 
 

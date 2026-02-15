@@ -1,8 +1,8 @@
 GAME_TYPE: platformer
 
-RATIONALE: The Civil War is best understood as a chronological progression of events and shifting geography, which mirrors the linear movement of a platformer. This genre allows the player to "advance" through the timeline of the war, moving from the causes of the conflict toward its major battles and ultimate resolution.
+RATIONALE: The American Civil War is best taught as a chronological progression of events and shifting tensions. A platformer allows the player to move through "levels" of history, starting with the causes in the early 1800s and progressing toward the war's conclusion, physically representing the passage of time and the obstacles faced by the nation.
 
-ADDON FEATURE: Historical Fact Gates
-At the end of each level section, the player encounters a "Fortress Gate" blocked by two hanging banners. Each banner displays a historical statement regarding the war’s causes or factions (e.g., "The Confederacy supported States' Rights" vs. "The Union supported the expansion of slavery"). The player must jump through the banner containing the correct historical fact to unlock the gate and proceed; choosing the incorrect banner triggers a "skirmish" (spawns an extra enemy) and requires the player to re-read the prompt.
+ADDON FEATURE: The Legislative Dispatch
+Throughout each level, the player must collect "Fact Scrolls" scattered in hard-to-reach places. At the end of the level, the player reaches a "Telegraph Station" (the level exit), which only opens once the player correctly categorizes their collected scrolls into two bins: "Union/North" and "Confederacy/South." This reinforces the lesson's objective of distinguishing between the two sides and their respective economic and political characteristics before they can proceed to the next historical era.
 
-VISUAL THEME: The player controls a Union soldier navigating 19th-century landscapes, including the woods of Virginia and fortified encampments. Collectibles are "Abolitionist Pamphlets," and hazards include period-accurate obstacles like wooden barricades, cannons, and opposing scouts.
+VISUAL THEME: The game is set in the mid-19th century United States, with the background changing from the industrial factories of the North to the agrarian plantations of the South. The player character is a "History Scout" in a Union-style blue cap, and the hazards are "Conflict Clouds" and "Policy Spikes," representing the growing political tensions of the 1860s.

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Historical Messenger: Civil War Causes</title>
+    <title>The Fractal Grid - Geometric Series</title>
     <style>
         * {
             margin: 0;
@@ -13,71 +13,76 @@
         }
 
         body {
-            background: #2b2b2b;
+            background: #05050f;
             overflow: hidden;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: monospace;
         }
 
         canvas {
             display: block;
-            margin: 0 auto;
         }
     </style>
 </head>
 
 <body>
     <!-- 
-    LESSON OBJECTIVE: Identify the primary causes of the American Civil War.
-    
-    GAME MECHANICS:
-    1. Exploration: Player navigates a 19th-century environment.
-    2. Discrimination: Player must distinguish between valid historical causes (Slavery, States' Rights, Economics) 
-       and anachronistic distractors.
-    3. Gatekeeping: Progress is blocked until mastery (3 correct causes) is demonstrated.
-    
-    FIXES APPLIED:
-    - Implemented "Deck System" for scrolls to guarantee at least 3 valid causes per level (Preventing Soft-Lock).
-    - Updated Camera API to use setCamPos() and getCamPos().
+        LESSON OBJECTIVES:
+        1. Geometric Series: Understand the structure of geometric sequences (a, ar, ar^2...).
+        2. Sum Formula: Apply S_n = a(1-r^n)/(1-r) to solve for the sum of finite geometric series.
+        3. Common Ratio: Identify the multiplier 'r' between terms.
     -->
-
     <script src="https://unpkg.com/kaplay@3001/dist/kaplay.js"></script>
     <script>
         // ============================================================
-        //  THE HISTORICAL MESSENGER
-        //  A Kaplay.js educational platformer about Civil War causes.
+        //  THE FRACTAL GRID
+        //  A Cyber-Math Platformer about Geometric Series
         // ============================================================
 
-        // ----- 1. GAME DATA & CONFIG -----
-        
-        const VALID_CAUSES = ["Slavery", "States' Rights", "Economics", "Sectionalism", "Election 1860"];
-        const DISTRACTORS = ["Space Travel", "The Internet", "Robots", "Aliens", "Television", "Smartphones"];
-
+        // ----- 1. GAME CONFIG -----
         const CONFIG = {
-            // Physics
             gravity: 1600,
-            jumpForce: 680,
-            moveSpeed: 320,
+            jumpForce: 600,
+            moveSpeed: 300,
             maxFallSpeed: 900,
-
-            // Player
+            
+            // Level Data & State
             playerStartPos: { x: 50, y: 0 },
             playerHealth: 3,
-
-            // Camera
+            
             cameraFollow: true,
 
-            // Visuals (Sepia / Parchment Theme)
-            bgColor: [225, 205, 170],      // Parchment Tan
-            floorColor: [101, 67, 33],     // Dark Wood/Soil
-            platformColor: [160, 130, 90], // Weathered Wood
-            hazardColor: [139, 69, 19],    // Tumbleweed Brown
-            scrollColor: [255, 250, 240],  // Off-white Paper
-            portalLockedColor: [100, 100, 100], // Gray (Locked)
-            portalOpenColor: [50, 50, 180],     // Blue (Open)
-            textColor: [40, 30, 20],       // Ink Black
+            // Theme Colors (Neon/Cyberpunk)
+            bgColor: [5, 5, 15],           // Deep Space
+            floorColor: [10, 10, 30],      // Dark Grid
+            floorHighlight: [0, 100, 200], // Neon Edge
+            platformColor: [0, 100, 255],  // Electric Blue
+            hazardColor: [255, 0, 80],     // Error Red
+            coinColor: [255, 200, 0],      // Gold Ratio
+            portalColor: [180, 80, 255],   // Dimensional Purple
+            gateColor: [255, 0, 255],      // Locked Magenta
+            playerColor: [0, 255, 255],    // Vector Cyan
         };
 
-        // Levels
+        // Geometric Series Data for Sum Gates
+        const SERIES_DATA = [
+            { 
+                id: 0, 
+                text: "2 + 6 + 18 + 54", 
+                n: 4, 
+                correct: 80, // a=2, r=3, n=4 -> S_4 = 2(1-3^4)/(1-3) = 80
+                wrong: [72, 84] 
+            },
+            { 
+                id: 1, 
+                text: "5 + 10 + 20 + ... (n=5)", 
+                n: 5, 
+                correct: 155, // a=5, r=2, n=5 -> S_5 = 5(1-2^5)/(1-2) = 155
+                wrong: [150, 160] 
+            }
+        ];
+
+        // ----- 2. LEVEL MAPS -----
+        // 'G' marks the Sum Gate location
         const LEVELS = [
             // --- Level 1 ---
             [
@@ -88,9 +93,9 @@
                 "                        ------          ",
                 "            $  $                        ",
                 "           ------           $  $        ",
-                "                           ------    >  ",
-                "    $  $                          ====  ",
-                "   ------                        -      ",
+                "                           ------    G  ",
+                "    $  $                           ====  ",
+                "   ------                              >",
                 "                   $                    ",
                 "  @              =====     ===          ",
                 "========   ^^^  ========  ======  ======",
@@ -98,9 +103,9 @@
             // --- Level 2 ---
             [
                 "                                        ",
-                "                                   >    ",
+                "                                   G    ",
                 "                                  ===   ",
-                "                       $  $             ",
+                "                       $  $            >",
                 "                      ------            ",
                 "           $                   $        ",
                 "          ---              ------       ",
@@ -110,18 +115,18 @@
                 "                                        ",
                 "  @                          ===        ",
                 "=====  ^^^  ====  ^^^  ====  ^^^^^^  ===",
-            ],
+            ]
         ];
 
-        // ----- 2. INITIALIZE KAPLAY -----
+        // ----- 3. INITIALIZE KAPLAY -----
         kaplay({
             background: CONFIG.bgColor,
             width: 800,
             height: 480,
             scale: 1,
-            crisp: true,
-            global: true,
+            global: true, 
             letterbox: true,
+            debug: false,
             buttons: {
                 jump: { keyboard: ["space", "w", "up"], gamepad: ["south"] },
                 left: { keyboard: ["a", "left"], gamepad: ["dpad-left"] },
@@ -131,55 +136,26 @@
 
         const TILE = 32;
 
-        // ----- 3. HELPER FUNCTIONS -----
+        // ----- 4. HELPER: Particle Effects -----
+        function spawnExplosion(p) {
+            for (let i = 0; i < 12; i++) {
+                add([
+                    rect(6, 6),
+                    pos(p),
+                    color(255, 230, 100),
+                    anchor("center"),
+                    move(rand(0, 360), rand(100, 400)),
+                    lifespan(0.6, { fade: 0.6 }),
+                    opacity(1),
+                    z(200)
+                ]);
+            }
+        }
 
-        // Build Level Function
-        function buildLevel(mapData) {
-            const objects = { portals: [] };
+        // ----- 5. HELPER: Build Level -----
+        function buildLevel(mapData, levelIdx) {
             let spawnPos = vec2(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y);
 
-            // --- STEP 1: PRE-CALCULATE SCROLLS (Fix Soft-Lock) ---
-            // Count total slots for scrolls in this map
-            let scrollSlots = 0;
-            for (const row of mapData) {
-                for (const char of row) {
-                    if (char === '$') scrollSlots++;
-                }
-            }
-
-            // Create a "deck" of scroll contents to ensure solvability
-            let scrollDeck = [];
-            const requiredValid = 3; 
-
-            // 1. Add guaranteed valid causes
-            // Shuffle the master list of valid causes to pick random ones
-            const shuffledValids = [...VALID_CAUSES].sort(() => 0.5 - Math.random());
-            
-            for (let i = 0; i < requiredValid; i++) {
-                // Use modulo in case requiredValid > VALID_CAUSES.length (unlikely here)
-                scrollDeck.push({
-                    text: shuffledValids[i % shuffledValids.length],
-                    isValid: true
-                });
-            }
-
-            // 2. Fill the remaining slots with random items (biased towards distractors)
-            const remainingSlots = Math.max(0, scrollSlots - requiredValid);
-            for (let i = 0; i < remainingSlots; i++) {
-                const isDistractor = Math.random() < 0.6; // 60% chance for distractor
-                if (isDistractor) {
-                    scrollDeck.push({ text: choose(DISTRACTORS), isValid: false });
-                } else {
-                    scrollDeck.push({ text: choose(VALID_CAUSES), isValid: true });
-                }
-            }
-
-            // 3. Shuffle the deck so the valid ones aren't always the first ones found
-            scrollDeck.sort(() => 0.5 - Math.random());
-            
-            let scrollIndex = 0;
-
-            // --- STEP 2: BUILD MAP ---
             for (let row = 0; row < mapData.length; row++) {
                 for (let col = 0; col < mapData[row].length; col++) {
                     const ch = mapData[row][col];
@@ -187,28 +163,33 @@
                     const y = row * TILE;
 
                     switch (ch) {
-                        // Ground
+                        // Ground Block
                         case "=":
-                            add([
+                            const ground = add([
                                 rect(TILE, TILE),
                                 pos(x, y),
                                 area(),
                                 body({ isStatic: true }),
                                 color(...CONFIG.floorColor),
-                                outline(2, rgb(30, 20, 10)),
                                 "ground",
+                            ]);
+                            // Add neon top highlight
+                            ground.add([
+                                rect(TILE, 2),
+                                pos(0, 0),
+                                color(...CONFIG.floorHighlight),
                             ]);
                             break;
 
-                        // Platform
+                        // One-way Platform (Energy Bar)
                         case "-":
                             add([
-                                rect(TILE, TILE / 2),
-                                pos(x, y + TILE / 2),
+                                rect(TILE, 8),
+                                pos(x, y),
                                 area(),
                                 body({ isStatic: true }),
                                 color(...CONFIG.platformColor),
-                                outline(2, rgb(50, 40, 30)),
+                                opacity(0.8),
                                 "platform",
                             ]);
                             break;
@@ -218,143 +199,137 @@
                             spawnPos = vec2(x, y);
                             break;
 
-                        // Scrolls (Replaces Coins)
+                        // Ratio Orb (Coin)
                         case "$":
-                            // Pop data from our pre-calculated guaranteed deck
-                            const data = scrollDeck[scrollIndex] || { text: "Error", isValid: false };
-                            scrollIndex++;
-
-                            const scroll = add([
-                                rect(24, 30),
-                                pos(x + TILE/2, y + TILE/2),
-                                anchor("center"),
+                            const coinX = x + TILE / 2;
+                            const coinY = y + TILE / 2;
+                            add([
+                                circle(8),
+                                pos(coinX, coinY),
                                 area(),
-                                color(...CONFIG.scrollColor),
-                                outline(1, rgb(0,0,0)),
-                                "scroll",
-                                {
-                                    causeText: data.text,
-                                    isValid: data.isValid,
-                                    bobOffset: rand(0, 10)
-                                }
+                                anchor("center"),
+                                color(...CONFIG.coinColor),
+                                z(5),
+                                "coin",
                             ]);
-                            
-                            // Floating Label
-                            scroll.add([
-                                text(data.text, { size: 10, width: 100, align: "center" }),
-                                pos(0, -25),
+                            // Label
+                            add([
+                                text("r", { size: 10, font: "monospace" }),
+                                pos(coinX, coinY),
                                 anchor("center"),
                                 color(0, 0, 0),
+                                z(6)
                             ]);
                             break;
 
-                        // Hazards
+                        // Calculation Error (Hazard) - Diamond Spikes
                         case "^":
                             add([
-                                circle(12),
-                                pos(x + TILE/2, y + TILE/2),
+                                rect(16, 16),
+                                pos(x + TILE/2, y + TILE - 8), 
+                                rotate(45), // Sets initial rotation
                                 anchor("center"),
-                                // Square hitbox for consistent collision
-                                area({ shape: new Rect(vec2(-10, -10), 20, 20) }),
+                                area({ scale: 0.7 }), 
                                 color(...CONFIG.hazardColor),
-                                outline(2, rgb(80, 40, 10)),
+                                outline(2, rgb(100, 0, 0)),
                                 "hazard",
-                                { rotSpeed: rand(2, 5) }
                             ]);
                             break;
 
-                        // Portal
+                        // Exit Portal
                         case ">":
-                            const portal = add([
-                                rect(TILE * 1.2, TILE * 2),
+                            add([
+                                rect(TILE, TILE * 2),
                                 pos(x, y - TILE),
                                 area(),
-                                anchor("top"),
-                                color(...CONFIG.portalLockedColor),
-                                outline(4, rgb(50, 50, 50)),
+                                anchor("topleft"),
+                                color(...CONFIG.portalColor),
+                                opacity(0.7),
                                 z(1),
                                 "portal",
-                                { isOpen: false }
+                            ]);
+                            break;
+                        
+                        // Sum Gate (Addon Feature)
+                        case "G":
+                            // Visual Gate Barrier
+                            add([
+                                rect(20, TILE * 3),
+                                pos(x, y - TILE * 2),
+                                area(),
+                                body({ isStatic: true }),
+                                color(...CONFIG.gateColor),
+                                outline(2, rgb(255, 255, 255)),
+                                "gateBarrier"
                             ]);
                             
-                            // Knob
-                            portal.add([
-                                circle(4),
-                                pos(TILE/2, TILE),
-                                color(200, 200, 0)
+                            // Invisible Trigger Zone (Left of gate)
+                            add([
+                                rect(60, TILE * 3),
+                                pos(x - 150, y - TILE * 2),
+                                area(),
+                                opacity(0),
+                                "gateTrigger",
+                                { triggered: false, levelIdx: levelIdx }
                             ]);
-                            
-                            objects.portals.push(portal);
+
+                            // Formula Display
+                            add([
+                                text("SUM GATE\nLOCKED", { size: 12, font: "monospace", align: "center" }),
+                                pos(x + 10, y - TILE * 3),
+                                anchor("bottom"),
+                                color(255, 255, 255),
+                                "gateLabel"
+                            ]);
                             break;
                     }
                 }
             }
 
-            return { spawnPos, objects };
+            return { spawnPos };
         }
 
-        // ----- 4. MAIN GAME SCENE -----
+        // ----- 6. MAIN GAME SCENE -----
         scene("game", (levelIdx = 0) => {
             setGravity(CONFIG.gravity);
 
-            // Level State
+            const { spawnPos } = buildLevel(LEVELS[levelIdx], levelIdx);
+            
             let score = 0;
             let hp = CONFIG.playerHealth;
-            let collectedCauses = [];
-            
-            const { spawnPos, objects } = buildLevel(LEVELS[levelIdx]);
+            let gateSolved = false;
 
-            // --- Player ---
+            // --- Player Object (Vector Arrow Shape) ---
             const player = add([
-                rect(24, 32),
+                polygon([vec2(0, -15), vec2(12, 10), vec2(0, 5), vec2(-12, 10)]),
                 pos(spawnPos),
-                area(),
+                area({ scale: 0.8 }), 
                 body(),
-                anchor("botleft"),
-                color(40, 40, 40),
-                outline(1, rgb(0,0,0)),
+                // CRITICAL FIX: rotate(0) creates the 'angle' property needed for lerp()
+                rotate(0), 
+                anchor("center"),
+                scale(1),
+                color(...CONFIG.playerColor),
+                outline(2, rgb(255, 255, 255)),
                 z(10),
-                { 
-                    speedMultiplier: 1.0,
-                    facing: 1
-                },
                 "player",
             ]);
 
             // --- HUD ---
             const hpLabel = add([
-                text(`Integrity: ${hp}`, { size: 16, font: "monospace" }),
+                text(`HP: ${hp}`, { size: 18, font: "monospace" }),
                 pos(16, 12),
                 fixed(),
                 z(100),
-                color(...CONFIG.textColor),
+                color(255, 255, 255),
             ]);
 
-            const listHeader = add([
-                text("Causes Found:", { size: 16, font: "monospace" }),
-                pos(16, 40),
+            const scoreLabel = add([
+                text(`Ratio Pts: ${score}`, { size: 18, font: "monospace" }),
+                pos(16, 36),
                 fixed(),
                 z(100),
-                color(...CONFIG.textColor),
-            ]);
-
-            const listContent = add([
-                text("- (need 3)", { size: 14, width: 200, font: "monospace" }),
-                pos(16, 60),
-                fixed(),
-                z(100),
-                color(80, 60, 40),
-            ]);
-
-            // Controls Info
-            add([
-                text("(A/D) Move  (SPACE) Jump", { size: 14, font: "monospace" }),
-                pos(center().x, 12),
-                anchor("top"),
-                fixed(),
-                z(100),
-                color(...CONFIG.textColor),
-                opacity(0.7)
+                color(...CONFIG.coinColor),
             ]);
 
             add([
@@ -363,49 +338,37 @@
                 anchor("topright"),
                 fixed(),
                 z(100),
-                color(...CONFIG.textColor),
+                color(200, 200, 255),
+            ]);
+            
+            // Controls Text
+            add([
+                text("ARROWS/WASD to Move", { size: 12, font: "monospace" }),
+                pos(16, height() - 20),
+                anchor("bottomleft"),
+                fixed(),
+                z(100),
+                color(150, 150, 200)
             ]);
 
-            // --- Logic Updates ---
-
-            // Check win condition to open portals
-            onUpdate(() => {
-                if (collectedCauses.length >= 3) {
-                    objects.portals.forEach(p => {
-                        if (!p.isOpen) {
-                            p.isOpen = true;
-                            p.color = rgb(...CONFIG.portalOpenColor);
-                            p.use(opacity(0.8));
-                            p.add([
-                                text("OPEN", { size: 12 }),
-                                pos(TILE * 0.6, -10),
-                                anchor("center"),
-                                color(0, 0, 0)
-                            ]);
-                        }
-                    });
-                }
-            });
-
-            // Rotate Tumbleweeds
-            onUpdate("hazard", (h) => {
-                h.angle += h.rotSpeed;
-            });
-
-            // Bob Scrolls
-            onUpdate("scroll", (s) => {
-                s.pos.y += Math.sin(time() * 4 + s.bobOffset) * 0.5;
-            });
-
-            // --- Input ---
+            // --- Movement ---
             onButtonDown("left", () => {
-                player.move(-CONFIG.moveSpeed * player.speedMultiplier, 0);
-                player.facing = -1;
+                player.move(-CONFIG.moveSpeed, 0);
+                // Rotate player visual to point left slightly
+                // This now works because player has the rotate() component
+                player.angle = lerp(player.angle, -15, 0.2);
             });
 
             onButtonDown("right", () => {
-                player.move(CONFIG.moveSpeed * player.speedMultiplier, 0);
-                player.facing = 1;
+                player.move(CONFIG.moveSpeed, 0);
+                player.angle = lerp(player.angle, 15, 0.2);
+            });
+
+            // Reset angle when idle
+            player.onUpdate(() => {
+                if (!isKeyDown("left") && !isKeyDown("right")) {
+                    player.angle = lerp(player.angle, 0, 0.2);
+                }
             });
 
             onButtonPress("jump", () => {
@@ -414,181 +377,264 @@
                 }
             });
 
-            // Cap fall speed
-            player.onUpdate(() => {
-                if (player.vel.y > CONFIG.maxFallSpeed) player.vel.y = CONFIG.maxFallSpeed;
-            });
-
-            // --- Camera Follow ---
+            // --- Camera ---
             if (CONFIG.cameraFollow) {
                 player.onUpdate(() => {
-                    // Smoothly interpolate camera position towards player
-                    const currentCam = getCamPos(); // Using new getter
+                    const curr = camPos();
+                    // Smooth follow, lock Y slightly
                     const targetX = player.pos.x + 100;
                     const targetY = player.pos.y - 50;
-                    const targetPos = vec2(targetX, targetY);
                     
-                    // Lerp vector for smoothness
-                    const newPos = currentCam.lerp(targetPos, 0.05);
-                    
-                    setCamPos(newPos); // Using new setter
+                    camPos(vec2(
+                        lerp(curr.x, targetX, 0.05),
+                        lerp(curr.y, targetY, 0.05)
+                    ));
                 });
             }
 
-            // --- Interactions ---
-
-            // 1. Collect Scrolls
-            player.onCollide("scroll", (scroll) => {
-                destroy(scroll);
-                
-                if (scroll.isValid) {
-                    // Correct Cause
-                    if (!collectedCauses.includes(scroll.causeText)) {
-                        collectedCauses.push(scroll.causeText);
-                        score += 100;
-                        
-                        // Update HUD
-                        listContent.text = collectedCauses.map(c => `> ${c}`).join("\n");
-                        
-                        // Feedback
-                        add([
-                            text("CORRECT!", { size: 20 }),
-                            pos(player.pos.sub(0, 40)),
-                            color(0, 150, 0),
-                            move(0, -50),
-                            lifespan(1, { fade: 0.5 }), 
-                            opacity(1)
-                        ]);
-                    }
-                } else {
-                    // Distractor / Wrong Cause
-                    hp--;
-                    hpLabel.text = `Integrity: ${hp}`;
-                    shake(5);
-                    
-                    // Slowdown Penalty
-                    player.speedMultiplier = 0.4;
-                    wait(2, () => player.speedMultiplier = 1.0); // Recover speed after 2s
-
-                    // Feedback
-                    add([
-                        text("WRONG! (Slowed)", { size: 20 }),
-                        pos(player.pos.sub(0, 40)),
-                        color(200, 0, 0),
-                        move(0, -50),
-                        lifespan(1, { fade: 0.5 }),
-                        opacity(1)
-                    ]);
-
-                    if (hp <= 0) go("gameover", { score, level: levelIdx, reason: "Misinformation Overload" });
-                }
+            // --- Core Mechanics ---
+            player.onCollide("coin", (coin) => {
+                destroy(coin);
+                score++;
+                scoreLabel.text = `Ratio Pts: ${score}`;
+                spawnExplosion(coin.pos); 
             });
 
-            // 2. Hazards
             player.onCollide("hazard", () => {
+                takeDamage();
+            });
+
+            function takeDamage() {
                 hp--;
-                hpLabel.text = `Integrity: ${hp}`;
-                flash(rgb(...CONFIG.hazardColor), 0.15);
+                hpLabel.text = `HP: ${hp}`;
                 shake(10);
-                player.jump(300);
+                spawnExplosion(player.pos);
                 
                 if (hp <= 0) {
-                    go("gameover", { score, level: levelIdx, reason: "Hit by Tumbleweed" });
+                    go("gameover", { score, level: levelIdx });
+                } else {
+                    player.pos = spawnPos.clone();
+                    player.vel = vec2(0, 0);
+                    // Flash red screen overlay
+                    add([
+                        rect(width(), height()),
+                        color(255, 0, 0),
+                        opacity(0.3),
+                        fixed(),
+                        lifespan(0.1, { fade: 0.1 }),
+                        z(200)
+                    ]);
+                }
+            }
+
+            player.onCollide("portal", () => {
+                // Portal only works if gate is gone
+                if(get("gateBarrier").length > 0) {
+                     return;
+                }
+
+                const nextLevel = levelIdx + 1;
+                if (nextLevel < LEVELS.length) {
+                    go("game", nextLevel);
+                } else {
+                    go("win", { score });
                 }
             });
 
-            // 3. Portal / Exit
-            player.onCollide("portal", (portal) => {
-                if (portal.isOpen) {
-                    const nextLevel = levelIdx + 1;
-                    if (nextLevel < LEVELS.length) {
-                        go("game", nextLevel);
-                    } else {
-                        go("win", { score });
-                    }
-                } else {
-                    shake(2);
+            // --- ADDON: Sum Formula Gate ---
+            player.onCollide("gateTrigger", (trigger) => {
+                if (trigger.triggered || gateSolved) return;
+                
+                trigger.triggered = true;
+                const data = SERIES_DATA[levelIdx];
+                
+                // Display Question
+                add([
+                    text(`SOLVE:\n${data.text}\nFind Sum (Sn)`, { 
+                        size: 20, 
+                        font: "monospace", 
+                        align: "center" 
+                    }),
+                    pos(player.pos.x, player.pos.y - 220),
+                    anchor("center"),
+                    color(255, 255, 0),
+                    lifespan(15, { fade: 1 }),
+                    opacity(1), // Required for lifespan fade
+                    z(150),
+                    "gateText"
+                ]);
+
+                // Prepare Orb Values
+                let values = [data.correct, ...data.wrong];
+                values = values.sort(() => Math.random() - 0.5); // Shuffle
+
+                // Spawn Orbs
+                values.forEach((val, i) => {
+                    const angle = (i / values.length) * Math.PI * 2 - Math.PI/2; 
+                    // Spacing them out in an arc above the gate area
+                    const offsetX = (i - 1) * 100;
+                    const orbPos = vec2(player.pos.x + offsetX, player.pos.y - 150);
+
+                    const orb = add([
+                        circle(28),
+                        pos(orbPos),
+                        color(0, 100, 200),
+                        outline(2, rgb(255, 255, 255)),
+                        area(),
+                        anchor("center"),
+                        z(160),
+                        "sumOrb",
+                        { value: val }
+                    ]);
+                    
+                    // CRITICAL FIX: Add text as CHILD object so it gets destroyed with the orb
+                    orb.add([
+                        text(val, { size: 16, font: "monospace" }),
+                        pos(0, 0), // Relative to parent center
+                        anchor("center"),
+                        color(255, 255, 255),
+                        z(161)
+                    ]);
+
+                    // Float animation
+                    orb.onUpdate(() => {
+                        orb.pos.y += Math.sin(time() * 4 + i) * 0.5;
+                    });
+                });
+            });
+
+            // Orb Interaction
+            player.onCollide("sumOrb", (orb) => {
+                const data = SERIES_DATA[levelIdx];
+                
+                if (orb.value === data.correct) {
+                    // CORRECT: Unlock Gate
+                    // destroyAll("sumOrb") kills all orbs AND their child texts
+                    destroyAll("sumOrb"); 
+                    destroyAll("gateBarrier");
+                    destroyAll("gateText");
+                    destroyAll("gateLabel");
+                    gateSolved = true;
+                    spawnExplosion(orb.pos);
+                    shake(5);
+                    
+                    // Success Text
                     add([
-                        text("Need 3 Valid Causes!", { size: 18 }),
-                        pos(player.pos.sub(0, 60)),
-                        color(0, 0, 0),
-                        move(0, -20),
+                        text("GATE OPEN!", { size: 24, font: "monospace" }),
+                        pos(player.pos.x, player.pos.y - 100),
+                        anchor("center"),
+                        color(0, 255, 0),
+                        lifespan(2, { fade: 1 }),
+                        opacity(1),
+                        z(100)
+                    ]);
+                } else {
+                    // WRONG: Punishment
+                    destroy(orb); // Destroys this specific orb AND its child text
+                    
+                    shake(10);
+                    spawnExplosion(orb.pos);
+                    spawnGlitches(player.pos);
+                    
+                    add([
+                        text("ERROR!", { size: 24, font: "monospace" }),
+                        pos(player.pos.x, player.pos.y - 100),
+                        anchor("center"),
+                        color(255, 0, 0),
                         lifespan(1, { fade: 0.5 }),
-                        opacity(1)
+                        opacity(1),
+                        z(100)
                     ]);
                 }
             });
 
-            // 4. Fall Death
+            function spawnGlitches(centerPos) {
+                // Spawn 3 glitch enemies that fall
+                for(let i=0; i<3; i++) {
+                    add([
+                        rect(20, 20),
+                        pos(centerPos.x + rand(-100, 100), centerPos.y - 200),
+                        area(),
+                        body(),
+                        color(220, 60, 80),
+                        outline(2, rgb(255, 255, 255)),
+                        lifespan(4, { fade: 1 }), 
+                        opacity(1), // Required for lifespan
+                        "hazard", // Reuses hazard collision logic
+                        "glitch"
+                    ]);
+                }
+            }
+
+            // --- Fall off screen ---
             player.onUpdate(() => {
                 if (player.pos.y > LEVELS[levelIdx].length * TILE + 300) {
-                    go("gameover", { score, level: levelIdx, reason: "Lost in Time" });
+                    takeDamage();
                 }
             });
+
+            // --- Parallax Background ---
+            for(let i=0; i<20; i++) {
+                 add([
+                    rect(rand(20, 100), rand(20, 100)),
+                    pos(rand(-500, 3000), rand(-200, 800)),
+                    color(30, 30, 60),
+                    opacity(0.3),
+                    z(-10),
+                    move(LEFT, rand(5, 15)) // Slow drift
+                ]);
+            }
+
         });
 
-        // ----- 5. GAME OVER SCENE -----
-        scene("gameover", ({ score, level, reason }) => {
+        // ----- 7. GAME OVER & WIN SCENES -----
+        scene("gameover", ({ score, level }) => {
             add([
-                text("GAME OVER", { size: 48, font: "monospace" }),
+                text("SYSTEM FAILURE", { size: 48, font: "monospace" }),
                 pos(center()),
                 anchor("center"),
-                color(139, 69, 19),
+                color(255, 0, 80),
             ]);
-
             add([
-                text(reason, { size: 24 }),
-                pos(center().x, center().y + 50),
+                text(`Ratio Points: ${score}`, { size: 24, font: "monospace" }),
+                pos(center().x, center().y + 60),
                 anchor("center"),
-                color(200, 50, 50),
+                color(255, 255, 255),
             ]);
-
             add([
-                text("Press SPACE to try again", { size: 18 }),
-                pos(center().x, center().y + 100),
+                text("Press SPACE to Reboot", { size: 18, font: "monospace" }),
+                pos(center().x, center().y + 120),
                 anchor("center"),
-                color(80, 80, 80),
+                color(100, 100, 200),
             ]);
-
             onKeyPress("space", () => go("game", level));
             onClick(() => go("game", level));
         });
 
-        // ----- 6. WIN SCENE -----
         scene("win", ({ score }) => {
             add([
-                text("HISTORY PRESERVED!", { size: 40, font: "monospace" }),
+                text("SEQUENCE COMPLETE", { size: 48, font: "monospace" }),
                 pos(center()),
                 anchor("center"),
-                color(50, 150, 50),
+                color(0, 255, 255),
             ]);
-
             add([
-                text(`Score: ${score}`, { size: 24 }),
+                text(`Total Ratio Points: ${score}`, { size: 24, font: "monospace" }),
                 pos(center().x, center().y + 60),
                 anchor("center"),
-                color(0, 0, 0),
+                color(255, 200, 0),
             ]);
-
             add([
-                text("You identified the true causes of the Civil War.", { size: 16 }),
-                pos(center().x, center().y + 90),
+                text("Press SPACE to Re-Initialize", { size: 18, font: "monospace" }),
+                pos(center().x, center().y + 120),
                 anchor("center"),
-                color(80, 80, 80),
+                color(100, 100, 200),
             ]);
-
-            add([
-                text("Press SPACE to play again", { size: 18 }),
-                pos(center().x, center().y + 130),
-                anchor("center"),
-                color(100, 100, 100),
-            ]);
-
             onKeyPress("space", () => go("game", 0));
             onClick(() => go("game", 0));
         });
 
-        // Start
+        // ----- 8. START GAME -----
         go("game", 0);
 
     </script>

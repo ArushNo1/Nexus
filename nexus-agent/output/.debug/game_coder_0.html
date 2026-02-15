@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Civil War Chronicles: The Union Advance</title>
+    <title>Civil War: The Legislative Dispatch</title>
     <style>
         * {
             margin: 0;
@@ -13,8 +13,9 @@
         }
 
         body {
-            background: #2d374b;
+            background: #1a1a2e;
             overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
         }
 
         canvas {
@@ -24,27 +25,15 @@
 </head>
 
 <body>
-    <!-- KAPLAY.JS CDN -->
-    <script src="https://unpkg.com/kaplay@3001.0.19/dist/kaplay.js"></script>
-    
+    <script src="https://unpkg.com/kaplay@3001/dist/kaplay.js"></script>
     <script>
-        /**
-         * CIVIL WAR CHRONICLES: THE UNION ADVANCE
-         * 
-         * Educational Objectives:
-         * 1. Identify key causes of the American Civil War (States' Rights vs. Slavery).
-         * 2. Recognize major factions and leaders (Union/Lincoln vs. Confederacy/Davis).
-         * 3. Understand the chronological progression of the war through level advancement.
-         * 
-         * Mechanics:
-         * - Platformer gameplay representing the Union Army's advance.
-         * - "Historical Fact Gates": Players must choose the correct historical statement to clear obstacles.
-         * - "Skirmishes": Incorrect answers spawn enemies, reinforcing learning through penalty.
-         */
+        // ============================================================
+        //  CIVIL WAR: THE LEGISLATIVE DISPATCH
+        //  A historical platformer about the causes of the US Civil War.
+        //  Mechanics: Platforming + Fact Sorting Minigame
+        // ============================================================
 
-        // ============================================================
-        //  1. GAME CONFIG
-        // ============================================================
+        // ----- 1. GAME CONFIG -----
         const CONFIG = {
             // Physics
             gravity: 1600,
@@ -52,92 +41,100 @@
             moveSpeed: 300,
             maxFallSpeed: 800,
 
-            // Player
+            // Player Stats
             playerStartPos: { x: 50, y: 0 },
             playerHealth: 3,
 
-            // Camera
-            cameraFollow: true,
+            // Visuals - Civil War Theme
+            colors: {
+                unionBlue: [0, 50, 150],
+                confedGray: [130, 130, 140],
+                skinTan: [210, 180, 140],
+                
+                // Level 1: North (Industrial)
+                northSky: [100, 105, 110], // Smoggy/Overcast
+                northGround: [130, 50, 50], // Brick
+                
+                // Level 2: South (Agrarian)
+                southSky: [200, 150, 100], // Dusty/Sunset
+                southGround: [100, 70, 40], // Soil
 
-            // Visuals (Civil War Palette)
-            bgColor: [45, 55, 75],       // Somber Dusk Blue
-            floorColor: [101, 67, 33],   // Earthy Brown (Mud/Dirt)
-            platformColor: [139, 69, 19],// Weathered Wood (Barricades)
-            hazardColor: [80, 80, 80],   // Iron/Steel (Spikes/Cannons)
-            coinColor: [245, 245, 220],  // Parchment (Pamphlets)
-            portalColor: [0, 50, 100],   // Union Blue base for flag
-            textColor: [255, 255, 255],
+                wood: [180, 140, 100],
+                scrollWhite: [245, 245, 235],
+                scrollRibbon: [218, 165, 32],
+                hazardIron: [60, 60, 60],
+                portalMetal: [80, 80, 90],
+                portalLight: [255, 255, 100],
+            }
         };
 
-        // ============================================================
-        //  2. HISTORICAL DATA (Addon Feature)
-        // ============================================================
-        const FACTS = [
+        // ----- 2. HISTORICAL DATA -----
+        const FACT_DATA = [
+            // Level 0: The North
             {
-                q: "Primary cause of the war?",
-                options: ["Expansion of Trade", "Slavery"],
-                correct: 1 // Index of correct option
+                region: "The North",
+                sky: CONFIG.colors.northSky,
+                ground: CONFIG.colors.northGround,
+                facts: [
+                    { id: 1, text: "Economy based on manufacturing", side: "Union" },
+                    { id: 2, text: "High population density", side: "Union" },
+                    { id: 3, text: "extensive railroad networks", side: "Union" },
+                    { id: 4, text: "Favored protective tariffs", side: "Union" } // Backup fact
+                ]
             },
+            // Level 1: The South
             {
-                q: "President of the Union?",
-                options: ["Abraham Lincoln", "Jefferson Davis"],
-                correct: 0
-            },
-            {
-                q: "The Emancipation Proclamation...",
-                options: ["Ended the war", "Freed slaves in rebel states"],
-                correct: 1
+                region: "The South",
+                sky: CONFIG.colors.southSky,
+                ground: CONFIG.colors.southGround,
+                facts: [
+                    { id: 5, text: "Economy based on agriculture", side: "Confederacy" },
+                    { id: 6, text: "Reliant on plantation labor", side: "Confederacy" },
+                    { id: 7, text: "Exported cotton to Europe", side: "Confederacy" },
+                    { id: 8, text: "Opposed high tariffs", side: "Confederacy" } // Backup fact
+                ]
             }
         ];
 
-        // ============================================================
-        //  3. LEVEL MAPS
-        //  New Symbols:
-        //  | : Gate (Blocks path)
-        //  [ : Left Banner (Option 0)
-        //  ] : Right Banner (Option 1)
-        // ============================================================
+        // ----- 3. LEVEL MAPS -----
+        // Adjusted to have exactly 3 scrolls ($) per level for the minigame
         const LEVELS = [
-            // --- Level 1: The Outbreak ---
+            // --- Level 1: Northern Factories ---
             [
-                "                                          ",
-                "                                          ",
-                "                                          ",
-                "                       $                  ",
-                "      [              -----           ]    ",
-                "    -----                          -----  ",
-                "                                          ",
-                "            |              |              ",
-                "    $       |      $       |         >    ",
-                "   ---      |     ---      |        ===   ",
-                "            |              |              ",
-                "  @         |              |              ",
-                "=====  ^^^  =  ^^^    ^^^  =  ^^^  =======",
+                "                                        ",
+                "                                        ",
+                "                                        ",
+                "                         $              ",
+                "                        ------          ",
+                "                                        ",
+                "           ------           $           ",
+                "                           ------    >  ",
+                "       $                           ==== ",
+                "   ------                               ",
+                "                                        ",
+                "  @              =====     ===          ",
+                "========   ^^^  ========  ======  ======",
             ],
-            // --- Level 2: The Turning Point ---
+            // --- Level 2: Southern Plantations ---
             [
-                "                                          ",
-                "                                          ",
-                "     [           ]                        ",
-                "   -----       -----                      ",
-                "                                          ",
-                "          |                               ",
-                "          |                               ",
-                "          |              [           ]    ",
-                "          |            -----       -----  ",
-                "     $    |                               ",
-                "   -----  |                   |           ",
-                "          |                   |      >    ",
-                "  @       |    ^^^       $    |     ===   ",
-                "=====  ^^^^^^  ====  ^^^^^^^  =  ^^^^^^^^^",
+                "                                        ",
+                "                                   >    ",
+                "                                  ===   ",
+                "                          $             ",
+                "                      ------            ",
+                "           $                            ",
+                "          ---              ------       ",
+                "                                        ",
+                "              $                         ",
+                "   ---    ------  -----                 ",
+                "                                        ",
+                "  @                          ===        ",
+                "=====  ^^^  ====  ^^^  ====  ^^^^^^  ===",
             ],
         ];
 
-        // ============================================================
-        //  4. INITIALIZE KAPLAY
-        // ============================================================
+        // ----- 4. INITIALIZE KAPLAY -----
         kaplay({
-            background: CONFIG.bgColor,
             width: 800,
             height: 480,
             scale: 1,
@@ -149,22 +146,28 @@
                 left: { keyboard: ["a", "left"], gamepad: ["dpad-left"] },
                 right: { keyboard: ["d", "right"], gamepad: ["dpad-right"] },
             },
+            // Default background, will be overridden per level
+            background: CONFIG.colors.northSky, 
         });
 
         const TILE = 32;
 
-        // ============================================================
-        //  5. HELPER: Build Level
-        // ============================================================
+        // ----- 5. HELPER: Build Level -----
         function buildLevel(mapData, levelIdx) {
-            const objects = { coins: [], hazards: [], portals: [], gates: [], banners: [] };
+            const levelConfig = FACT_DATA[levelIdx];
+            const objects = { scrolls: [], hazards: [], platforms: [], portals: [] };
             let spawnPos = vec2(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y);
-            
-            // Track which Fact Gate we are currently building
-            // We assume a strictly ordered layout: [ ... ] ... | 
-            // Every time we place a Gate |, we increment the index for the next set.
-            let currentGateIdx = levelIdx * 2; // Offset facts by level to keep them unique per level (approx)
-            if (currentGateIdx >= FACTS.length) currentGateIdx = 0; // fallback
+            let scrollCount = 0;
+
+            // Background for this level
+            add([
+                rect(width() * 2, height() * 2), // Oversized to cover camera movement
+                pos(-width()/2, -height()/2),
+                color(...levelConfig.sky),
+                fixed(),
+                z(-1000),
+                "bg"
+            ]);
 
             for (let row = 0; row < mapData.length; row++) {
                 for (let col = 0; col < mapData[row].length; col++) {
@@ -173,28 +176,28 @@
                     const y = row * TILE;
 
                     switch (ch) {
-                        // Ground Block (Dirt)
+                        // Ground
                         case "=":
                             add([
                                 rect(TILE, TILE),
                                 pos(x, y),
                                 area(),
                                 body({ isStatic: true }),
-                                color(...CONFIG.floorColor),
-                                outline(2, rgb(60, 40, 20)),
+                                color(...levelConfig.ground),
+                                outline(2, rgb(0, 0, 0)),
                                 "ground",
                             ]);
                             break;
 
-                        // Platform (Wood)
+                        // Platforms (Wooden)
                         case "-":
                             add([
                                 rect(TILE, TILE / 2),
                                 pos(x, y + TILE / 2),
                                 area(),
                                 body({ isStatic: true }),
-                                color(...CONFIG.platformColor),
-                                outline(2, rgb(80, 40, 10)),
+                                color(...CONFIG.colors.wood),
+                                outline(2, rgb(40, 30, 10)),
                                 "platform",
                             ]);
                             break;
@@ -204,233 +207,147 @@
                             spawnPos = vec2(x, y);
                             break;
 
-                        // Collectible (Abolitionist Pamphlet)
+                        // Fact Scroll (Collectible)
                         case "$":
-                            // Paper sheet visual
-                            const coin = add([
-                                rect(18, 24),
+                            // Assign a specific fact from the level's pool
+                            const factIndex = scrollCount % levelConfig.facts.length;
+                            const fact = levelConfig.facts[factIndex];
+                            
+                            const scroll = add([
+                                rect(20, 14),
                                 pos(x + TILE / 2, y + TILE / 2),
                                 area(),
                                 anchor("center"),
-                                color(...CONFIG.coinColor),
-                                outline(1, rgb(100, 100, 100)),
-                                "coin",
+                                color(...CONFIG.colors.scrollWhite),
+                                outline(1, rgb(0,0,0)),
+                                z(5),
+                                "scroll",
+                                { fact: fact } // Attach data to object
                             ]);
-                            // Text lines on paper
-                            coin.add([
-                                rect(12, 2), pos(0, -6), anchor("center"), color(0,0,0,0.3)
+                            
+                            // Ribbon detail
+                            scroll.add([
+                                rect(4, 14),
+                                pos(0, 0),
+                                anchor("center"),
+                                color(...CONFIG.colors.scrollRibbon)
                             ]);
-                            coin.add([
-                                rect(12, 2), pos(0, 0), anchor("center"), color(0,0,0,0.3)
-                            ]);
-                            coin.add([
-                                rect(8, 2), pos(-2, 6), anchor("center"), color(0,0,0,0.3)
-                            ]);
-                            objects.coins.push(coin);
+
+                            objects.scrolls.push(scroll);
+                            scrollCount++;
                             break;
 
-                        // Hazard (Iron Spikes)
+                        // Policy Spike (Hazard)
                         case "^":
                             add([
                                 polygon([vec2(0, TILE), vec2(TILE / 2, 4), vec2(TILE, TILE)]),
                                 pos(x, y),
-                                area({ shape: new Rect(vec2(4, 12), TILE - 8, TILE - 12) }),
-                                color(...CONFIG.hazardColor),
+                                area({ shape: new Rect(vec2(4, 8), TILE - 8, TILE - 8) }),
+                                color(...CONFIG.colors.hazardIron),
                                 "hazard",
                             ]);
                             break;
 
-                        // Exit Portal (Union Flagpole)
+                        // Telegraph Station (Portal)
                         case ">":
-                            // Pole
-                            const pole = add([
-                                rect(4, TILE * 3),
-                                pos(x + 14, y - TILE * 2),
+                            // Tower body
+                            const portal = add([
+                                rect(TILE, TILE * 1.5),
+                                pos(x, y - TILE * 0.5),
                                 area(),
-                                color(200, 200, 200),
+                                anchor("top"),
+                                color(...CONFIG.colors.portalMetal),
+                                z(1),
                                 "portal",
-                                z(5)
                             ]);
-                            // Flag
-                            pole.add([
-                                rect(40, 24),
-                                pos(2, 2),
-                                color(0, 35, 102), // Union Blue
+                            
+                            // Blinking light
+                            const light = portal.add([
+                                circle(6),
+                                pos(TILE/2, 6),
+                                color(...CONFIG.colors.portalLight),
+                                opacity(0.8),
+                                "portalLight"
                             ]);
-                            pole.add([
-                                rect(40, 4),
-                                pos(2, 6),
-                                color(200, 0, 0), // Red stripe
-                            ]);
-                             pole.add([
-                                rect(40, 4),
-                                pos(2, 16),
-                                color(200, 0, 0), // Red stripe
-                            ]);
-                            break;
+                            
+                            // Simple blink animation
+                            loop(0.5, () => {
+                                light.opacity = light.opacity === 0.8 ? 0.2 : 0.8;
+                            });
 
-                        // --- ADDON: HISTORICAL FACT GATES ---
-
-                        // Gate (Barrier)
-                        case "|":
-                            add([
-                                rect(16, TILE * 4), // Tall gate
-                                pos(x + 8, y - TILE * 3),
-                                area(),
-                                body({ isStatic: true }),
-                                color(30, 30, 30),
-                                outline(2, rgb(100, 100, 100)),
-                                "gate",
-                                { gateId: currentGateIdx } // Link to fact
-                            ]);
-                            // After placing a gate, we assume the next set of banners belongs to the next fact
-                            currentGateIdx++;
-                            if (currentGateIdx >= FACTS.length) currentGateIdx = 0;
-                            break;
-
-                        // Left Banner (Option 0)
-                        case "[":
-                            const factIdxL = currentGateIdx;
-                            const bannerL = add([
-                                rect(140, 90),
-                                pos(x, y - 40),
-                                area(), 
-                                anchor("center"),
-                                color(220, 220, 200),
-                                outline(4, rgb(139, 69, 19)),
-                                "banner",
-                                { factId: factIdxL, optionId: 0 }
-                            ]);
-                            // Banner Text
-                            bannerL.add([
-                                text(FACTS[factIdxL].options[0], { size: 14, width: 130, align: "center" }),
-                                anchor("center"),
-                                color(0, 0, 0)
-                            ]);
-                            // Question Text (Floating above)
-                            add([
-                                text(FACTS[factIdxL].q, { size: 14, width: 250, align: "center" }),
-                                pos(x + TILE, y - 100), // Centered roughly between banners
-                                anchor("center"),
-                                color(255, 255, 255)
-                            ]);
-                            break;
-
-                        // Right Banner (Option 1)
-                        case "]":
-                            const factIdxR = currentGateIdx;
-                            const bannerR = add([
-                                rect(140, 90),
-                                pos(x, y - 40),
-                                area(),
-                                anchor("center"),
-                                color(220, 220, 200),
-                                outline(4, rgb(139, 69, 19)),
-                                "banner",
-                                { factId: factIdxR, optionId: 1 }
-                            ]);
-                             // Banner Text
-                             bannerR.add([
-                                text(FACTS[factIdxR].options[1], { size: 14, width: 130, align: "center" }),
-                                anchor("center"),
-                                color(0, 0, 0)
-                            ]);
+                            objects.portals.push(portal);
                             break;
                     }
                 }
             }
-
-            return { spawnPos };
+            return { spawnPos, totalScrolls: scrollCount };
         }
 
-        // ============================================================
-        //  6. MAIN GAME SCENE
-        // ============================================================
+        // ----- 6. MAIN GAME SCENE -----
         scene("game", (levelIdx = 0) => {
             setGravity(CONFIG.gravity);
 
-            // Track solved facts to prevent re-triggering
-            const solvedFacts = new Set();
-
-            // Build Level
-            const { spawnPos } = buildLevel(LEVELS[levelIdx], levelIdx);
-
-            // UI State
-            let score = 0;
+            const { spawnPos, totalScrolls } = buildLevel(LEVELS[levelIdx], levelIdx);
+            
+            // Game State
             let hp = CONFIG.playerHealth;
+            let collectedFacts = []; // Array of fact objects
 
-            // --- Player Object (Union Soldier) ---
+            // --- Player Object (History Scout) ---
             const player = add([
-                rect(24, 40), // Soldier shape
+                rect(24, 32),
                 pos(spawnPos),
                 area(),
                 body(),
                 anchor("botleft"),
-                color(0, 35, 102), // Union Blue Coat
-                outline(1, rgb(0, 0, 0)),
+                color(...CONFIG.colors.unionBlue),
+                outline(1, rgb(0,0,0)),
                 z(10),
-                { facing: 1 },
                 "player",
             ]);
 
-            // Player details (Belt buckle)
+            // Face detail
             player.add([
-                rect(24, 4),
-                pos(0, -18),
-                color(0, 0, 0), // Belt
-                anchor("botleft")
-            ]);
-            player.add([
-                rect(6, 6),
-                pos(9, -19),
-                color(218, 165, 32), // Gold Buckle
-                anchor("botleft")
+                rect(14, 12),
+                pos(12, 8),
+                anchor("center"),
+                color(...CONFIG.colors.skinTan)
             ]);
 
             // --- HUD ---
-            const uiBox = add([
-                rect(width(), 40),
+            const hpLabel = add([
+                text(`Unity: ${hp}`, { size: 18, font: "monospace" }),
+                pos(16, 12),
                 fixed(),
-                pos(0,0),
-                color(0, 0, 0),
-                opacity(0.5),
-                z(99)
+                z(100),
+                color(100, 200, 255),
             ]);
 
-            const hpLabel = add([
-                text(`MORALE: ${hp}`, { size: 18 }),
-                pos(16, 12),
+            const factsLabel = add([
+                text(`Facts: 0/${totalScrolls}`, { size: 18, font: "monospace" }),
+                pos(16, 36),
+                fixed(),
+                z(100),
+                color(255, 215, 0),
+            ]);
+
+            add([
+                text(FACT_DATA[levelIdx].region, { size: 18, font: "monospace" }),
+                pos(width() - 16, 12),
+                anchor("topright"),
                 fixed(),
                 z(100),
                 color(255, 255, 255),
             ]);
 
-            const scoreLabel = add([
-                text(`PAMPHLETS: ${score}`, { size: 18 }),
-                pos(16, 40),
-                fixed(),
-                z(100),
-                color(...CONFIG.coinColor),
-            ]);
-
-            const levelLabel = add([
-                text(`Section ${levelIdx + 1}`, { size: 18 }),
-                pos(width() - 16, 12),
-                anchor("topright"),
-                fixed(),
-                z(100),
-                color(200, 200, 255),
-            ]);
-
             // --- Movement ---
             onButtonDown("left", () => {
                 player.move(-CONFIG.moveSpeed, 0);
-                player.facing = -1;
+                player.flipX = true; // Primitive rects don't flip, but we can animate face if needed
             });
 
             onButtonDown("right", () => {
                 player.move(CONFIG.moveSpeed, 0);
-                player.facing = 1;
             });
 
             onButtonPress("jump", () => {
@@ -440,157 +357,83 @@
             });
 
             player.onUpdate(() => {
-                if (player.vel.y > CONFIG.maxFallSpeed) {
+                if (player.vel && player.vel.y > CONFIG.maxFallSpeed) {
                     player.vel.y = CONFIG.maxFallSpeed;
                 }
             });
 
-            // --- Camera ---
-            if (CONFIG.cameraFollow) {
-                player.onUpdate(() => {
-                    camPos(
-                        lerp(camPos().x, player.pos.x + 100, 0.05),
-                        lerp(camPos().y, player.pos.y - 50, 0.05),
-                    );
-                });
-            }
+            // Camera
+            player.onUpdate(() => {
+                camPos(
+                    lerp(camPos().x, player.pos.x + 100, 0.05),
+                    lerp(camPos().y, player.pos.y - 50, 0.05),
+                );
+            });
 
-            // --- Collection ---
-            player.onCollide("coin", (coin) => {
-                destroy(coin);
-                score++;
-                scoreLabel.text = `PAMPHLETS: ${score}`;
-                // Particle puff
-                for (let i = 0; i < 4; i++) {
-                    add([
-                        rect(4, 4),
-                        pos(coin.pos),
-                        color(255, 255, 200),
-                        move(rand(0, 360), rand(50, 150)),
-                        opacity(1),
-                        lifespan(0.3, { fade: 0.3 }),
-                    ]);
-                }
+            // --- Scroll Collection ---
+            player.onCollide("scroll", (scroll) => {
+                collectedFacts.push(scroll.fact);
+                destroy(scroll);
+                
+                // Feedback
+                factsLabel.text = `Facts: ${collectedFacts.length}/${totalScrolls}`;
+                
+                // Show floating text of what was found
+                add([
+                    text("Fact Found!", { size: 14 }),
+                    pos(player.pos.x, player.pos.y - 40),
+                    anchor("center"),
+                    color(255, 255, 255),
+                    move(vec2(0, -50), 30),
+                    lifespan(1, { fade: 0.5 }), // Fades out
+                    opacity(1),
+                    z(20)
+                ]);
             });
 
             // --- Hazards ---
             player.onCollide("hazard", () => {
-                takeDamage();
-            });
-
-            player.onCollide("enemy", (e) => {
-                destroy(e);
-                takeDamage();
-            });
-
-            function takeDamage() {
                 hp--;
-                hpLabel.text = `MORALE: ${hp}`;
-                flash(rgb(255, 0, 0), 0.15);
-                shake(10);
-                // Knockback
-                player.jump(300);
-                player.move(player.facing * -500, 0);
-
+                hpLabel.text = `Unity: ${hp}`;
+                shake(6);
                 if (hp <= 0) {
-                    go("gameover", { score, level: levelIdx });
-                }
-            }
-
-            // --- ADDON: HISTORICAL FACT GATES LOGIC ---
-            player.onCollide("banner", (banner) => {
-                // If this gate is already solved, ignore
-                if (solvedFacts.has(banner.factId)) return;
-
-                const fact = FACTS[banner.factId];
-                
-                // Check answer
-                if (banner.optionId === fact.correct) {
-                    // CORRECT
-                    solvedFacts.add(banner.factId);
-                    
-                    // Destroy the associated Gate(s)
-                    const gates = get("gate");
-                    gates.forEach(g => {
-                        if (g.gateId === banner.factId) {
-                            destroy(g);
-                            // Visual effect for gate destruction
-                            for(let i=0; i<10; i++) {
-                                add([
-                                    rect(8, 8),
-                                    pos(g.pos.add(rand(0, 16), rand(0, 100))),
-                                    color(100, 100, 100),
-                                    move(rand(0, 360), 100),
-                                    opacity(1),
-                                    lifespan(0.5, { fade: 0.5 })
-                                ]);
-                            }
-                        }
-                    });
-
-                    // Bonus Score
-                    score += 5;
-                    scoreLabel.text = `PAMPHLETS: ${score}`;
-                    
-                    // Feedback
-                    add([
-                        text("CORRECT!", { size: 24 }),
-                        pos(player.pos.x, player.pos.y - 60),
-                        anchor("center"),
-                        color(0, 255, 0),
-                        move(270, 50),
-                        opacity(1),
-                        lifespan(1, { fade: 0.5 })
-                    ]);
-
+                    go("gameover", { level: levelIdx });
                 } else {
-                    // INCORRECT
-                    shake(5);
-                    add([
-                        text("INCORRECT!", { size: 24 }),
-                        pos(player.pos.x, player.pos.y - 60),
-                        anchor("center"),
-                        color(255, 0, 0),
-                        move(270, 50),
-                        opacity(1),
-                        lifespan(1, { fade: 0.5 })
-                    ]);
-                    
-                    // Spawn Skirmish Enemy
-                    const enemy = add([
-                        rect(24, 24),
-                        pos(player.pos.x + 200, player.pos.y - 100),
-                        area(),
-                        body(),
-                        color(150, 20, 20), // Confederate Red/Grey
-                        "enemy",
-                        "hazard"
-                    ]);
-                    // Simple AI: Move left
-                    enemy.onUpdate(() => {
-                        enemy.move(-150, 0);
-                    });
+                    player.pos = spawnPos.clone();
+                    player.vel = vec2(0, 0);
                 }
             });
 
-
-            // --- Level Completion ---
+            // --- Portal / Level Exit ---
             player.onCollide("portal", () => {
-                const nextLevel = levelIdx + 1;
-                if (nextLevel < LEVELS.length) {
-                    go("game", nextLevel);
+                if (collectedFacts.length >= totalScrolls) {
+                    // Go to Sorting Minigame
+                    go("sorting", { 
+                        facts: collectedFacts, 
+                        nextLevel: levelIdx + 1,
+                        currentRegion: FACT_DATA[levelIdx].region
+                    });
                 } else {
-                    go("win", { score });
+                    // Warning message
+                    const warning = add([
+                        text("Collect all Facts first!", { size: 16 }),
+                        pos(player.pos.x, player.pos.y - 60),
+                        anchor("center"),
+                        color(255, 100, 100),
+                        lifespan(2, { fade: 1 }),
+                        opacity(1),
+                        z(100)
+                    ]);
                 }
             });
 
-            // --- Death Plane ---
+            // --- Fall Death ---
             player.onUpdate(() => {
-                if (player.pos.y > 1000) {
+                if (player.pos.y > LEVELS[levelIdx].length * TILE + 200) {
                     hp--;
-                    hpLabel.text = `MORALE: ${hp}`;
+                    hpLabel.text = `Unity: ${hp}`;
                     if (hp <= 0) {
-                        go("gameover", { score, level: levelIdx });
+                        go("gameover", { level: levelIdx });
                     } else {
                         player.pos = spawnPos.clone();
                         player.vel = vec2(0, 0);
@@ -599,24 +442,220 @@
             });
         });
 
-        // ============================================================
-        //  7. GAME OVER & WIN SCENES
-        // ============================================================
-        scene("gameover", ({ score, level }) => {
+        // ----- 7. SORTING MINIGAME SCENE (Addon) -----
+        scene("sorting", ({ facts, nextLevel, currentRegion }) => {
+            // Background
             add([
-                text("RETREAT!", { size: 48 }),
+                rect(width(), height()),
+                color(30, 30, 40),
+                fixed()
+            ]);
+
+            // Header
+            add([
+                text("LEGISLATIVE DISPATCH", { size: 32, font: "monospace" }),
+                pos(width() / 2, 40),
+                anchor("center"),
+                color(255, 255, 255)
+            ]);
+            
+            add([
+                text(`Categorize facts from ${currentRegion}`, { size: 18 }),
+                pos(width() / 2, 80),
+                anchor("center"),
+                color(200, 200, 200)
+            ]);
+
+            // Bins
+            const binY = 140;
+            const binWidth = 200;
+            const binHeight = 250;
+
+            // Union Bin
+            add([
+                rect(binWidth, binHeight),
+                pos(width() * 0.25, binY),
+                anchor("center"),
+                color(...CONFIG.colors.unionBlue),
+                outline(4, rgb(255, 255, 255)),
+                "bin_union"
+            ]);
+            add([
+                text("UNION\n(North)", { size: 24, align: "center" }),
+                pos(width() * 0.25, binY - 100),
+                anchor("center"),
+                color(255, 255, 255)
+            ]);
+
+            // Confederacy Bin
+            add([
+                rect(binWidth, binHeight),
+                pos(width() * 0.75, binY),
+                anchor("center"),
+                color(...CONFIG.colors.confedGray),
+                outline(4, rgb(255, 255, 255)),
+                "bin_confed"
+            ]);
+            add([
+                text("CONFEDERACY\n(South)", { size: 24, align: "center" }),
+                pos(width() * 0.75, binY - 100),
+                anchor("center"),
+                color(255, 255, 255)
+            ]);
+
+            // Fact Objects
+            // We'll place them in the middle initially
+            facts.forEach((fact, index) => {
+                const factBtn = add([
+                    rect(300, 40),
+                    pos(width() / 2, 160 + index * 50),
+                    anchor("center"),
+                    color(200, 200, 200), // Default neutral color
+                    area(),
+                    outline(2, rgb(0,0,0)),
+                    "factBtn",
+                    {
+                        data: fact,
+                        assigned: null // null, "Union", "Confederacy"
+                    }
+                ]);
+
+                factBtn.add([
+                    text(fact.text, { size: 14, width: 290, align: "center" }),
+                    anchor("center"),
+                    color(0, 0, 0)
+                ]);
+
+                // Click interaction
+                factBtn.onClick(() => {
+                    // Cycle state: Neutral -> Union -> Confed -> Neutral
+                    if (factBtn.assigned === null) {
+                        factBtn.assigned = "Union";
+                        factBtn.color = rgb(...CONFIG.colors.unionBlue);
+                        factBtn.pos.x = width() * 0.25; // Move visually to bin
+                    } else if (factBtn.assigned === "Union") {
+                        factBtn.assigned = "Confederacy";
+                        factBtn.color = rgb(...CONFIG.colors.confedGray);
+                        factBtn.pos.x = width() * 0.75;
+                    } else {
+                        factBtn.assigned = null;
+                        factBtn.color = rgb(200, 200, 200);
+                        factBtn.pos.x = width() / 2;
+                    }
+                });
+            });
+
+            // Submit Button
+            const submitBtn = add([
+                rect(200, 50),
+                pos(width() / 2, height() - 60),
+                anchor("center"),
+                area(),
+                color(40, 180, 80),
+                outline(2, rgb(255, 255, 255)),
+                "submit"
+            ]);
+
+            submitBtn.add([
+                text("SEND DISPATCH", { size: 20 }),
+                anchor("center"),
+                color(255, 255, 255)
+            ]);
+
+            // Validation Logic
+            submitBtn.onClick(() => {
+                let correct = 0;
+                let allSorted = true;
+                const factObjs = get("factBtn");
+
+                factObjs.forEach(obj => {
+                    if (obj.assigned === null) allSorted = false;
+                    if (obj.assigned === obj.data.side) correct++;
+                });
+
+                if (!allSorted) {
+                    shake(5);
+                    add([
+                        text("Sort all facts first!", { size: 24 }),
+                        pos(width()/2, height()/2),
+                        anchor("center"),
+                        color(255, 100, 100),
+                        lifespan(1, { fade: 0.5 }),
+                        opacity(1),
+                        z(200)
+                    ]);
+                    return;
+                }
+
+                if (correct === facts.length) {
+                    // Success!
+                    playSuccessEffects();
+                    wait(1.5, () => {
+                        if (nextLevel < LEVELS.length) {
+                            go("game", nextLevel);
+                        } else {
+                            go("win", { score: facts.length }); // Simplified win tracking
+                        }
+                    });
+                } else {
+                    // Failure
+                    shake(10);
+                    add([
+                        text(`Inaccuracies Detected!\n(${correct}/${facts.length} Correct)`, { size: 24, align: "center" }),
+                        pos(width()/2, height()/2),
+                        anchor("center"),
+                        color(255, 50, 50),
+                        lifespan(2, { fade: 0.5 }),
+                        opacity(1),
+                        z(200)
+                    ]);
+                }
+            });
+        });
+
+        function playSuccessEffects() {
+            add([
+                text("DISPATCH SENT!", { size: 48 }),
+                pos(center()),
+                anchor("center"),
+                color(50, 255, 50),
+                lifespan(2, { fade: 0.5 }),
+                opacity(1),
+                z(200)
+            ]);
+            // Confetti
+            for(let i=0; i<20; i++) {
+                add([
+                    rect(4,4),
+                    pos(rand(0, width()), rand(0, height())),
+                    color(rand(200,255), rand(200,255), 0),
+                    move(vec2(0, 100), rand(50, 150)),
+                    lifespan(2),
+                    opacity(1)
+                ]);
+            }
+        }
+
+        // ----- 8. GAME OVER SCENE -----
+        scene("gameover", ({ level }) => {
+            add([
+                rect(width(), height()),
+                color(20, 0, 0),
+            ]);
+            add([
+                text("HISTORY REPEATS ITSELF", { size: 48, align: "center" }),
                 pos(center()),
                 anchor("center"),
                 color(220, 60, 80),
             ]);
             add([
-                text(`Pamphlets Collected: ${score}`, { size: 22 }),
+                text("The Union is fractured.", { size: 20 }),
                 pos(center().x, center().y + 60),
                 anchor("center"),
                 color(200, 200, 200),
             ]);
             add([
-                text("Press SPACE to Regroup", { size: 18 }),
+                text("Press SPACE to try again", { size: 18 }),
                 pos(center().x, center().y + 110),
                 anchor("center"),
                 color(150, 150, 180),
@@ -625,27 +664,26 @@
             onClick(() => go("game", level));
         });
 
-        scene("win", ({ score }) => {
+        // ----- 9. WIN SCENE -----
+        scene("win", () => {
+             add([
+                rect(width(), height()),
+                color(0, 40, 0),
+            ]);
             add([
-                text("VICTORY!", { size: 48 }),
+                text("UNION PRESERVED!", { size: 48 }),
                 pos(center()),
                 anchor("center"),
                 color(100, 255, 150),
             ]);
             add([
-                text("The Union is Preserved.", { size: 24 }),
-                pos(center().x, center().y + 50),
-                anchor("center"),
-                color(200, 200, 255),
-            ]);
-            add([
-                text(`Total Pamphlets: ${score}`, { size: 22 }),
-                pos(center().x, center().y + 100),
+                text("You successfully navigated the\nhistory of the Civil War.", { size: 20, align: "center" }),
+                pos(center().x, center().y + 80),
                 anchor("center"),
                 color(255, 210, 50),
             ]);
             add([
-                text("Press SPACE to Play Again", { size: 18 }),
+                text("Press SPACE to restart history", { size: 18 }),
                 pos(center().x, center().y + 150),
                 anchor("center"),
                 color(150, 150, 180),
@@ -654,10 +692,9 @@
             onClick(() => go("game", 0));
         });
 
-        // Start Game
+        // Start
         go("game", 0);
 
     </script>
 </body>
-
 </html>
