@@ -10,12 +10,30 @@ const execAsync = promisify(exec);
 
 // ── TypeScript Interfaces ──────────────────────────────────────────────────
 
+interface Beat {
+    startSec: number;
+    durationSec: number;
+    layout: 'process' | 'transformation' | 'cycle' | 'comparison' | 'list' | 'focus' | 'split' | 'equation' | 'graph' | 'diagram';
+    heading?: string;
+    elements: string[];
+    highlight?: string;
+    text?: string;
+    subtitle?: string;
+}
+
 interface VideoScene {
     narration: string;
-    animationType: string;
-    elements: string[];
+    beats: Beat[];
     audioUrl?: string | null;
     spriteUrls?: Record<string, string | null>;
+}
+
+interface VideoPalette {
+    primary: string;
+    secondary: string;
+    tertiary: string;
+    bg: string;
+    surface: string;
 }
 
 interface VideoData {
@@ -23,6 +41,7 @@ interface VideoData {
     targetAudience: string;
     scenes: VideoScene[];
     keyTakeaways: string[];
+    palette?: VideoPalette;
     [key: string]: any;
 }
 
@@ -143,11 +162,13 @@ async function renderVideoWithRemotion(
     try {
         await fs.mkdir(tempDir, { recursive: true });
 
-        // 1. Fetch sprites for all elements across all scenes
+        // 1. Fetch sprites for all elements across all beats in all scenes
         console.log('[generate-video] Fetching sprites...');
         const allElements = new Set<string>();
         videoData.scenes.forEach(scene => {
-            scene.elements?.forEach(el => allElements.add(el));
+            scene.beats?.forEach(beat => {
+                beat.elements?.forEach(el => allElements.add(el));
+            });
         });
         const spriteDir = path.join(tempDir, 'sprites');
         await fs.mkdir(spriteDir, { recursive: true });
@@ -211,6 +232,8 @@ async function renderVideoWithRemotion(
             title: videoData.title,
             targetAudience: videoData.targetAudience,
             scenes: scenesWithSupabaseAssets,
+            palette: videoData.palette,
+            totalDurationSec: videoData._totalDurationSec,
         };
 
         console.log('[generate-video] Props data:', JSON.stringify(propsData, null, 2).slice(0, 500));
@@ -220,7 +243,10 @@ async function renderVideoWithRemotion(
 
         // 5. Render with Remotion CLI
         console.log('[generate-video] Running Remotion render...');
-        const renderCmd = `npx remotion render remotion/Root.tsx ${compositionId} "${outputPath}" --props="${propsPath}" --gl=angle`;
+        // Calculate total frames for dynamic duration
+        const totalDurationSec = videoData._totalDurationSec || (videoData.scenes.length * 28 + 6);
+        const totalFrames = Math.ceil(totalDurationSec * 30); // 30fps
+        const renderCmd = `npx remotion render remotion/Root.tsx ${compositionId} "${outputPath}" --props="${propsPath}" --gl=angle --frames=0-${totalFrames - 1}`;
 
         const { stdout, stderr } = await execAsync(renderCmd, {
             timeout: 300000,
@@ -277,9 +303,9 @@ async function generateVideoWithGemini(
 
     console.log(`[generate-video] Lesson title: "${title}", subject: "${subject}", grade: "${gradeLevel}"`);
 
-    const prompt = `You are Edison, an elite educational video creator who makes STUNNING, VISUALLY CAPTIVATING educational content.
+    const prompt = `You are Edison, an elite educational video director. You write SCREENPLAYS — precise, timestamped storyboards that synchronize visuals with narration beat by beat.
 
-LESSON INFORMATION (YOU MUST USE THIS CONTENT — DO NOT INVENT A DIFFERENT TOPIC):
+LESSON INFORMATION (use this content exactly — do not invent a different topic):
 Title: ${title}
 Subject: ${subject}
 Grade Level: ${gradeLevel}
@@ -289,98 +315,249 @@ Main Content: ${content.procedure || ''}
 Closure: ${content.closure || ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎬 YOUR MISSION: Create a PREMIUM educational video about "${title}" for ${gradeLevel} students
+SCREENPLAY STRUCTURE — Each scene has a narration + a sequence of timed BEATS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-CRITICAL RULES FOR EXCELLENCE:
-✓ Videos are our PRIMARY SELLING POINT - they must look PROFESSIONAL and ENGAGING
-✓ Narration does the heavy lifting - make it rich, detailed, and educational (90-120 words per scene)
-✓ Visual elements should be MINIMAL TEXT - just 1-3 word labels that represent concepts
-✓ Each element will become a HIGH-QUALITY SPRITE (icon/illustration) - choose visually distinct, searchable terms
-✓ Think like a top-tier educational content creator (Kurzgesagt, TED-Ed, Khan Academy)
+A BEAT is a visual moment: it shows specific icons/elements on screen for a set duration.
+When a beat starts, the visuals CHANGE to match what is being said at that exact second.
+Think of it like a slide in a presentation — but timed to the voice.
+
+Generate 2-5 scenes depending on the complexity of the topic:
+  - Simple topics (a single concept, e.g. "What is gravity?"): 2 scenes
+  - Medium topics (a process or moderate idea): 3 scenes
+  - Complex topics (multiple related concepts, e.g. "The American Revolution"): 4-5 scenes
+
+Each scene should have 60-100 words of narration. The narration word count drives the scene duration:
+  words / 2.8 = scene duration in seconds (Edge TTS speaks at ~2.8 words/sec)
+
+Each scene must have 2-4 beats. Beat timing rules:
+  - First beat must start at startSec: 0
+  - Each beat's startSec = previous beat's startSec + previous beat's durationSec
+  - Beats are timed proportionally within the scene duration
+  - Minimum beat duration: 5 seconds
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📐 ANIMATION TYPES - Choose the BEST fit for each concept:
+LAYOUT TYPES — pick the one that best fits WHAT IS BEING SAID at that beat:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🔄 "process" - Step-by-step flow (A → B → C → D)
-   ↳ Perfect for: How things work, sequences, procedures, timelines
-   ↳ Elements flow left-to-right or top-to-bottom with arrows
-   ↳ Example: "Digestion" → ["Mouth", "Stomach", "Intestines", "Nutrients"]
+"focus"          — 1-3 key concepts shown large and centered. Use when introducing the main idea or a key term.
+                   Example: "Photosynthesis is how plants make food" → elements: ["Plant", "Sun", "Food"]
 
-⚡ "transformation" - Inputs become Outputs (ingredients → result)
-   ↳ Perfect for: Chemical reactions, conversions, before/after, cause/effect
-   ↳ First half = inputs, second half = outputs, transformation in middle
-   ↳ Example: "Photosynthesis" → ["Sunlight", "Water", "CO2", "Glucose", "Oxygen"]
+"process"        — A → B → C sequential flow with arrows. Use when explaining ordered steps. MAX 4 elements for horizontal, 5 for vertical.
+                   Example: "first mix, then heat, then cool" → elements: ["Mix", "Heat", "Cool"]
 
-🔁 "cycle" - Circular loop of connected steps
-   ↳ Perfect for: Cycles, repeating processes, feedback loops
-   ↳ Elements arranged in a circle with continuous flow
-   ↳ Example: "Water Cycle" → ["Evaporation", "Condensation", "Precipitation", "Collection"]
+"transformation" — Left side (inputs) ⟹ Right side (outputs). Use for reactions, conversions, cause and effect.
+                   Example: "water and CO2 become glucose and oxygen" → elements: ["Water", "CO2", "Glucose", "Oxygen"]
 
-⚖️ "comparison" - Side-by-side contrast (A vs B)
-   ↳ Perfect for: Compare/contrast, pros/cons, two perspectives
-   ↳ Elements split into two groups (left vs right)
-   ↳ Example: "Vertebrates vs Invertebrates" → ["Backbone", "Skeleton", "Spine"] vs ["Exoskeleton", "Shell", "Soft Body"]
+"cycle"          — Elements arranged in a circle with arrows. Use for repeating processes, feedback loops.
+                   Example: "evaporates, condenses, precipitates, collects" → elements: ["Evaporation", "Condensation", "Precipitation", "Collection"]
 
-📋 "list" - Sequential items appearing one by one
-   ↳ Perfect for: Facts, features, characteristics, tips, properties
-   ↳ Numbered items with smooth reveal animations
-   ↳ Example: "Layers of Earth" → ["Crust", "Mantle", "Outer Core", "Inner Core"]
+"comparison"     — Side A vs Side B divided layout. Use when contrasting two things.
+                   Example: "acids vs bases" → elements: ["Sour taste", "pH below 7", "Bitter taste", "pH above 7"]
+
+"list"           — Numbered items revealed one by one. Use for enumerating facts, properties, or rules.
+                   Example: "three laws of motion" → elements: ["Inertia", "F = ma", "Action-Reaction"]
+
+"split"          — Two equal columns side by side. Use for parallel concepts.
+                   Example: "potential vs kinetic energy" → elements: ["Height", "Stored", "Motion", "Speed"]
+
+"equation"       — ★ MATH/SCIENCE STAR LAYOUT. Large animated equation centered on screen with term cards below.
+                   SET "text" to the equation string. Use ^ for superscripts and _ for subscripts.
+                   For multi-char sub/superscripts use braces: x^{2n}, a_{ij}
+                   You can also use: √, π, ÷, ×, ≤, ≥, ≠, →, ∞
+                   NEVER use Unicode subscript/superscript characters (₂, ², ₃, ³, etc.)
+                   SET "subtitle" to explain what the equation means in plain English.
+                   Elements are the key terms/variables visualized as small cards below the equation.
+
+                   USE FOR: formulas, theorems, definitions, identities, laws
+                   Example: Pythagorean theorem →
+                     text: "a^2 + b^2 = c^2"
+                     subtitle: "The sum of squares of the two shorter sides equals the square of the hypotenuse"
+                     elements: ["Triangle", "Right Angle", "Hypotenuse"]
+
+                   Example: Quadratic formula →
+                     text: "x = (-b ± √(b^2 - 4ac)) ÷ 2a"
+                     subtitle: "Finds the roots of any quadratic equation ax^2 + bx + c = 0"
+                     elements: ["Parabola", "Root", "Coefficient"]
+
+                   Example: Newton's second law →
+                     text: "F = m × a"
+                     subtitle: "Force equals mass times acceleration"
+                     elements: ["Force", "Mass", "Acceleration"]
+
+                   Example: Chemical formula →
+                     text: "H_2O → H_2 + O_2"
+                     subtitle: "Water breaks down into hydrogen and oxygen"
+                     elements: ["Water", "Hydrogen", "Oxygen"]
+
+"graph"          — ★ DATA VISUALIZATION. Animated bar chart with axes, grid, and labeled bars.
+                   SET "text" to the chart title or equation being visualized.
+                   SET "subtitle" to explain what the graph shows.
+                   Elements become labeled bars — each element is a category/data point.
+
+                   USE FOR: comparing quantities, showing data, visualizing functions, distributions
+                   Example: Comparing planet sizes →
+                     text: "Relative Planet Sizes"
+                     subtitle: "Diameter compared to Earth"
+                     elements: ["Mercury", "Venus", "Earth", "Mars", "Jupiter"]
+
+                   Example: Population growth →
+                     text: "Population Over Decades"
+                     elements: ["1980", "1990", "2000", "2010", "2020"]
+
+"diagram"        — ★ GEOMETRIC/STRUCTURAL. Draws animated shapes with labeled vertices/sides connected by lines.
+                   SET "text" to the theorem or property being shown.
+                   SET "subtitle" to explain the visual.
+                   Elements become labeled points/vertices of the geometric figure.
+
+                   USE FOR: geometry, molecular structures, network graphs, proofs, spatial relationships
+                   Example: Triangle angles →
+                     text: "Interior angles sum to 180°"
+                     subtitle: "∠A + ∠B + ∠C = 180°"
+                     elements: ["Angle A", "Angle B", "Angle C"]
+
+                   Example: Water molecule →
+                     text: "H_2O Molecular Structure"
+                     elements: ["Hydrogen", "Oxygen", "Hydrogen"]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✍️ NARRATION MASTERY:
+SUBJECT-AWARE VISUAL STRATEGY — Match layouts to the subject:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✓ Write 90-120 words per scene (MORE content = better learning)
-✓ Be conversational, engaging, and enthusiastic
-✓ Explain concepts clearly without relying on visual text
-✓ Use storytelling techniques: questions, examples, real-world connections
-✓ NO special characters, backslashes, markdown, or emojis
-✓ Spell out chemical formulas: "C O 2" not "CO₂", "H 2 O" not "H₂O"
-✓ Write as if speaking to an eager student - be inspiring!
+MATH/ALGEBRA/CALCULUS:
+  - MUST use "equation" layout for every formula, theorem, or identity
+  - Use "graph" to visualize functions, data, or comparisons
+  - Use "diagram" for geometric proofs and shapes
+  - Use "process" for step-by-step problem solving
+  - The "text" field is CRITICAL for math — it shows the actual equation on screen
+  - Example flow: equation → process (steps to solve) → graph (visual result)
+
+SCIENCE (Physics, Chemistry, Biology):
+  - Use "equation" for laws and formulas (F=ma, E=mc^2, PV=nRT)
+  - Use "transformation" for chemical reactions and energy conversions
+  - Use "diagram" for molecular structures and anatomical features
+  - Use "cycle" for biological cycles (water cycle, cell cycle)
+  - Use "graph" for experimental data and measurements
+
+HISTORY/SOCIAL STUDIES:
+  - Use "process" for timelines and cause-effect chains
+  - Use "comparison" for contrasting civilizations, policies, or eras
+  - Use "list" for key events, dates, or principles
+  - Use "focus" for introducing key figures or concepts
+  - AVOID equation/graph/diagram — these are not visual fits for humanities
+
+LANGUAGE ARTS/LITERATURE:
+  - Use "focus" for themes, characters, and key quotes
+  - Use "comparison" for comparing characters or themes
+  - Use "list" for literary devices, plot points, or vocabulary
+  - Use "split" for parallel plotlines or before/after analysis
+  - AVOID equation/graph/diagram unless analyzing data
+
+GEOGRAPHY/EARTH SCIENCE:
+  - Use "diagram" for tectonic plates, rock layers, weather systems
+  - Use "cycle" for water cycle, rock cycle, carbon cycle
+  - Use "graph" for climate data, elevation, population
+  - Use "process" for erosion, formation processes
+
+The layouts you choose MUST match the subject matter. A math video without "equation" layouts looks terrible. A history video with "equation" layouts makes no sense.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎨 ELEMENT SELECTION (SPRITES):
+HEADING RULES:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✓ Choose 4-6 elements per scene (optimal for visual clarity)
-✓ Each element = 1-3 words maximum (these become sprite searches)
-✓ Use concrete, visually searchable terms: "Sun", "Atom", "Tree", "Brain"
-✓ Avoid abstract text or full sentences - think ICONS and ILLUSTRATIONS
-✓ Elements should represent KEY CONCEPTS that support the narration
-✓ Consider: What would make a great icon/sprite for this concept?
-
-GOOD Elements:
-✓ "Sun", "Plant", "Oxygen" (photosynthesis)
-✓ "Rain", "Cloud", "Ocean" (water cycle)
-✓ "Cell", "DNA", "Nucleus" (biology)
-✓ "Addition", "Fraction", "Division" (math)
-
-BAD Elements (too wordy):
-✗ "The process of photosynthesis"
-✗ "When it rains the water falls"
-✗ "Cells contain genetic material"
+✓ Headings should describe WHAT IS HAPPENING visually, not generic labels
+  GOOD: "Sunlight Meets Leaf", "Sugar is Born", "Energy Released"
+  BAD: "Leaf Diagram", "Step 1", "Key Concepts", "The Process"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NARRATION RULES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Generate EXACTLY 3 scenes that together teach "${title}" comprehensively.
+✓ 60-100 words per scene. The word count determines scene duration (words / 2.8 = seconds)
+✓ Conversational, enthusiastic, age-appropriate for ${gradeLevel}
+✓ NO special characters, markdown, backslashes, or emojis
+✓ In element labels, spell out formulas: "Carbon Dioxide" not "CO_2", "Water" not "H_2O"
+✓ In equation "text" fields, use ^ for superscripts and _ for subscripts (NEVER Unicode like ₂ ² ₃ ³)
+✓ Each sentence you write maps to a beat — plan beats to match what you say
 
-Return JSON (NO markdown fences, ONLY JSON):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ELEMENT (SPRITE) RULES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ 2-5 elements per beat (icons that illustrate what's being said RIGHT NOW)
+✓ 1-3 words each — concrete, searchable icon terms: "Sun", "Brain", "DNA", "River"
+✓ Elements MUST match what the narration says at that beat's time window
+✓ The heading (2-5 words) summarizes the beat's visual moment
+✓ Optional: set "highlight" to one element name to make it glow/pulse (the star of that beat)
+
+✓ Use SINGLE concrete nouns that map to real icons: "Sun", "Leaf", "Heart", "Brain", "Globe", "Lightning", "Atom", "Book", "Microscope", "Gear", "Shield", "Star", "Cloud", "Fire", "Mountain", "Wave", "Tree", "Fish", "Bird", "Clock"
+✗ NEVER use multi-word concepts as elements: "Carbon Dioxide" → use "CO2"; "Water Molecule" → use "Water"; "Solar Energy" → use "Sun"; "Leaf Diagram" → use "Leaf"
+✗ NEVER use abbreviations the icon API won't find: use "Thermometer" not "Temp", use "Lightning" not "Elec"
+
+GOOD elements: "Nucleus", "Electron", "Volcano", "Heart", "Calculator", "Rocket"
+BAD elements: "The process of", "When students", "Key takeaway is" (too long or abstract)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COLOR PALETTE — Match the visual mood to the subject matter:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Choose hex colors that emotionally and conceptually fit "${subject}":
+- Biology/Nature: greens (#22c55e), earthy tones (#a16207), soft blues (#38bdf8)
+- Chemistry/Physics: electric blues (#3b82f6), purples (#a855f7), cyan (#06b6d4)
+- History/Social Studies: warm ambers (#f59e0b), reds (#ef4444), muted golds (#ca8a04)
+- Math/Logic: cool teals (#14b8a6), indigos (#6366f1), crisp whites
+- Geography/Earth: deep blues (#1d4ed8), greens (#16a34a), earthy browns (#92400e)
+- Literature/Language: purples (#9333ea), pinks (#ec4899), warm creams
+- Technology/Engineering: electric blues (#2563eb), oranges (#f97316), silvers
+
+Rules:
+- "bg" must be VERY dark (lightness < 15%) — e.g. "#0a1a12", "#0f0a1e", "#1a0f05"
+- "surface" must be dark (lightness 15-25%) — e.g. "#132010", "#1a1040", "#241508"
+- "primary", "secondary", "tertiary" must have HIGH contrast on dark backgrounds (lightness > 50%)
+- Colors must be vibrant, not muddy — use saturated hues
+- All three accent colors should be visually distinct from each other
+
+Return JSON (NO markdown fences, ONLY raw JSON):
 {
   "title": "${title}",
   "targetAudience": "${gradeLevel}",
+  "palette": {
+    "primary": "#22c55e",
+    "secondary": "#38bdf8",
+    "tertiary": "#a3e635",
+    "bg": "#071a0e",
+    "surface": "#0f2d18"
+  },
   "scenes": [
     {
-      "narration": "string (90-120 words, engaging, educational, conversational)",
-      "animationType": "process|transformation|cycle|comparison|list",
-      "elements": ["1-3 word sprite term", "another term", "etc"]
+      "narration": "60-100 words of narration text...",
+      "beats": [
+        {
+          "startSec": 0,
+          "durationSec": 12,
+          "layout": "equation",
+          "heading": "The Key Formula",
+          "text": "a² + b² = c²",
+          "subtitle": "The Pythagorean theorem relates the sides of a right triangle",
+          "elements": ["Triangle", "Right Angle", "Hypotenuse"],
+          "highlight": "Triangle"
+        },
+        {
+          "startSec": 12,
+          "durationSec": 10,
+          "layout": "diagram",
+          "heading": "Seeing It Visually",
+          "text": "Right Triangle",
+          "elements": ["Side a", "Side b", "Side c"],
+          "highlight": "Side c"
+        }
+      ]
     }
   ],
-  "keyTakeaways": ["concise takeaway 1", "concise takeaway 2", "concise takeaway 3"]
+  "keyTakeaways": ["takeaway 1", "takeaway 2", "takeaway 3"]
 }
 
-Remember: This video is our SHOWCASE - make it EXCEPTIONAL! 🌟`;
+CRITICAL: beats[0].startSec must be 0. palette.bg lightness MUST be < 15%. Generate 2-5 scenes based on topic complexity. For math/science: ALWAYS use "equation" layout when showing a formula. Set "text" and "subtitle" on equation/graph/diagram beats. For humanities: stick to focus/process/list/comparison layouts.`;
 
     for (const model of GEMINI_MODELS) {
         try {
@@ -432,7 +609,72 @@ Remember: This video is our SHOWCASE - make it EXCEPTIONAL! 🌟`;
                 .trim();
             const videoData = JSON.parse(cleaned);
 
-            console.log(`[generate-video] AI returned title: "${videoData.title}", scenes: ${videoData.scenes?.length}`);
+            console.log(`[generate-video] AI returned title: "${videoData.title}", scenes: ${videoData.scenes?.length}, palette: ${JSON.stringify(videoData.palette)}`);
+
+            // Calculate scene duration from narration word count
+            videoData.scenes?.forEach((scene: any, si: number) => {
+                // Estimate scene duration from word count (~2.8 words/sec for Edge TTS)
+                const wordCount = (scene.narration || '').split(/\s+/).filter(Boolean).length;
+                const sceneDurationSec = Math.max(10, Math.ceil(wordCount / 2.8));
+                scene._durationSec = sceneDurationSec; // Store for later use
+
+                if (!Array.isArray(scene.beats) || scene.beats.length === 0) {
+                    scene.beats = [{ startSec: 0, durationSec: sceneDurationSec, layout: 'list', heading: '', elements: [] }];
+                }
+
+                // Fix startSec to be sequential
+                let cursor = 0;
+                scene.beats.forEach((beat: any) => {
+                    beat.startSec = cursor;
+                    beat.durationSec = Math.max(5, Number(beat.durationSec) || 8);
+                    cursor += beat.durationSec;
+                });
+
+                // Scale beats to match actual narration duration
+                const total = scene.beats.reduce((s: number, b: any) => s + b.durationSec, 0);
+                if (total !== sceneDurationSec) {
+                    const scale = sceneDurationSec / total;
+                    let sc = 0;
+                    scene.beats.forEach((beat: any, bi: number) => {
+                        beat.startSec = Math.round(sc);
+                        beat.durationSec = bi === scene.beats.length - 1
+                            ? sceneDurationSec - Math.round(sc)
+                            : Math.max(5, Math.round(beat.durationSec * scale));
+                        sc += beat.durationSec;
+                    });
+                }
+
+                console.log(`[generate-video] Scene ${si + 1}: ${wordCount} words → ${sceneDurationSec}s, ${scene.beats.length} beats — ${scene.beats.map((b: any) => `${b.startSec}s+${b.durationSec}s(${b.layout})`).join(', ')}`);
+            });
+
+            // Calculate total video duration
+            const totalDuration = videoData.scenes.reduce((sum: number, s: any) => sum + (s._durationSec || 25), 0) + 6; // +6 for intro+outro
+            videoData._totalDurationSec = totalDuration;
+            console.log(`[generate-video] Total video duration: ${totalDuration}s (${videoData.scenes.length} scenes)`);
+
+            // Validate palette — ensure it has all required fields and valid hex colors
+            const hexRe = /^#[0-9a-fA-F]{6}$/;
+            const p = videoData.palette;
+            if (!p || !hexRe.test(p.primary) || !hexRe.test(p.secondary) || !hexRe.test(p.tertiary) || !hexRe.test(p.bg) || !hexRe.test(p.surface)) {
+                console.warn('[generate-video] Palette missing or malformed, using subject-based fallback');
+                // Subject-based fallback palettes
+                const subjectLower = (subject || '').toLowerCase();
+                if (subjectLower.includes('bio') || subjectLower.includes('nature') || subjectLower.includes('environment')) {
+                    videoData.palette = { primary: '#22c55e', secondary: '#38bdf8', tertiary: '#a3e635', bg: '#071a0e', surface: '#0f2d18' };
+                } else if (subjectLower.includes('chem') || subjectLower.includes('phys')) {
+                    videoData.palette = { primary: '#3b82f6', secondary: '#a855f7', tertiary: '#06b6d4', bg: '#07091f', surface: '#10143a' };
+                } else if (subjectLower.includes('hist') || subjectLower.includes('social')) {
+                    videoData.palette = { primary: '#f59e0b', secondary: '#ef4444', tertiary: '#fcd34d', bg: '#1a0e05', surface: '#2d1a08' };
+                } else if (subjectLower.includes('math') || subjectLower.includes('calcul') || subjectLower.includes('algebra')) {
+                    videoData.palette = { primary: '#14b8a6', secondary: '#6366f1', tertiary: '#e2e8f0', bg: '#040f12', surface: '#0a1e24' };
+                } else if (subjectLower.includes('geo') || subjectLower.includes('earth')) {
+                    videoData.palette = { primary: '#60a5fa', secondary: '#4ade80', tertiary: '#fbbf24', bg: '#050e1a', surface: '#0a1d30' };
+                } else if (subjectLower.includes('tech') || subjectLower.includes('computer') || subjectLower.includes('engineer')) {
+                    videoData.palette = { primary: '#38bdf8', secondary: '#f97316', tertiary: '#a3e635', bg: '#050d14', surface: '#0a1824' };
+                } else {
+                    videoData.palette = { primary: '#818cf8', secondary: '#34d399', tertiary: '#fb923c', bg: '#0a0a1a', surface: '#13132a' };
+                }
+            }
 
             // Generate video with Remotion (includes audio generation and Supabase upload)
             let videoUrl = null;
@@ -508,45 +750,42 @@ export async function POST(req: NextRequest) {
             .single();
 
         if (lessonError) {
-            console.error('[generate-video] Failed to save lesson:', lessonError);
-            throw new Error('Failed to save lesson to database');
+            // Best-effort — table may not be set up yet, don't block video generation
+            console.warn('[generate-video] Could not save lesson to DB (table may not exist yet):', lessonError.message);
+        } else {
+            console.log('[generate-video] Lesson saved:', savedLesson.id);
         }
-
-        console.log('[generate-video] Lesson saved:', savedLesson.id);
 
         // 2. Generate video
         const videoData = await generateVideoWithGemini(lessonData, user.id);
 
-        // 3. Save video to database
-        console.log('[generate-video] Saving video to database...');
-        const { data: savedVideo, error: videoError } = await supabase
-            .from('videos')
-            .insert({
-                lesson_id: savedLesson.id,
-                user_id: user.id,
-                title: videoData.title,
-                target_audience: videoData.targetAudience,
-                scenes: videoData.scenes,
-                key_takeaways: videoData.keyTakeaways || [],
-                video_url: videoData.videoUrl,
-                thumbnail_url: videoData.thumbnailUrl,
-                status: videoData.videoUrl ? 'completed' : 'failed',
-                error_message: videoData.videoUrl ? null : 'Video rendering failed',
-            })
-            .select()
-            .single();
+        // 3. Save video to database (best-effort)
+        if (savedLesson) {
+            console.log('[generate-video] Saving video to database...');
+            const { error: videoError } = await supabase
+                .from('videos')
+                .insert({
+                    lesson_id: savedLesson.id,
+                    user_id: user.id,
+                    title: videoData.title,
+                    target_audience: videoData.targetAudience,
+                    scenes: videoData.scenes,
+                    key_takeaways: videoData.keyTakeaways || [],
+                    video_url: videoData.videoUrl,
+                    thumbnail_url: videoData.thumbnailUrl,
+                    status: videoData.videoUrl ? 'completed' : 'failed',
+                    error_message: videoData.videoUrl ? null : 'Video rendering failed',
+                });
 
-        if (videoError) {
-            console.error('[generate-video] Failed to save video:', videoError);
-            throw new Error('Failed to save video to database');
+            if (videoError) {
+                console.warn('[generate-video] Could not save video to DB:', videoError.message);
+            }
         }
-
-        console.log('[generate-video] Video saved:', savedVideo.id);
 
         return NextResponse.json({
             success: true,
-            lessonId: savedLesson.id,
-            videoId: savedVideo.id,
+            lessonId: savedLesson?.id ?? null,
+            videoId: null,
             ...videoData,
         });
     } catch (error: any) {
