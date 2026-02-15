@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Sidebar from '@/components/sidebar';
+import ChalkEquations from '@/components/ui/chalk-equations';
 import { User, School, Save, LogOut, Copy, CheckCircle, Users as UsersIcon, BookOpen, Loader2 } from 'lucide-react';
 import { getClassroomsForTeacher } from '@/lib/services/classrooms';
 
@@ -107,7 +108,8 @@ export default function SettingsPage() {
                     .font-serif-display { font-family: 'DM Serif Display', serif; }
                     .font-sans-clean { font-family: 'Inter', sans-serif; }
                 `}</style>
-                <Sidebar />
+                <ChalkEquations />
+            <Sidebar />
                 <div className="min-h-screen transition-[margin] duration-300" style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}>
                     <div className="flex items-center justify-center py-32">
                         <div className="flex items-center gap-3 text-emerald-400 font-sans-clean">
@@ -130,6 +132,7 @@ export default function SettingsPage() {
                 .font-sans-clean { font-family: 'Inter', sans-serif; }
             `}</style>
 
+            <ChalkEquations />
             <Sidebar />
 
             <div className="min-h-screen transition-[margin] duration-300" style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}>

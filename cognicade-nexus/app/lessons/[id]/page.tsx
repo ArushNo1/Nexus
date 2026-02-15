@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Sidebar from '@/components/sidebar';
+import ChalkEquations from '@/components/ui/chalk-equations';
 import Link from 'next/link';
 import {
     ArrowLeft,
@@ -98,7 +99,8 @@ export default function LessonDetailPage() {
                     .font-serif-display { font-family: 'DM Serif Display', serif; }
                     .font-sans-clean { font-family: 'Inter', sans-serif; }
                 `}</style>
-                <Sidebar />
+                <ChalkEquations />
+            <Sidebar />
                 <div className="min-h-screen transition-[margin] duration-300" style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}>
                     <div className="flex items-center justify-center py-32">
                         <div className="flex items-center gap-3 text-emerald-400 font-sans-clean">
@@ -120,7 +122,8 @@ export default function LessonDetailPage() {
                     .font-serif-display { font-family: 'DM Serif Display', serif; }
                     .font-sans-clean { font-family: 'Inter', sans-serif; }
                 `}</style>
-                <Sidebar />
+                <ChalkEquations />
+            <Sidebar />
                 <div className="min-h-screen transition-[margin] duration-300" style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}>
                     <div className="px-8 py-12 text-center">
                         <BookOpen className="mx-auto text-slate-500 mb-4" size={48} />
@@ -153,6 +156,7 @@ export default function LessonDetailPage() {
                 .animate-float-gentle { animation: float-gentle 4s ease-in-out infinite; }
             `}</style>
 
+            <ChalkEquations />
             <Sidebar />
 
             <div className="min-h-screen transition-[margin] duration-300" style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}>

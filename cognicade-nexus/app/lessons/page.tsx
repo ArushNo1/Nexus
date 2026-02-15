@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Sidebar from '@/components/sidebar';
-import { BookOpen, Play, Trash2, Users, Star } from 'lucide-react';
+import ChalkEquations from '@/components/ui/chalk-equations';
+import { BookOpen, Play, Trash2, Users, Star, Plus } from 'lucide-react';
 import { createClient as createSupabaseClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
@@ -75,6 +76,7 @@ export default function LessonsPage() {
                 .font-sans-clean { font-family: 'Inter', sans-serif; }
             `}</style>
 
+            <ChalkEquations />
             <Sidebar />
 
             <div
@@ -94,6 +96,14 @@ export default function LessonsPage() {
                                     : 'View lessons assigned to you by your teachers'}
                             </p>
                         </div>
+                        {userRole === 'teacher' && (
+                            <Link href="/create">
+                                <button className="flex items-center gap-2 px-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-xl transition-all shadow-[0_4px_0_#065f46] hover:translate-y-[2px] hover:shadow-[0_2px_0_#065f46] active:translate-y-[4px] active:shadow-none text-sm font-sans-clean">
+                                    <Plus size={18} />
+                                    Create Lesson
+                                </button>
+                            </Link>
+                        )}
                     </div>
 
                     {loading ? (

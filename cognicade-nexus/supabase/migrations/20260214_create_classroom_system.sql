@@ -234,17 +234,7 @@ CREATE POLICY "Students can view assignments for their classrooms"
 CREATE POLICY "Teachers can create assignments for their lessons and classrooms"
     ON lesson_assignments FOR INSERT
     WITH CHECK (
-        assigned_by = auth.uid() AND
-        EXISTS (
-            SELECT 1 FROM lessons
-            WHERE lessons.id = lesson_assignments.lesson_id
-            AND lessons.user_id = auth.uid()
-        ) AND
-        EXISTS (
-            SELECT 1 FROM classrooms
-            WHERE classrooms.id = lesson_assignments.classroom_id
-            AND classrooms.teacher_id = auth.uid()
-        )
+        assigned_by = auth.uid()
     );
 
 CREATE POLICY "Teachers can update their own assignments"

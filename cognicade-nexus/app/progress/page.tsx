@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Sidebar from '@/components/sidebar';
+import ChalkEquations from '@/components/ui/chalk-equations';
 import { Target, TrendingUp, Award, Clock } from 'lucide-react';
 
 export default function ProgressPage() {
@@ -39,6 +40,7 @@ export default function ProgressPage() {
                 .font-sans-clean { font-family: 'Inter', sans-serif; }
             `}</style>
 
+            <ChalkEquations />
             <Sidebar />
 
             <div

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import Sidebar from '@/components/sidebar';
+import ChalkEquations from '@/components/ui/chalk-equations';
 import { createClient } from '@/lib/supabase/client';
 import { Classroom, UserProfile } from '@/lib/types';
 import { getClassroomsForTeacher, createClassroom, getClassroomsForStudent, joinClassroom } from '@/lib/services/classrooms';
@@ -149,6 +150,7 @@ export default function ClassroomsPage() {
                 .font-sans-clean { font-family: 'Inter', sans-serif; }
             `}</style>
 
+            <ChalkEquations />
             <Sidebar />
 
             <div

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Sidebar from '@/components/sidebar';
 import { createClient } from '@/lib/supabase/client';
 import { getRecentLessons, getStudentRecentLessons } from '@/lib/services/classrooms';
+import ChalkEquations from '@/components/ui/chalk-equations';
 
 const PLACEHOLDER_THUMBNAILS = [
     'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=300&fit=crop',
@@ -109,6 +110,7 @@ export default function Dashboard() {
                 }
             `}</style>
 
+            <ChalkEquations />
             <Sidebar />
 
             <div
@@ -168,10 +170,10 @@ export default function Dashboard() {
                                         return (
                                             <div
                                                 key={`${lesson.id}-${idx}`}
-                                                className="group relative flex-shrink-0 w-80 bg-[#0d281e] border border-white/5 rounded-2xl overflow-hidden hover:border-emerald-500/20 transition-all hover:scale-[1.03]"
+                                                className="group relative flex-shrink-0 w-[22rem] bg-[#0d281e] border border-white/5 rounded-2xl overflow-hidden hover:border-emerald-500/20 transition-all hover:scale-[1.03]"
                                             >
                                                 {/* Thumbnail */}
-                                                <div className="relative h-52 overflow-hidden">
+                                                <div className="relative h-[18rem] overflow-hidden">
                                                     <img
                                                         src={lesson.thumbnail_url || PLACEHOLDER_THUMBNAILS[originalIdx % PLACEHOLDER_THUMBNAILS.length]}
                                                         alt={lesson.title}

@@ -1,6 +1,7 @@
 'use client';
 
 import Sidebar from '@/components/sidebar';
+import ChalkEquations from '@/components/ui/chalk-equations';
 import { Gamepad2, Zap, Brain, Puzzle } from 'lucide-react';
 
 export default function LibraryPage() {
@@ -36,6 +37,7 @@ export default function LibraryPage() {
                 .font-sans-clean { font-family: 'Inter', sans-serif; }
             `}</style>
 
+            <ChalkEquations />
             <Sidebar />
 
             <div
