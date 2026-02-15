@@ -1,0 +1,2 @@
+initial ones: beatemup, fighter, maze, platformer, shootemup
+second gen: breakout, match3, quizrunner, towerdefense, typingword
