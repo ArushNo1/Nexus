@@ -1,92 +1,89 @@
-This technical plan outlines the visual transformation of the platformer template into a Civil War-themed educational game and the implementation of the "Fact-Check Bridge" mechanic.
+This technical plan outlines the transformation of the base platformer template into a **Digital Testing Lab** game featuring the **Knowledge Gate** mechanic.
 
 ### 1. Visual Reskin Plan
 
-The goal is to move from a generic neon platformer to a "historical parchment" aesthetic.
+To achieve the "Digital Testing Lab" aesthetic, we will replace the organic colors with high-contrast neon palettes and add geometric details.
 
-#### **Global Visuals (CONFIG Object)**
-*   **Background Color**: Change `CONFIG.bgColor` from dark blue to `[245, 235, 205]` (Parchment).
-*   **Palette Swap**:
-    *   `floorColor`: Level 1 (North) `[80, 50, 40]` (Industrial Brick); Level 2 (South) `[130, 90, 60]` (Southern Soil).
-    *   `hazardColor`: `[80, 80, 80]` (Iron/Grey for Barbed Wire or Cannonballs).
-    *   `coinColor`: `[184, 134, 11]` (Aged Gold for "Telegraph Keys").
+**A. Color Palette & Environment (CONFIG Object)**
+*   **Background**: Change `bgColor` to `[10, 10, 25]` (Deep Midnight).
+*   **Ground/Walls**: Change `floorColor` to `[0, 255, 255]` (Neon Cyan).
+*   **Platforms**: Change `platformColor` to `[255, 0, 255]` (Neon Magenta).
+*   **Hazards**: Change `hazardColor` to `[255, 50, 50]` (Glitch Red).
+*   **Coins**: Change `coinColor` to `[255, 255, 0]` (Data Yellow).
 
-#### **Character & Object Reskin**
-*   **The Scout (Player)**: In `scene("game")`, modify the player creation. Instead of the default bean, add a `color(0, 50, 150)` (Union Blue) and `outline(2, rgb(0, 0, 0))` to signify the Union uniform.
-*   **Telegraph Keys (Coins)**: Change "Coins" to "Messages" in `scoreLabel`. Replace the `circle(10)` in `buildLevel` (case `$`) with a `rect(16, 12)` to look like a telegraph key or a folded letter.
-*   **Barbed Wire (Hazards)**: The `polygon` in `buildLevel` (case `^`) will remain, but the color change to metallic grey and the parchment background will make them look like sharp fortifications.
-*   **The Peace Treaty (Portal)**: Change `CONFIG.portalColor` to `[255, 255, 255]` with a dark outline to represent an official document.
-
-#### **HUD & UI Updates**
-*   `hpLabel`: Change text to "Morale: ${hp}".
-*   `scoreLabel`: Change text to "Messages: ${score}".
-*   `levelLabel`: Level 1 becomes "The Industrial North"; Level 2 becomes "The Agrarian South".
+**B. Game Objects**
+*   **Player (Data Probe)**:
+    *   Instead of just `sprite("bean")`, add a `rect` child or `outline(2, rgb(255, 255, 255))` to give it a robotic glow.
+    *   Scale it down to `0.8` for a "compact drone" look.
+*   **Hazards (Corrupted Files)**:
+    *   Replace `polygon` spikes with `rect(TILE, TILE)` blocks.
+    *   Add a `shake()` or `opacity()` flicker in an `onUpdate` loop to simulate "glitching."
+*   **Coins (Data Bits)**:
+    *   Change `circle(10)` to `rect(12, 12, { radius: 2 })` and rotate by 45 degrees (diamond shape).
+*   **HUD**:
+    *   Rename "Coins" to "Data Bits".
+    *   Use a monospace font if available or keep default with `size: 16` for a terminal feel.
 
 ---
 
-### 2. Addon Mechanic Implementation Plan: Fact-Check Bridge
+### 2. Addon Mechanic Implementation: The Knowledge Gate
 
-This mechanic will be implemented using a new tile symbol and a dynamic question-spawner.
+The Knowledge Gate consists of two portals at the end of each level. One represents the correct answer and the other represents the incorrect one.
 
-#### **Step 1: Data Structure**
-Define the historical content at the top of the script:
+#### A. Data Structure
+Add a constant `QUESTIONS` array before the `LEVELS` array to store lesson content.
 ```javascript
-const BRIDGES = [
-  { 
-    q: "Who was the President of the Union?", 
-    a: { text: "Abraham Lincoln", isCorrect: true }, 
-    b: { text: "Jefferson Davis", isCorrect: false } 
-  },
-  // Add more questions corresponding to the '?' symbols in map
+const QUESTIONS = [
+    { 
+        q: "Which tag groups objects?", 
+        a: "Tags", // Correct
+        b: "Names", // Incorrect
+        correct: "a" 
+    },
+    // ... one for each level
 ];
 ```
 
-#### **Step 2: Update Level Mapping**
-*   Add two new symbols to the `LEVELS` array:
-    *   `?`: The bridge trigger location.
-    *   `S`: The "History Scroll" checkpoint.
-*   Update `buildLevel` switch statement:
-    *   **Case `S`**: Spawn a "History Scroll" object (rect with tag `"checkpoint"`).
-    *   **Case `?`**: Spawn an invisible trigger area (rect with tag `"bridgeTrigger"`). Store an index `bridgeIdx` in the object.
+#### B. Level Map Updates
+Modify the `LEVELS` maps to remove the single `>` and add two specific symbols for the gates:
+*   `1`: Correct Portal
+*   `2`: Incorrect Portal
 
-#### **Step 3: Modify Scene Logic (scene "game")**
-*   **Checkpoint System**:
-    Add a collision handler for the scroll:
-    ```javascript
-    let currentSpawnPos = spawnPos; // Initialize with default
-    player.onCollide("checkpoint", (s) => {
-        currentSpawnPos = s.pos;
-        // Visual feedback: Change scroll color or pop text
-    });
-    ```
-    Update the `hazard` and `death plane` logic to use `player.pos = currentSpawnPos.clone()` instead of the original `spawnPos`.
-
-*   **Bridge Trigger Logic**:
-    When the player hits the `?`:
-    1.  Spawn two platforms ahead of the trigger.
-    2.  Use `platform.add([text(...)])` to attach the labels (Choice A and Choice B) to the physical platforms.
-    3.  Tag them `"choice-correct"` and `"choice-wrong"` based on the `BRIDGES` data.
-
-#### **Step 4: Collision Handling for Choices**
-```javascript
-player.onCollide("choice-wrong", (p) => {
-    shake(10);
-    destroy(p); // Platform vanishes
-    // Player falls to the checkpoint below
-});
-
-player.onCollide("choice-correct", (p) => {
-    p.color = rgb(0, 200, 0); // Turn green to show success
-    // Platform stays solid (standard behavior)
-});
+Example Level End:
+```text
+"          1  2   "
+"         ======  "
 ```
+
+#### C. Build Level Modification
+In the `buildLevel(mapData)` function, add cases for symbols `1` and `2`:
+1.  **Tagging**: Give them tags `"portal"` and a specific identifier (e.g., `"gateA"`, `"gateB"`).
+2.  **Labels**: Add a child text object to each portal using `obj.add([text(...)])` to display Answer A or Answer B from the `QUESTIONS` array.
+
+#### D. Logic Implementation (Inside `scene("game")`)
+Replace the existing `player.onCollide("portal", ...)` handler with the following logic:
+
+1.  **Collision Check**:
+    *   When player hits a portal, identify if it is the "correct" portal based on `QUESTIONS[levelIdx].correct`.
+2.  **Correct Path**:
+    *   If correct: Play a "success" sound/visual and call `go("game", levelIdx + 1)`.
+3.  **Incorrect Path (The Reboot)**:
+    *   If incorrect: 
+        *   Trigger `shake(10)` and a brief `flash(rgb(255,0,0), 0.2)`.
+        *   Reset `player.pos = spawnPos`.
+        *   Optional: Subtract a small amount of score as a penalty.
+
+#### E. Code Hints
+*   **Adding Child Text**: Use `gate.add([text(answerText, { size: 12 }), pos(0, -20), anchor("center")])`.
+*   **Detecting Gate Type**: Use custom properties during `add()`: `add([ ..., "portal", { isGateA: true } ])`.
 
 ---
 
 ### 3. Integration Checklist
 
-*   **Scoring**: Landing on a correct platform should award +5 "Messages" (Score) to reward historical knowledge.
-*   **Win/Lose**: If the player falls through an incorrect platform, they lose 1 Morale (HP). If Morale hits 0, they go to Game Over.
-*   **Map Design**: The level designer must ensure a "History Scroll" checkpoint (`S`) is placed directly below every Fact-Check Bridge (`?`) so the player can recover and re-read the facts.
-*   **Z-Index**: Ensure Choice labels (text) have `z(100)` so they are visible over the platforms.
-*   **Scale**: Use `fixed()` for question prompts if you want them to appear as UI, or `pos()` relative to the bridge trigger to make them part of the world. For this lesson, floating text above the bridge is more immersive.
+*   **Scoring**: The "Data Bits" (coins) collected throughout the level are preserved even if the player hits the wrong gate and reboots. This rewards exploration while the gates test knowledge.
+*   **Win/Lose Conditions**:
+    *   The Knowledge Gate acts as the only way to trigger `nextLevel`.
+    *   The "Corrupted Files" (hazards) still reduce HP. If HP hits 0, it's a hard "Game Over." If a gate is wrong, it's just a "soft reset" (reboot).
+*   **Camera**: Ensure the camera is wide enough at the end of the level so the player can clearly see both gates and their labels before choosing.
+*   **Edge Case**: If the player jumps and hits the side of the portal instead of the front, ensure the `area()` component is large enough to trigger the collision reliably. Use `anchor("bot")` for gates to keep them flush with the floor.
