@@ -3,17 +3,15 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Civil War Chronicles: The Union Advance</title>
+    <title>Photosynthesis Run - Chloroplast Charge</title>
     <style>
         * {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
         body {
-            background: #2d374b;
+            background: #111;
             overflow: hidden;
         }
 
@@ -24,640 +22,615 @@
 </head>
 
 <body>
-    <!-- KAPLAY.JS CDN -->
-    <script src="https://unpkg.com/kaplay@3001.0.19/dist/kaplay.js"></script>
-    
+    <script src="https://unpkg.com/kaplay@3001/dist/kaplay.js"></script>
     <script>
         /**
-         * CIVIL WAR CHRONICLES: THE UNION ADVANCE
+         * PHOTOSYNTHESIS RUN - CHLOROPLAST CHARGE
          * 
          * Educational Objectives:
-         * 1. Identify key causes of the American Civil War (States' Rights vs. Slavery).
-         * 2. Recognize major factions and leaders (Union/Lincoln vs. Confederacy/Davis).
-         * 3. Understand the chronological progression of the war through level advancement.
+         * 1. Identify Inputs of Photosynthesis (Sunlight, Water, Carbon Dioxide).
+         * 2. Identify Outputs of Photosynthesis (Glucose, Oxygen).
+         * 3. Avoid Non-Inputs/Stressors (Salt, Smoke, etc.).
          * 
          * Mechanics:
-         * - Platformer gameplay representing the Union Army's advance.
-         * - "Historical Fact Gates": Players must choose the correct historical statement to clear obstacles.
-         * - "Skirmishes": Incorrect answers spawn enemies, reinforcing learning through penalty.
+         * - Endless Runner: 3 lanes, jump to choose correct answer.
+         * - Chloroplast Charge: Collecting correct inputs fills a meter.
+         * - Bloom State: Full meter triggers "Bloom" (invincibility/bonus mode).
+         * - Bloom attracts "Glucose" (bonus points) and releases "Oxygen" (visuals).
          */
 
-        // ============================================================
-        //  1. GAME CONFIG
-        // ============================================================
-        const CONFIG = {
-            // Physics
-            gravity: 1600,
-            jumpForce: 650,
-            moveSpeed: 300,
-            maxFallSpeed: 800,
-
-            // Player
-            playerStartPos: { x: 50, y: 0 },
-            playerHealth: 3,
-
-            // Camera
-            cameraFollow: true,
-
-            // Visuals (Civil War Palette)
-            bgColor: [45, 55, 75],       // Somber Dusk Blue
-            floorColor: [101, 67, 33],   // Earthy Brown (Mud/Dirt)
-            platformColor: [139, 69, 19],// Weathered Wood (Barricades)
-            hazardColor: [80, 80, 80],   // Iron/Steel (Spikes/Cannons)
-            coinColor: [245, 245, 220],  // Parchment (Pamphlets)
-            portalColor: [0, 50, 100],   // Union Blue base for flag
-            textColor: [255, 255, 255],
+        // -- CONFIG: Gameplay constants & Theme Colors --
+        const C = {
+            scrollSpeed: 140,       // pixels/sec
+            playerSpeed: 300,       // lane-switch speed
+            playerHP: 3,            // lives
+            gateSpacing: 600,       // pixels between gates
+            laneCount: 3,           // top, mid, bot
+            laneHeight: 70,         // vertical space per lane
+            floorY: 340,            // ground level
+            
+            // -- THEME COLORS (Forest/Garden) --
+            bg: [20, 40, 20],               // Deep Forest Green
+            floorCol: [60, 45, 30],         // Rich Soil Brown
+            laneLineCol: [100, 200, 100],   // Viny Green
+            playerCol: [50, 200, 50],       // Leaf Green (Sprout)
+            playerBloomCol: [255, 100, 200],// Flower Pink
+            
+            // Gate Colors
+            correctCol: [255, 255, 100],    // Sunlight Yellow (Input)
+            wrongCol: [80, 80, 80],         // Smoke/Stressor (Non-Input)
+            neutralCol: [200, 220, 150],    // Pale Plant Green
+            questionCol: [255, 255, 255],   // White Text
+            
+            // Addon Constants
+            chargeGain: 34,                 // % per correct answer (3 hits to fill)
+            bloomDuration: 5,               // seconds
         };
 
-        // ============================================================
-        //  2. HISTORICAL DATA (Addon Feature)
-        // ============================================================
-        const FACTS = [
+        // -- QUESTIONS: Photosynthesis Inputs/Outputs --
+        // answers[0..2] map to lanes. correct = index of correct answer.
+        // We shuffle answers at runtime.
+        const QUESTIONS = [
             {
-                q: "Primary cause of the war?",
-                options: ["Expansion of Trade", "Slavery"],
-                correct: 1 // Index of correct option
+                question: "What energy source do plants need?",
+                answers: ["Sunlight", "Moonlight", "Electricity"],
+                correct: 0,
             },
             {
-                q: "President of the Union?",
-                options: ["Abraham Lincoln", "Jefferson Davis"],
-                correct: 0
+                question: "Which gas do plants absorb from air?",
+                answers: ["Oxygen", "Nitrogen", "Carbon Dioxide"],
+                correct: 2,
             },
             {
-                q: "The Emancipation Proclamation...",
-                options: ["Ended the war", "Freed slaves in rebel states"],
-                correct: 1
+                question: "What liquid do roots absorb?",
+                answers: ["Soda", "Vinegar", "Water"],
+                correct: 2,
+            },
+            {
+                question: "What sugar do plants make for food?",
+                answers: ["Glucose", "Salt", "Lactose"],
+                correct: 0,
+            },
+            {
+                question: "What gas do plants release?",
+                answers: ["Oxygen", "Methane", "Helium"],
+                correct: 0,
+            },
+            {
+                question: "Which part of the plant catches sunlight?",
+                answers: ["Roots", "Leaves", "Seeds"],
+                correct: 1,
+            },
+            {
+                question: "What green pigment traps sunlight?",
+                answers: ["Chlorophyll", "Melanin", "Keratin"],
+                correct: 0,
+            },
+            {
+                question: "What is the process of making food called?",
+                answers: ["Digestion", "Respiration", "Photosynthesis"],
+                correct: 2,
             }
         ];
 
-        // ============================================================
-        //  3. LEVEL MAPS
-        //  New Symbols:
-        //  | : Gate (Blocks path)
-        //  [ : Left Banner (Option 0)
-        //  ] : Right Banner (Option 1)
-        // ============================================================
-        const LEVELS = [
-            // --- Level 1: The Outbreak ---
-            [
-                "                                          ",
-                "                                          ",
-                "                                          ",
-                "                       $                  ",
-                "      [              -----           ]    ",
-                "    -----                          -----  ",
-                "                                          ",
-                "            |              |              ",
-                "    $       |      $       |         >    ",
-                "   ---      |     ---      |        ===   ",
-                "            |              |              ",
-                "  @         |              |              ",
-                "=====  ^^^  =  ^^^    ^^^  =  ^^^  =======",
-            ],
-            // --- Level 2: The Turning Point ---
-            [
-                "                                          ",
-                "                                          ",
-                "     [           ]                        ",
-                "   -----       -----                      ",
-                "                                          ",
-                "          |                               ",
-                "          |                               ",
-                "          |              [           ]    ",
-                "          |            -----       -----  ",
-                "     $    |                               ",
-                "   -----  |                   |           ",
-                "          |                   |      >    ",
-                "  @       |    ^^^       $    |     ===   ",
-                "=====  ^^^^^^  ====  ^^^^^^^  =  ^^^^^^^^^",
-            ],
-        ];
-
-        // ============================================================
-        //  4. INITIALIZE KAPLAY
-        // ============================================================
-        kaplay({
-            background: CONFIG.bgColor,
-            width: 800,
-            height: 480,
-            scale: 1,
-            crisp: true,
-            global: true,
-            letterbox: true,
-            buttons: {
-                jump: { keyboard: ["space", "w", "up"], gamepad: ["south"] },
-                left: { keyboard: ["a", "left"], gamepad: ["dpad-left"] },
-                right: { keyboard: ["d", "right"], gamepad: ["dpad-right"] },
-            },
-        });
-
-        const TILE = 32;
-
-        // ============================================================
-        //  5. HELPER: Build Level
-        // ============================================================
-        function buildLevel(mapData, levelIdx) {
-            const objects = { coins: [], hazards: [], portals: [], gates: [], banners: [] };
-            let spawnPos = vec2(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y);
-            
-            // Track which Fact Gate we are currently building
-            // We assume a strictly ordered layout: [ ... ] ... | 
-            // Every time we place a Gate |, we increment the index for the next set.
-            let currentGateIdx = levelIdx * 2; // Offset facts by level to keep them unique per level (approx)
-            if (currentGateIdx >= FACTS.length) currentGateIdx = 0; // fallback
-
-            for (let row = 0; row < mapData.length; row++) {
-                for (let col = 0; col < mapData[row].length; col++) {
-                    const ch = mapData[row][col];
-                    const x = col * TILE;
-                    const y = row * TILE;
-
-                    switch (ch) {
-                        // Ground Block (Dirt)
-                        case "=":
-                            add([
-                                rect(TILE, TILE),
-                                pos(x, y),
-                                area(),
-                                body({ isStatic: true }),
-                                color(...CONFIG.floorColor),
-                                outline(2, rgb(60, 40, 20)),
-                                "ground",
-                            ]);
-                            break;
-
-                        // Platform (Wood)
-                        case "-":
-                            add([
-                                rect(TILE, TILE / 2),
-                                pos(x, y + TILE / 2),
-                                area(),
-                                body({ isStatic: true }),
-                                color(...CONFIG.platformColor),
-                                outline(2, rgb(80, 40, 10)),
-                                "platform",
-                            ]);
-                            break;
-
-                        // Player Spawn
-                        case "@":
-                            spawnPos = vec2(x, y);
-                            break;
-
-                        // Collectible (Abolitionist Pamphlet)
-                        case "$":
-                            // Paper sheet visual
-                            const coin = add([
-                                rect(18, 24),
-                                pos(x + TILE / 2, y + TILE / 2),
-                                area(),
-                                anchor("center"),
-                                color(...CONFIG.coinColor),
-                                outline(1, rgb(100, 100, 100)),
-                                "coin",
-                            ]);
-                            // Text lines on paper
-                            coin.add([
-                                rect(12, 2), pos(0, -6), anchor("center"), color(0,0,0,0.3)
-                            ]);
-                            coin.add([
-                                rect(12, 2), pos(0, 0), anchor("center"), color(0,0,0,0.3)
-                            ]);
-                            coin.add([
-                                rect(8, 2), pos(-2, 6), anchor("center"), color(0,0,0,0.3)
-                            ]);
-                            objects.coins.push(coin);
-                            break;
-
-                        // Hazard (Iron Spikes)
-                        case "^":
-                            add([
-                                polygon([vec2(0, TILE), vec2(TILE / 2, 4), vec2(TILE, TILE)]),
-                                pos(x, y),
-                                area({ shape: new Rect(vec2(4, 12), TILE - 8, TILE - 12) }),
-                                color(...CONFIG.hazardColor),
-                                "hazard",
-                            ]);
-                            break;
-
-                        // Exit Portal (Union Flagpole)
-                        case ">":
-                            // Pole
-                            const pole = add([
-                                rect(4, TILE * 3),
-                                pos(x + 14, y - TILE * 2),
-                                area(),
-                                color(200, 200, 200),
-                                "portal",
-                                z(5)
-                            ]);
-                            // Flag
-                            pole.add([
-                                rect(40, 24),
-                                pos(2, 2),
-                                color(0, 35, 102), // Union Blue
-                            ]);
-                            pole.add([
-                                rect(40, 4),
-                                pos(2, 6),
-                                color(200, 0, 0), // Red stripe
-                            ]);
-                             pole.add([
-                                rect(40, 4),
-                                pos(2, 16),
-                                color(200, 0, 0), // Red stripe
-                            ]);
-                            break;
-
-                        // --- ADDON: HISTORICAL FACT GATES ---
-
-                        // Gate (Barrier)
-                        case "|":
-                            add([
-                                rect(16, TILE * 4), // Tall gate
-                                pos(x + 8, y - TILE * 3),
-                                area(),
-                                body({ isStatic: true }),
-                                color(30, 30, 30),
-                                outline(2, rgb(100, 100, 100)),
-                                "gate",
-                                { gateId: currentGateIdx } // Link to fact
-                            ]);
-                            // After placing a gate, we assume the next set of banners belongs to the next fact
-                            currentGateIdx++;
-                            if (currentGateIdx >= FACTS.length) currentGateIdx = 0;
-                            break;
-
-                        // Left Banner (Option 0)
-                        case "[":
-                            const factIdxL = currentGateIdx;
-                            const bannerL = add([
-                                rect(140, 90),
-                                pos(x, y - 40),
-                                area(), 
-                                anchor("center"),
-                                color(220, 220, 200),
-                                outline(4, rgb(139, 69, 19)),
-                                "banner",
-                                { factId: factIdxL, optionId: 0 }
-                            ]);
-                            // Banner Text
-                            bannerL.add([
-                                text(FACTS[factIdxL].options[0], { size: 14, width: 130, align: "center" }),
-                                anchor("center"),
-                                color(0, 0, 0)
-                            ]);
-                            // Question Text (Floating above)
-                            add([
-                                text(FACTS[factIdxL].q, { size: 14, width: 250, align: "center" }),
-                                pos(x + TILE, y - 100), // Centered roughly between banners
-                                anchor("center"),
-                                color(255, 255, 255)
-                            ]);
-                            break;
-
-                        // Right Banner (Option 1)
-                        case "]":
-                            const factIdxR = currentGateIdx;
-                            const bannerR = add([
-                                rect(140, 90),
-                                pos(x, y - 40),
-                                area(),
-                                anchor("center"),
-                                color(220, 220, 200),
-                                outline(4, rgb(139, 69, 19)),
-                                "banner",
-                                { factId: factIdxR, optionId: 1 }
-                            ]);
-                             // Banner Text
-                             bannerR.add([
-                                text(FACTS[factIdxR].options[1], { size: 14, width: 130, align: "center" }),
-                                anchor("center"),
-                                color(0, 0, 0)
-                            ]);
-                            break;
-                    }
+        // -- Shuffle utility --
+        function shuffleAnswers() {
+            QUESTIONS.forEach((q) => {
+                const correctAnswer = q.answers[q.correct];
+                // Fisher-Yates shuffle
+                for (let i = q.answers.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.answers[i], q.answers[j]] = [q.answers[j], q.answers[i]];
                 }
-            }
-
-            return { spawnPos };
+                q.correct = q.answers.indexOf(correctAnswer);
+            });
         }
 
-        // ============================================================
-        //  6. MAIN GAME SCENE
-        // ============================================================
-        scene("game", (levelIdx = 0) => {
-            setGravity(CONFIG.gravity);
+        const canvasW = 800;
+        const canvasH = 450;
+        
+        kaplay({ 
+            width: canvasW, 
+            height: canvasH, 
+            background: C.bg, 
+            crisp: true, 
+            letterbox: true 
+        });
 
-            // Track solved facts to prevent re-triggering
-            const solvedFacts = new Set();
+        loadBean(); // Keeping bean as a fallback/debug sprite if needed, though we use primitives
 
-            // Build Level
-            const { spawnPos } = buildLevel(LEVELS[levelIdx], levelIdx);
+        // ==================
+        //  GAME SCENE
+        // ==================
+        scene("game", () => {
+            shuffleAnswers(); 
 
-            // UI State
+            // Game State
             let score = 0;
-            let hp = CONFIG.playerHealth;
+            let hp = C.playerHP;
+            let charge = 0;          // 0 to 100
+            let isBlooming = false;  // Addon state
+            let questionIdx = 0;
+            let nextGateX = canvasW + 200;
+            let answered = new Set();
+            
+            // Lane Setup
+            const laneYs = [];
+            for (let i = 0; i < C.laneCount; i++) {
+                laneYs.push(C.floorY - (C.laneCount - 1 - i) * C.laneHeight);
+            }
+            let currentLane = 1; // Middle lane
+            let targetY = laneYs[currentLane];
 
-            // --- Player Object (Union Soldier) ---
+            // -- BACKGROUND --
+            // Ground
+            add([
+                rect(canvasW, canvasH - C.floorY + C.laneHeight),
+                pos(0, C.floorY + C.laneHeight / 2),
+                color(...C.floorCol),
+                fixed(),
+                z(0),
+            ]);
+
+            // Lane Lines (Vines)
+            for (let i = 0; i < C.laneCount; i++) {
+                add([
+                    rect(canvasW, 4),
+                    pos(0, laneYs[i] + C.laneHeight / 2),
+                    color(...C.laneLineCol),
+                    opacity(0.15),
+                    fixed(),
+                    z(1),
+                ]);
+            }
+
+            // -- PLAYER (The Sprout) --
             const player = add([
-                rect(24, 40), // Soldier shape
-                pos(spawnPos),
+                rect(32, 32, { radius: 16 }), // Rounded sprout shape
+                pos(100, laneYs[currentLane]),
+                anchor("center"),
+                color(...C.playerCol),
+                scale(1),
                 area(),
-                body(),
-                anchor("botleft"),
-                color(0, 35, 102), // Union Blue Coat
-                outline(1, rgb(0, 0, 0)),
-                z(10),
-                { facing: 1 },
+                z(20),
                 "player",
             ]);
 
-            // Player details (Belt buckle)
+            // Add a little leaf detail to player
             player.add([
-                rect(24, 4),
-                pos(0, -18),
-                color(0, 0, 0), // Belt
-                anchor("botleft")
-            ]);
-            player.add([
-                rect(6, 6),
-                pos(9, -19),
-                color(218, 165, 32), // Gold Buckle
-                anchor("botleft")
+                rect(10, 20, { radius: 5 }),
+                pos(0, -20),
+                anchor("bottom"),
+                color(40, 180, 40),
+                rotate(20),
             ]);
 
-            // --- HUD ---
-            const uiBox = add([
-                rect(width(), 40),
-                fixed(),
-                pos(0,0),
+            // -- CONTROLS --
+            function changeLane(dir) {
+                currentLane += dir;
+                if (currentLane < 0) currentLane = 0;
+                if (currentLane >= C.laneCount) currentLane = C.laneCount - 1;
+                targetY = laneYs[currentLane];
+            }
+            onKeyPress("up", () => changeLane(-1));
+            onKeyPress("w", () => changeLane(-1));
+            onKeyPress("down", () => changeLane(1));
+            onKeyPress("s", () => changeLane(1));
+
+            // Smooth Movement
+            onUpdate(() => {
+                player.pos.y = lerp(player.pos.y, targetY, dt() * 12);
+            });
+
+            // -- AMBIENT PARTICLES (Leaves) --
+            loop(0.2, () => {
+                add([
+                    circle(rand(2, 4)),
+                    pos(canvasW + 20, rand(0, C.floorY)),
+                    color(60, 100, 60),
+                    opacity(rand(0.2, 0.5)),
+                    move(LEFT, C.scrollSpeed * 0.5),
+                    z(5),
+                    "leaf",
+                    lifespan(6),
+                ]);
+            });
+
+            // =========================
+            //  ADDON: CHLOROPLAST CHARGE
+            // =========================
+
+            // Charge Bar UI
+            add([
+                rect(104, 24, { radius: 4 }),
+                pos(18, 58),
                 color(0, 0, 0),
-                opacity(0.5),
-                z(99)
-            ]);
-
-            const hpLabel = add([
-                text(`MORALE: ${hp}`, { size: 18 }),
-                pos(16, 12),
                 fixed(),
-                z(100),
-                color(255, 255, 255),
+                z(50)
             ]);
-
-            const scoreLabel = add([
-                text(`PAMPHLETS: ${score}`, { size: 18 }),
-                pos(16, 40),
+            const chargeBar = add([
+                rect(0, 16, { radius: 2 }),
+                pos(20, 62),
+                color(0, 255, 0),
                 fixed(),
-                z(100),
-                color(...CONFIG.coinColor),
+                z(51),
+                "chargeBar"
             ]);
-
-            const levelLabel = add([
-                text(`Section ${levelIdx + 1}`, { size: 18 }),
-                pos(width() - 16, 12),
-                anchor("topright"),
+            add([
+                text("CHLOROPLAST CHARGE", { size: 10 }),
+                pos(20, 46),
+                color(150, 255, 150),
                 fixed(),
-                z(100),
-                color(200, 200, 255),
+                z(51)
             ]);
 
-            // --- Movement ---
-            onButtonDown("left", () => {
-                player.move(-CONFIG.moveSpeed, 0);
-                player.facing = -1;
-            });
-
-            onButtonDown("right", () => {
-                player.move(CONFIG.moveSpeed, 0);
-                player.facing = 1;
-            });
-
-            onButtonPress("jump", () => {
-                if (player.isGrounded()) {
-                    player.jump(CONFIG.jumpForce);
-                }
-            });
-
-            player.onUpdate(() => {
-                if (player.vel.y > CONFIG.maxFallSpeed) {
-                    player.vel.y = CONFIG.maxFallSpeed;
-                }
-            });
-
-            // --- Camera ---
-            if (CONFIG.cameraFollow) {
-                player.onUpdate(() => {
-                    camPos(
-                        lerp(camPos().x, player.pos.x + 100, 0.05),
-                        lerp(camPos().y, player.pos.y - 50, 0.05),
-                    );
-                });
-            }
-
-            // --- Collection ---
-            player.onCollide("coin", (coin) => {
-                destroy(coin);
-                score++;
-                scoreLabel.text = `PAMPHLETS: ${score}`;
-                // Particle puff
-                for (let i = 0; i < 4; i++) {
-                    add([
-                        rect(4, 4),
-                        pos(coin.pos),
-                        color(255, 255, 200),
-                        move(rand(0, 360), rand(50, 150)),
-                        opacity(1),
-                        lifespan(0.3, { fade: 0.3 }),
-                    ]);
-                }
-            });
-
-            // --- Hazards ---
-            player.onCollide("hazard", () => {
-                takeDamage();
-            });
-
-            player.onCollide("enemy", (e) => {
-                destroy(e);
-                takeDamage();
-            });
-
-            function takeDamage() {
-                hp--;
-                hpLabel.text = `MORALE: ${hp}`;
-                flash(rgb(255, 0, 0), 0.15);
-                shake(10);
-                // Knockback
-                player.jump(300);
-                player.move(player.facing * -500, 0);
-
-                if (hp <= 0) {
-                    go("gameover", { score, level: levelIdx });
-                }
-            }
-
-            // --- ADDON: HISTORICAL FACT GATES LOGIC ---
-            player.onCollide("banner", (banner) => {
-                // If this gate is already solved, ignore
-                if (solvedFacts.has(banner.factId)) return;
-
-                const fact = FACTS[banner.factId];
+            // Bloom Logic
+            function startBloom() {
+                if (isBlooming) return;
+                isBlooming = true;
+                charge = 100;
                 
-                // Check answer
-                if (banner.optionId === fact.correct) {
-                    // CORRECT
-                    solvedFacts.add(banner.factId);
+                // Transform Player
+                player.use(color(...C.playerBloomCol));
+                tween(player.scale, vec2(1.3), 0.5, (v) => player.scale = v, easings.easeOutBack);
+                
+                addKaboom(player.pos);
+                shake(5);
+
+                // Bloom Text
+                const bloomLabel = add([
+                    text("BLOOM STATE!", { size: 32 }),
+                    pos(center()),
+                    anchor("center"),
+                    color(255, 100, 200),
+                    lifespan(2, { fade: 0.5 }),
+                    fixed(),
+                    z(100)
+                ]);
+
+                // End Bloom Timer
+                wait(C.bloomDuration, endBloom);
+            }
+
+            function endBloom() {
+                if (!isBlooming) return; // Already ended
+                isBlooming = false;
+                charge = 0;
+                
+                // Revert Player
+                player.use(color(...C.playerCol));
+                tween(player.scale, vec2(1), 0.5, (v) => player.scale = v, easings.easeOutBack);
+            }
+
+            // Update Charge Bar Visual
+            onUpdate(() => {
+                chargeBar.width = lerp(chargeBar.width, charge, dt() * 10);
+                
+                // Bloom Effects
+                if (isBlooming) {
+                    // Spawn Oxygen Trails
+                    if (time() % 0.1 < dt()) {
+                        add([
+                            circle(6),
+                            pos(player.pos.add(rand(-10, 10), rand(-10, 10))),
+                            color(200, 240, 255),
+                            opacity(0.8),
+                            move(LEFT, 150),
+                            lifespan(0.6, { fade: 0.6 }),
+                            z(19),
+                        ]);
+                    }
                     
-                    // Destroy the associated Gate(s)
-                    const gates = get("gate");
-                    gates.forEach(g => {
-                        if (g.gateId === banner.factId) {
-                            destroy(g);
-                            // Visual effect for gate destruction
-                            for(let i=0; i<10; i++) {
-                                add([
-                                    rect(8, 8),
-                                    pos(g.pos.add(rand(0, 16), rand(0, 100))),
-                                    color(100, 100, 100),
-                                    move(rand(0, 360), 100),
-                                    opacity(1),
-                                    lifespan(0.5, { fade: 0.5 })
-                                ]);
-                            }
-                        }
-                    });
-
-                    // Bonus Score
-                    score += 5;
-                    scoreLabel.text = `PAMPHLETS: ${score}`;
-                    
-                    // Feedback
-                    add([
-                        text("CORRECT!", { size: 24 }),
-                        pos(player.pos.x, player.pos.y - 60),
-                        anchor("center"),
-                        color(0, 255, 0),
-                        move(270, 50),
-                        opacity(1),
-                        lifespan(1, { fade: 0.5 })
-                    ]);
-
-                } else {
-                    // INCORRECT
-                    shake(5);
-                    add([
-                        text("INCORRECT!", { size: 24 }),
-                        pos(player.pos.x, player.pos.y - 60),
-                        anchor("center"),
-                        color(255, 0, 0),
-                        move(270, 50),
-                        opacity(1),
-                        lifespan(1, { fade: 0.5 })
-                    ]);
-                    
-                    // Spawn Skirmish Enemy
-                    const enemy = add([
-                        rect(24, 24),
-                        pos(player.pos.x + 200, player.pos.y - 100),
-                        area(),
-                        body(),
-                        color(150, 20, 20), // Confederate Red/Grey
-                        "enemy",
-                        "hazard"
-                    ]);
-                    // Simple AI: Move left
-                    enemy.onUpdate(() => {
-                        enemy.move(-150, 0);
-                    });
-                }
-            });
-
-
-            // --- Level Completion ---
-            player.onCollide("portal", () => {
-                const nextLevel = levelIdx + 1;
-                if (nextLevel < LEVELS.length) {
-                    go("game", nextLevel);
-                } else {
-                    go("win", { score });
-                }
-            });
-
-            // --- Death Plane ---
-            player.onUpdate(() => {
-                if (player.pos.y > 1000) {
-                    hp--;
-                    hpLabel.text = `MORALE: ${hp}`;
-                    if (hp <= 0) {
-                        go("gameover", { score, level: levelIdx });
-                    } else {
-                        player.pos = spawnPos.clone();
-                        player.vel = vec2(0, 0);
+                    // Spawn Glucose Coins Ahead
+                    if (time() % 0.3 < dt()) {
+                        const yPos = laneYs[Math.floor(rand(0, 3))];
+                        add([
+                            circle(8),
+                            pos(canvasW + 50, yPos),
+                            color(255, 255, 0),
+                            area({ scale: 1.5 }), // larger pickup area
+                            anchor("center"),
+                            z(25),
+                            "glucose",
+                            { val: 50 }
+                        ]);
                     }
                 }
             });
+
+            // Glucose Magnet & Collection
+            onUpdate("glucose", (g) => {
+                g.pos.x -= C.scrollSpeed * dt(); // Natural scroll
+                
+                if (isBlooming) {
+                    // Magnet effect
+                    const dir = player.pos.sub(g.pos).unit();
+                    const dist = player.pos.dist(g.pos);
+                    if (dist < 400) {
+                        g.move(dir.scale(500)); // Fly towards player
+                    }
+                }
+                
+                if (g.pos.x < -50) destroy(g);
+            });
+
+            onCollide("player", "glucose", (p, g) => {
+                destroy(g);
+                score += g.val;
+                add([
+                    text("+" + g.val, { size: 14 }),
+                    pos(p.pos.x, p.pos.y - 30),
+                    color(255, 255, 0),
+                    move(UP, 100),
+                    lifespan(0.5, { fade: 0.5 }),
+                    z(100)
+                ]);
+            });
+
+
+            // =========================
+            //  QUIZ MECHANICS
+            // =========================
+            function spawnGate(qIdx) {
+                if (qIdx >= QUESTIONS.length) return;
+                const q = QUESTIONS[qIdx];
+                const gateX = nextGateX;
+
+                // Question Banner
+                add([
+                    text(q.question, { size: 18, width: 400, align: "center" }),
+                    pos(gateX, C.floorY - C.laneCount * C.laneHeight - 30),
+                    anchor("center"),
+                    color(...C.questionCol),
+                    z(25),
+                    "scrollable",
+                    { gateIdx: qIdx },
+                ]);
+
+                // Answer Blocks
+                for (let lane = 0; lane < C.laneCount; lane++) {
+                    const isCorrect = lane === q.correct;
+                    const block = add([
+                        rect(90, C.laneHeight - 12, { radius: 8 }),
+                        pos(gateX, laneYs[lane]),
+                        anchor("center"),
+                        color(...C.neutralCol),
+                        outline(3, rgb(60, 80, 60)),
+                        area(),
+                        z(15),
+                        "answerblock",
+                        "scrollable",
+                        {
+                            gateIdx: qIdx,
+                            lane,
+                            isCorrect,
+                            revealed: false,
+                        },
+                    ]);
+
+                    // Answer Text
+                    block.add([
+                        text(q.answers[lane], { size: 13, width: 80, align: "center" }),
+                        anchor("center"),
+                        color(40, 60, 40),
+                    ]);
+                }
+
+                nextGateX += C.gateSpacing;
+            }
+
+            // Scroll Logic
+            onUpdate("scrollable", (s) => {
+                s.pos.x -= C.scrollSpeed * dt();
+                if (s.pos.x < -300) destroy(s);
+            });
+
+            // Collision with Gate
+            onCollide("player", "answerblock", (p, block) => {
+                if (block.revealed) return;
+                if (answered.has(block.gateIdx)) return;
+                
+                answered.add(block.gateIdx);
+
+                // Reveal logic for all blocks in this gate
+                get("answerblock").forEach((b) => {
+                    if (b.gateIdx === block.gateIdx) {
+                        b.revealed = true;
+                        b.color = b.isCorrect ? rgb(...C.correctCol) : rgb(...C.wrongCol);
+                    }
+                });
+
+                if (block.isCorrect) {
+                    // CORRECT
+                    score += 100;
+                    addKaboom(player.pos);
+                    
+                    // Add Charge
+                    if (!isBlooming) {
+                        charge += C.chargeGain;
+                        if (charge >= 100) startBloom();
+                    }
+
+                    // Floating Text
+                    add([
+                        text("Input Acquired!", { size: 20 }),
+                        pos(player.pos.x, player.pos.y - 50),
+                        anchor("center"),
+                        color(100, 255, 100),
+                        move(UP, 50),
+                        lifespan(1.0, { fade: 0.5 }),
+                        z(100),
+                    ]);
+
+                } else {
+                    // WRONG
+                    shake(8);
+                    
+                    // Penalty: Lose HP and Stress
+                    hp--;
+                    
+                    add([
+                        text("Stressor!", { size: 20 }),
+                        pos(player.pos.x, player.pos.y - 50),
+                        anchor("center"),
+                        color(255, 80, 80),
+                        move(UP, 50),
+                        lifespan(1.0, { fade: 0.5 }),
+                        z(100),
+                    ]);
+
+                    // If blooming, maybe end it early or reduce time? 
+                    // Let's just reduce HP for simplicity as per plan.
+                    
+                    if (hp <= 0) {
+                        wait(1, () => go("gameover", { score, answered: answered.size, total: QUESTIONS.length }));
+                    }
+                }
+
+                // Win check
+                if (answered.size >= QUESTIONS.length) {
+                    // Wait a bit before winning to finish animations
+                    wait(2.0, () => {
+                        go("win", { score, hp, total: QUESTIONS.length });
+                    });
+                }
+            });
+
+            // Spawn all gates
+            for (let i = 0; i < QUESTIONS.length; i++) {
+                spawnGate(i);
+            }
+
+            // HUD
+            const scoreText = add([
+                text(`Score: 0`, { size: 20 }),
+                pos(20, 20), color(255, 255, 255), fixed(), z(50),
+            ]);
+            
+            // Lives (Hearts)
+            const hpContainer = add([
+                pos(200, 22), fixed(), z(50)
+            ]);
+            
+            // Update HUD
+            onUpdate(() => {
+                scoreText.text = `Score: ${score}`;
+                hpContainer.removeAll();
+                // Draw hearts
+                for(let i=0; i<hp; i++){
+                    hpContainer.add([
+                        text("♥", { size: 22 }),
+                        pos(i * 24, 0),
+                        color(255, 100, 100)
+                    ]);
+                }
+            });
+            
+            add([
+                text("UP/DOWN to Switch Lanes", { size: 12 }),
+                pos(canvasW/2, canvasH - 20),
+                anchor("center"),
+                color(150, 180, 150),
+                fixed(),
+                z(50)
+            ]);
+
+            // Ground Markers for Speed sensation
+            loop(0.4, () => {
+                add([
+                    rect(30, 4),
+                    pos(canvasW + 10, C.floorY + C.laneHeight/2 + rand(0, 30)),
+                    color(50, 40, 30),
+                    opacity(0.3),
+                    move(LEFT, C.scrollSpeed),
+                    lifespan(3),
+                    z(2)
+                ]);
+            });
         });
 
-        // ============================================================
-        //  7. GAME OVER & WIN SCENES
-        // ============================================================
-        scene("gameover", ({ score, level }) => {
+        // ==================
+        //  GAME OVER SCENE
+        // ==================
+        scene("gameover", ({ score, answered, total }) => {
             add([
-                text("RETREAT!", { size: 48 }),
-                pos(center()),
-                anchor("center"),
-                color(220, 60, 80),
+                rect(canvasW, canvasH),
+                color(20, 20, 20),
             ]);
             add([
-                text(`Pamphlets Collected: ${score}`, { size: 22 }),
-                pos(center().x, center().y + 60),
-                anchor("center"),
-                color(200, 200, 200),
+                text("PLANT WITHERED", { size: 48 }), 
+                pos(center()), 
+                anchor("center"), 
+                color(220, 60, 60)
             ]);
             add([
-                text("Press SPACE to Regroup", { size: 18 }),
-                pos(center().x, center().y + 110),
-                anchor("center"),
-                color(150, 150, 180),
+                text(`Score: ${score}  |  Questions: ${answered}/${total}`, { size: 20 }), 
+                pos(center().x, center().y + 60), 
+                anchor("center"), 
+                color(255, 255, 255)
             ]);
-            onKeyPress("space", () => go("game", level));
-            onClick(() => go("game", level));
+            add([
+                text("Press SPACE to sprout again", { size: 16 }), 
+                pos(center().x, center().y + 120), 
+                anchor("center"), 
+                color(150, 150, 150)
+            ]);
+            
+            onKeyPress("space", () => go("game"));
+            onClick(() => go("game"));
         });
 
-        scene("win", ({ score }) => {
+        // ==================
+        //  WIN SCENE
+        // ==================
+        scene("win", ({ score, hp, total }) => {
             add([
-                text("VICTORY!", { size: 48 }),
-                pos(center()),
-                anchor("center"),
-                color(100, 255, 150),
+                rect(canvasW, canvasH),
+                color(20, 40, 20),
+            ]);
+            // Confetti
+            loop(0.1, () => {
+                add([
+                    rect(6, 6),
+                    pos(rand(0, canvasW), 0),
+                    color(rand(100, 255), rand(100, 255), 100),
+                    move(DOWN, rand(100, 200)),
+                    lifespan(2),
+                ]);
+            });
+
+            add([
+                text("FULL BLOOM!", { size: 48 }), 
+                pos(center()), 
+                anchor("center"), 
+                color(100, 255, 100)
             ]);
             add([
-                text("The Union is Preserved.", { size: 24 }),
-                pos(center().x, center().y + 50),
-                anchor("center"),
-                color(200, 200, 255),
+                text(`Final Score: ${score}`, { size: 24 }), 
+                pos(center().x, center().y + 60), 
+                anchor("center"), 
+                color(255, 255, 100)
             ]);
             add([
-                text(`Total Pamphlets: ${score}`, { size: 22 }),
-                pos(center().x, center().y + 100),
-                anchor("center"),
-                color(255, 210, 50),
+                text("You mastered Photosynthesis!", { size: 16 }), 
+                pos(center().x, center().y + 100), 
+                anchor("center"), 
+                color(200, 220, 200)
             ]);
             add([
-                text("Press SPACE to Play Again", { size: 18 }),
-                pos(center().x, center().y + 150),
-                anchor("center"),
-                color(150, 150, 180),
+                text("Press SPACE to play again", { size: 14 }), 
+                pos(center().x, center().y + 140), 
+                anchor("center"), 
+                color(150, 180, 150)
             ]);
-            onKeyPress("space", () => go("game", 0));
-            onClick(() => go("game", 0));
+
+            onKeyPress("space", () => go("game"));
+            onClick(() => go("game"));
         });
 
-        // Start Game
-        go("game", 0);
+        // -- START --
+        go("game");
 
     </script>
 </body>
-
 </html>

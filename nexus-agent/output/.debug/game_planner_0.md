@@ -1,8 +1,8 @@
-GAME_TYPE: platformer
+GAME_TYPE: quizrunner
 
-RATIONALE: The Civil War is best understood as a chronological progression of events and shifting geography, which mirrors the linear movement of a platformer. This genre allows the player to "advance" through the timeline of the war, moving from the causes of the conflict toward its major battles and ultimate resolution.
+RATIONALE: The quizrunner format is ideal for 5th graders to practice identifying and categorizing the inputs and outputs of photosynthesis. It reinforces the lesson objectives by requiring players to make split-second decisions to differentiate between what a plant needs (inputs) and what it produces (outputs).
 
-ADDON FEATURE: Historical Fact Gates
-At the end of each level section, the player encounters a "Fortress Gate" blocked by two hanging banners. Each banner displays a historical statement regarding the war’s causes or factions (e.g., "The Confederacy supported States' Rights" vs. "The Union supported the expansion of slavery"). The player must jump through the banner containing the correct historical fact to unlock the gate and proceed; choosing the incorrect banner triggers a "skirmish" (spawns an extra enemy) and requires the player to re-read the prompt.
+ADDON FEATURE: The Chloroplast Charge
+As the player runs, the gates are labeled with different substances (e.g., Oxygen, CO2, Sunlight, Glucose, Vinegar). Passing through a correct "Input" gate (Sunlight, Water, or CO2) fills a "Chloroplast Meter." When the meter is full, the plant enters a "Bloom State" for 5 seconds, turning the character into a flowering plant that automatically attracts "Glucose" coins and leaves behind "Oxygen" trails, visually reinforcing the relationship between inputs and outputs.
 
-VISUAL THEME: The player controls a Union soldier navigating 19th-century landscapes, including the woods of Virginia and fortified encampments. Collectibles are "Abolitionist Pamphlets," and hazards include period-accurate obstacles like wooden barricades, cannons, and opposing scouts.
+VISUAL THEME: The game features a small "Sprout" character running through a vibrant garden ecosystem. Correct gates are represented by glowing suns or refreshing rain clouds, while incorrect gates or obstacles are represented by "Environmental Stressors" like salt piles or thick smoke clouds.
