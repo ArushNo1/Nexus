@@ -805,14 +805,16 @@ export async function POST(req: NextRequest) {
                     user_id: user.id,
                     title: lessonData.lessonPlan?.title || 'Educational Video',
                     status: 'processing',
+                    scenes: [],
                 })
                 .select('id')
                 .single();
 
             if (insertError) {
-                console.warn('[generate-video] Could not create pending video:', insertError.message);
+                console.warn('[generate-video] Could not create pending video:', insertError.message, insertError);
             } else {
                 videoRowId = videoRow.id;
+                console.log('[generate-video] Pending video record created:', videoRowId);
             }
         }
 

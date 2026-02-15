@@ -24,6 +24,8 @@ import {
     ChevronDown,
     ChevronUp,
     XCircle,
+    FileText,
+    Sparkles,
 } from 'lucide-react';
 
 export default function LessonDetailPage() {
@@ -38,8 +40,32 @@ export default function LessonDetailPage() {
     const [game, setGame] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [userRole, setUserRole] = useState<'student' | 'teacher' | null>(null);
-    const [showObjectives, setShowObjectives] = useState(true);
     const [showScenes, setShowScenes] = useState(false);
+    const [generatingVideo, setGeneratingVideo] = useState(false);
+
+    const handleGenerateVideo = async () => {
+        if (!lesson || generatingVideo) return;
+        setGeneratingVideo(true);
+        try {
+            const res = await fetch('/api/generate-video', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lessonData: lesson.content,
+                    lessonId: lesson.id,
+                    gameDesignDoc: game?.design_doc_data || null,
+                }),
+            });
+            const data = await res.json();
+            if (data.videoId) {
+                setVideo({ id: data.videoId, status: 'processing' });
+            }
+        } catch (err) {
+            console.error('Failed to trigger video generation:', err);
+        } finally {
+            setGeneratingVideo(false);
+        }
+    };
 
     useEffect(() => {
         const loadLesson = async () => {
@@ -105,45 +131,29 @@ export default function LessonDetailPage() {
         loadLesson();
     }, [lessonId, router]);
 
-    // Poll for newly created game/video records (e.g. after redirect from create page)
+    // Poll for newly created game record (e.g. after redirect from create page)
     useEffect(() => {
-        if (loading || !lesson) return;
-        if (game && video) return; // Both already loaded
+        if (loading || !lesson || game) return;
 
         const interval = setInterval(async () => {
             const supabase = createClient();
-
-            if (!game) {
-                const { data: gameData } = await supabase
-                    .from('games')
-                    .select('*')
-                    .eq('lesson_id', lessonId)
-                    .order('created_at', { ascending: false })
-                    .limit(1)
-                    .maybeSingle();
-                if (gameData) setGame(gameData);
-            }
-
-            if (!video) {
-                const { data: videoData } = await supabase
-                    .from('videos')
-                    .select('*')
-                    .eq('lesson_id', lessonId)
-                    .order('created_at', { ascending: false })
-                    .limit(1)
-                    .maybeSingle();
-                if (videoData) setVideo(videoData);
-            }
+            const { data: gameData } = await supabase
+                .from('games')
+                .select('*')
+                .eq('lesson_id', lessonId)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            if (gameData) setGame(gameData);
         }, 3000);
 
-        // Stop polling after 30 seconds — if records aren't created by then, something failed
         const timeout = setTimeout(() => clearInterval(interval), 30000);
 
         return () => {
             clearInterval(interval);
             clearTimeout(timeout);
         };
-    }, [loading, lesson, game, video, lessonId]);
+    }, [loading, lesson, game, lessonId]);
 
     // Poll for game status while it's being generated
     useEffect(() => {
@@ -448,23 +458,36 @@ export default function LessonDetailPage() {
 
                         {/* No video placeholder */}
                         {!video && (
-                            <div className="relative bg-[#0d281e] border border-white/5 rounded-2xl p-8 text-center">
-                                {isGenerating ? (
+                            <div className="relative bg-[#0d281e] border border-blue-500/10 rounded-2xl p-8 text-center">
+                                {generatingVideo ? (
                                     <>
                                         <Loader2 className="mx-auto text-blue-400 mb-3 animate-spin" size={40} />
                                         <p className="text-blue-400 font-sans-clean font-medium">Generating concept video...</p>
                                         <p className="text-slate-500 text-sm font-sans-clean mt-1">This may take a few minutes. The page will update automatically.</p>
                                     </>
+                                ) : game?.status === 'done' ? (
+                                    <>
+                                        <Film className="mx-auto text-slate-600 mb-3" size={40} />
+                                        <p className="text-slate-400 font-sans-clean">No concept video generated yet.</p>
+                                        <p className="text-slate-500 text-sm font-sans-clean mt-1">The game is ready — you can now generate a video for this lesson.</p>
+                                        {userRole === 'teacher' && (
+                                            <button
+                                                onClick={handleGenerateVideo}
+                                                className="mt-4 inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all font-sans-clean bg-blue-500 hover:bg-blue-400 text-[#0d281e] shadow-[0_4px_0_#1e40af] hover:translate-y-[2px] hover:shadow-[0_2px_0_#1e40af] active:translate-y-[4px] active:shadow-none"
+                                            >
+                                                <Sparkles size={16} /> Generate Concept Video
+                                            </button>
+                                        )}
+                                    </>
                                 ) : (
                                     <>
                                         <Film className="mx-auto text-slate-600 mb-3" size={40} />
-                                        <p className="text-slate-400 font-sans-clean">No video generated for this lesson yet.</p>
-                                        {userRole === 'teacher' && (
-                                            <Link href={`/create?id=${lesson.id}`}>
-                                                <button className="mt-4 px-5 py-2.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all text-sm font-medium font-sans-clean">
-                                                    Generate Video
-                                                </button>
-                                            </Link>
+                                        <p className="text-slate-500 font-sans-clean">Video generation is available after the game finishes generating.</p>
+                                        {game && game.status !== 'failed' && (
+                                            <div className="flex items-center justify-center gap-2 mt-3 text-yellow-400/60 text-xs font-sans-clean">
+                                                <Loader2 size={12} className="animate-spin" />
+                                                Waiting for game to complete...
+                                            </div>
                                         )}
                                     </>
                                 )}
@@ -496,7 +519,7 @@ export default function LessonDetailPage() {
                             </div>
                         )}
 
-                        {/* Lesson Info, Objectives, Key Takeaways — bottom row */}
+                        {/* Lesson Info, Objectives, Design Doc, Key Takeaways — bottom row */}
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {/* Lesson Info Card */}
                             <div className="relative bg-[#0d281e] border border-emerald-500/10 rounded-2xl overflow-hidden">
@@ -529,29 +552,42 @@ export default function LessonDetailPage() {
                                 <div className="relative bg-[#0d281e] border border-emerald-500/10 rounded-2xl overflow-hidden">
                                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-transparent pointer-events-none" />
                                     <div className="relative z-10 p-6">
-                                        <button
-                                            onClick={() => setShowObjectives(!showObjectives)}
-                                            className="flex items-center justify-between w-full mb-4"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                                                    <Target className="text-emerald-400" size={18} />
-                                                </div>
-                                                <h2 className="text-xl font-serif-display text-white">Objectives</h2>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                                <Target className="text-emerald-400" size={18} />
                                             </div>
-                                            {showObjectives ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
-                                        </button>
+                                            <h2 className="text-xl font-serif-display text-white">Objectives</h2>
+                                        </div>
 
-                                        {showObjectives && (
-                                            <ul className="space-y-2">
-                                                {lesson.objectives.map((obj: string, i: number) => (
-                                                    <li key={i} className="flex items-start gap-2.5 text-sm text-slate-300 font-sans-clean">
-                                                        <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />
-                                                        {obj}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
+                                        <ul className="space-y-2">
+                                            {lesson.objectives.map((obj: string, i: number) => (
+                                                <li key={i} className="flex items-start gap-2.5 text-sm text-slate-300 font-sans-clean">
+                                                    <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+                                                    {obj}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Game Design Document Card */}
+                            {game?.design_doc_data && (
+                                <div className="relative bg-[#0d281e] border border-purple-500/10 rounded-2xl overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.02] to-transparent pointer-events-none" />
+                                    <div className="relative z-10 p-6">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                                                <FileText className="text-purple-400" size={18} />
+                                            </div>
+                                            <h2 className="text-xl font-serif-display text-white">Game Design Doc</h2>
+                                        </div>
+
+                                        <div className="bg-black/30 border border-white/5 rounded-xl p-4 overflow-auto max-h-[400px]">
+                                            <pre className="text-xs font-mono text-slate-400 whitespace-pre-wrap break-words">
+                                                {game.design_doc_data}
+                                            </pre>
+                                        </div>
                                     </div>
                                 </div>
                             )}

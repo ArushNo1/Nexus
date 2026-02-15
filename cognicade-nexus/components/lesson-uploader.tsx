@@ -6,7 +6,6 @@ import {
   Upload,
   Gamepad2,
   Film,
-  Music,
   FileText,
   Loader2,
   Sparkles,
@@ -105,8 +104,7 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
         is_published: true,
       });
 
-      // 4. Fire off all generation APIs (fire-and-forget)
-      // Game generation
+      // 4. Fire off game generation (video can be triggered later from the lesson page)
       fetch("/api/generate-game", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -117,23 +115,6 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
           target_audience: lp.gradeLevel || null,
         }),
       }).catch((err) => console.error("Game generation request failed:", err));
-
-      // Video generation
-      fetch("/api/generate-video", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lessonData: parsedData.data,
-          lessonId,
-        }),
-      }).catch((err) => console.error("Video generation request failed:", err));
-
-      // Music generation
-      fetch("/api/generate-song", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lessonData: parsedData.data }),
-      }).catch((err) => console.error("Music generation request failed:", err));
 
       // 5. Redirect to lesson detail page immediately
       router.push(`/lessons/${lessonId}?generating=true`);
@@ -161,8 +142,8 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
                 Create Educational Game
               </h2>
               <p className="text-slate-400 text-sm font-sans-clean mt-0.5">
-                Upload a lesson plan to generate an interactive game, concept
-                video, and background music.
+                Upload a lesson plan to generate an interactive game. You can
+                generate a concept video later from the lesson page.
               </p>
             </div>
           </div>
@@ -245,32 +226,18 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
                 <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                   <Gamepad2 size={16} />
                   <span className="text-sm font-medium font-sans-clean">
-                    Game
-                  </span>
-                  <span className="text-[9px] font-pixel text-emerald-500/60 ml-1">
-                    ALWAYS
+                    Interactive Game
                   </span>
                 </div>
 
-                {/* Video — always on */}
-                <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                {/* Video — generated later */}
+                <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-500">
                   <Film size={16} />
                   <span className="text-sm font-medium font-sans-clean">
                     Concept Video
                   </span>
-                  <span className="text-[9px] font-pixel text-blue-500/60 ml-1">
-                    ALWAYS
-                  </span>
-                </div>
-
-                {/* Music — always on */}
-                <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400">
-                  <Music size={16} />
-                  <span className="text-sm font-medium font-sans-clean">
-                    Background Music
-                  </span>
-                  <span className="text-[9px] font-pixel text-purple-500/60 ml-1">
-                    ALWAYS
+                  <span className="text-[9px] font-pixel text-slate-600 ml-1">
+                    LATER
                   </span>
                 </div>
               </div>

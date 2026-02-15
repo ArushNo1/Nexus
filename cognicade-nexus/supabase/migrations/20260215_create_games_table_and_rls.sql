@@ -1,22 +1,8 @@
--- Create games table (if it doesn't already exist)
-CREATE TABLE IF NOT EXISTS games (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    lesson_id UUID NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    target_audience TEXT,
-    html_src TEXT,
-    design_doc TEXT,
-    status TEXT DEFAULT 'pending', -- pending, generating, done, failed
-    errors TEXT[],
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_games_lesson_id ON games(lesson_id);
-CREATE INDEX IF NOT EXISTS idx_games_user_id ON games(user_id);
-CREATE INDEX IF NOT EXISTS idx_games_status ON games(status);
+-- Games table already exists — this migration only adds RLS policies.
+-- Table schema for reference:
+--   id, lesson_id, user_id, title, target_audience, thumbnail_url,
+--   status, errors, created_at, updated_at, design_doc_data, html_src,
+--   game_url, folder_path, error_message, completion_percentage
 
 -- Enable Row Level Security
 ALTER TABLE games ENABLE ROW LEVEL SECURITY;
