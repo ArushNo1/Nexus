@@ -108,7 +108,10 @@ export default function SettingsPage() {
         return (
             <div className="min-h-screen bg-[#0a1f18] text-slate-100">
                 <Sidebar />
-                <div className="ml-64 min-h-screen">
+                <div
+                    className="min-h-screen transition-[margin] duration-300"
+                    style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
+                >
                     <DashboardNavbar />
                     <div className="px-8 py-12 flex items-center justify-center">
                         <p className="text-slate-400 font-sans-clean">Loading settings...</p>
@@ -131,7 +134,10 @@ export default function SettingsPage() {
 
             <Sidebar />
 
-            <div className="ml-64 min-h-screen">
+            <div
+                className="min-h-screen transition-[margin] duration-300"
+                style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
+            >
                 <DashboardNavbar />
 
                 <div className="px-8 py-12">

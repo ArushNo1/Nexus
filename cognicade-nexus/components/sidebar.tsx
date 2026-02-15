@@ -73,6 +73,12 @@ export default function Sidebar() {
         fetchUserProfile();
     }, []);
 
+    useEffect(() => {
+        if (typeof document !== 'undefined') {
+            document.documentElement.style.setProperty('--sidebar-width', collapsed ? '5rem' : '16rem');
+        }
+    }, [collapsed]);
+
     const handleLogout = async () => {
         const supabase = createClient();
         await supabase.auth.signOut();
@@ -95,7 +101,7 @@ export default function Sidebar() {
                 </Link>
                 {!collapsed && (
                     <button
-                        onClick={() => setCollapsed(!collapsed)}
+                        onClick={() => setCollapsed(true)}
                         className="text-slate-400 hover:text-white transition-colors"
                     >
                         <ChevronLeft size={20} />
@@ -106,7 +112,7 @@ export default function Sidebar() {
             {/* Expand Button (when collapsed) */}
             {collapsed && (
                 <button
-                    onClick={() => setCollapsed(!collapsed)}
+                    onClick={() => setCollapsed(false)}
                     className="absolute -right-3 top-24 bg-emerald-500 hover:bg-emerald-400 text-white rounded-full p-1 shadow-lg transition-all"
                 >
                     <ChevronRight size={16} />

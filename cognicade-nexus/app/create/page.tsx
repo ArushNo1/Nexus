@@ -1,19 +1,10 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense } from 'react';
 import { LessonUploader } from '@/components/lesson-uploader';
-import LandingNavbar from '@/components/ui/landing-navbar';
+import CreateNavbar from '@/components/ui/create-navbar';
 
 export default function CreateLessonPage() {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [scrolled, setScrolled] = useState(false);
-
-    useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
     return (
         <div className="min-h-screen bg-[#0a1f18] text-slate-100 font-sans selection:bg-emerald-500/30">
             {/* Global Styles */}
@@ -56,7 +47,7 @@ export default function CreateLessonPage() {
                 .animate-chalk-drift { animation: chalk-drift var(--dur, 6s) ease-in-out infinite; }
             `}</style>
 
-            <LandingNavbar scrolled={scrolled} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+            <CreateNavbar />
 
             {/* Ambient background glows */}
             <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-emerald-500/[0.04] blur-[120px] rounded-full pointer-events-none" />

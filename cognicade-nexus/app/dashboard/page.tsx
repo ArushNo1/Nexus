@@ -180,7 +180,10 @@ export default function Dashboard() {
             <Sidebar />
 
             {/* Main Content */}
-            <div className="ml-64 min-h-screen">
+            <div
+                className="min-h-screen transition-[margin] duration-300"
+                style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
+            >
                 {/* Dashboard Navbar */}
                 <DashboardNavbar />
 

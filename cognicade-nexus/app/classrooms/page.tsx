@@ -151,7 +151,10 @@ export default function ClassroomsPage() {
 
             <Sidebar />
 
-            <div className="ml-64 min-h-screen">
+            <div
+                className="min-h-screen transition-[margin] duration-300"
+                style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
+            >
                 {/* Top Bar */}
                 <div className="bg-[#0d281e]/90 backdrop-blur-md border-b border-white/5 sticky top-0 z-40">
                     <div className="px-8 py-4 flex justify-between items-center">

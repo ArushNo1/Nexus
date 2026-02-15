@@ -18,7 +18,10 @@ export default function AchievementsPage() {
 
             <Sidebar />
 
-            <div className="ml-64 min-h-screen">
+            <div
+                className="min-h-screen transition-[margin] duration-300"
+                style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
+            >
                 <DashboardNavbar />
 
                 <div className="px-8 py-12">
