@@ -33,6 +33,6 @@ def get_llm(node_name: str) -> ChatGoogleGenerativeAI:
     model = MODEL_MAP.get(node_name, settings.default_model)
     return ChatGoogleGenerativeAI(
         model=model,
-        google_api_key=settings.gemini_api_key or None,
+        google_api_key=settings.gemini_api_key,
         max_output_tokens=settings.max_tokens,
     )
