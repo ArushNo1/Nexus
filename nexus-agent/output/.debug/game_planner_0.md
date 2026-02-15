@@ -1,8 +1,8 @@
-GAME_TYPE: platformer
+GAME_TYPE: quizrunner
 
-RATIONALE: The American Civil War is best taught as a chronological progression of events and shifting tensions. A platformer allows the player to move through "levels" of history, starting with the causes in the early 1800s and progressing toward the war's conclusion, physically representing the passage of time and the obstacles faced by the nation.
+RATIONALE: The quizrunner format is ideal for 5th graders to practice identifying and categorizing the inputs and outputs of photosynthesis. It reinforces the lesson objectives by requiring players to make split-second decisions to differentiate between what a plant needs (inputs) and what it produces (outputs).
 
-ADDON FEATURE: The Legislative Dispatch
-Throughout each level, the player must collect "Fact Scrolls" scattered in hard-to-reach places. At the end of the level, the player reaches a "Telegraph Station" (the level exit), which only opens once the player correctly categorizes their collected scrolls into two bins: "Union/North" and "Confederacy/South." This reinforces the lesson's objective of distinguishing between the two sides and their respective economic and political characteristics before they can proceed to the next historical era.
+ADDON FEATURE: The Chloroplast Charge
+As the player runs, the gates are labeled with different substances (e.g., Oxygen, CO2, Sunlight, Glucose, Vinegar). Passing through a correct "Input" gate (Sunlight, Water, or CO2) fills a "Chloroplast Meter." When the meter is full, the plant enters a "Bloom State" for 5 seconds, turning the character into a flowering plant that automatically attracts "Glucose" coins and leaves behind "Oxygen" trails, visually reinforcing the relationship between inputs and outputs.
 
-VISUAL THEME: The game is set in the mid-19th century United States, with the background changing from the industrial factories of the North to the agrarian plantations of the South. The player character is a "History Scout" in a Union-style blue cap, and the hazards are "Conflict Clouds" and "Policy Spikes," representing the growing political tensions of the 1860s.
+VISUAL THEME: The game features a small "Sprout" character running through a vibrant garden ecosystem. Correct gates are represented by glowing suns or refreshing rain clouds, while incorrect gates or obstacles are represented by "Environmental Stressors" like salt piles or thick smoke clouds.

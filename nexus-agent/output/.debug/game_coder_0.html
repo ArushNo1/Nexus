@@ -3,19 +3,16 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Civil War: The Legislative Dispatch</title>
+    <title>Photosynthesis Run - Chloroplast Charge</title>
     <style>
         * {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
         body {
-            background: #1a1a2e;
+            background: #111;
             overflow: hidden;
-            font-family: 'Courier New', Courier, monospace;
         }
 
         canvas {
@@ -27,673 +24,612 @@
 <body>
     <script src="https://unpkg.com/kaplay@3001/dist/kaplay.js"></script>
     <script>
-        // ============================================================
-        //  CIVIL WAR: THE LEGISLATIVE DISPATCH
-        //  A historical platformer about the causes of the US Civil War.
-        //  Mechanics: Platforming + Fact Sorting Minigame
-        // ============================================================
+        /**
+         * PHOTOSYNTHESIS RUN - CHLOROPLAST CHARGE
+         * 
+         * Educational Objectives:
+         * 1. Identify Inputs of Photosynthesis (Sunlight, Water, Carbon Dioxide).
+         * 2. Identify Outputs of Photosynthesis (Glucose, Oxygen).
+         * 3. Avoid Non-Inputs/Stressors (Salt, Smoke, etc.).
+         * 
+         * Mechanics:
+         * - Endless Runner: 3 lanes, jump to choose correct answer.
+         * - Chloroplast Charge: Collecting correct inputs fills a meter.
+         * - Bloom State: Full meter triggers "Bloom" (invincibility/bonus mode).
+         * - Bloom attracts "Glucose" (bonus points) and releases "Oxygen" (visuals).
+         */
 
-        // ----- 1. GAME CONFIG -----
-        const CONFIG = {
-            // Physics
-            gravity: 1600,
-            jumpForce: 650,
-            moveSpeed: 300,
-            maxFallSpeed: 800,
-
-            // Player Stats
-            playerStartPos: { x: 50, y: 0 },
-            playerHealth: 3,
-
-            // Visuals - Civil War Theme
-            colors: {
-                unionBlue: [0, 50, 150],
-                confedGray: [130, 130, 140],
-                skinTan: [210, 180, 140],
-                
-                // Level 1: North (Industrial)
-                northSky: [100, 105, 110], // Smoggy/Overcast
-                northGround: [130, 50, 50], // Brick
-                
-                // Level 2: South (Agrarian)
-                southSky: [200, 150, 100], // Dusty/Sunset
-                southGround: [100, 70, 40], // Soil
-
-                wood: [180, 140, 100],
-                scrollWhite: [245, 245, 235],
-                scrollRibbon: [218, 165, 32],
-                hazardIron: [60, 60, 60],
-                portalMetal: [80, 80, 90],
-                portalLight: [255, 255, 100],
-            }
+        // -- CONFIG: Gameplay constants & Theme Colors --
+        const C = {
+            scrollSpeed: 140,       // pixels/sec
+            playerSpeed: 300,       // lane-switch speed
+            playerHP: 3,            // lives
+            gateSpacing: 600,       // pixels between gates
+            laneCount: 3,           // top, mid, bot
+            laneHeight: 70,         // vertical space per lane
+            floorY: 340,            // ground level
+            
+            // -- THEME COLORS (Forest/Garden) --
+            bg: [20, 40, 20],               // Deep Forest Green
+            floorCol: [60, 45, 30],         // Rich Soil Brown
+            laneLineCol: [100, 200, 100],   // Viny Green
+            playerCol: [50, 200, 50],       // Leaf Green (Sprout)
+            playerBloomCol: [255, 100, 200],// Flower Pink
+            
+            // Gate Colors
+            correctCol: [255, 255, 100],    // Sunlight Yellow (Input)
+            wrongCol: [80, 80, 80],         // Smoke/Stressor (Non-Input)
+            neutralCol: [200, 220, 150],    // Pale Plant Green
+            questionCol: [255, 255, 255],   // White Text
+            
+            // Addon Constants
+            chargeGain: 34,                 // % per correct answer (3 hits to fill)
+            bloomDuration: 5,               // seconds
         };
 
-        // ----- 2. HISTORICAL DATA -----
-        const FACT_DATA = [
-            // Level 0: The North
+        // -- QUESTIONS: Photosynthesis Inputs/Outputs --
+        // answers[0..2] map to lanes. correct = index of correct answer.
+        // We shuffle answers at runtime.
+        const QUESTIONS = [
             {
-                region: "The North",
-                sky: CONFIG.colors.northSky,
-                ground: CONFIG.colors.northGround,
-                facts: [
-                    { id: 1, text: "Economy based on manufacturing", side: "Union" },
-                    { id: 2, text: "High population density", side: "Union" },
-                    { id: 3, text: "extensive railroad networks", side: "Union" },
-                    { id: 4, text: "Favored protective tariffs", side: "Union" } // Backup fact
-                ]
+                question: "What energy source do plants need?",
+                answers: ["Sunlight", "Moonlight", "Electricity"],
+                correct: 0,
             },
-            // Level 1: The South
             {
-                region: "The South",
-                sky: CONFIG.colors.southSky,
-                ground: CONFIG.colors.southGround,
-                facts: [
-                    { id: 5, text: "Economy based on agriculture", side: "Confederacy" },
-                    { id: 6, text: "Reliant on plantation labor", side: "Confederacy" },
-                    { id: 7, text: "Exported cotton to Europe", side: "Confederacy" },
-                    { id: 8, text: "Opposed high tariffs", side: "Confederacy" } // Backup fact
-                ]
+                question: "Which gas do plants absorb from air?",
+                answers: ["Oxygen", "Nitrogen", "Carbon Dioxide"],
+                correct: 2,
+            },
+            {
+                question: "What liquid do roots absorb?",
+                answers: ["Soda", "Vinegar", "Water"],
+                correct: 2,
+            },
+            {
+                question: "What sugar do plants make for food?",
+                answers: ["Glucose", "Salt", "Lactose"],
+                correct: 0,
+            },
+            {
+                question: "What gas do plants release?",
+                answers: ["Oxygen", "Methane", "Helium"],
+                correct: 0,
+            },
+            {
+                question: "Which part of the plant catches sunlight?",
+                answers: ["Roots", "Leaves", "Seeds"],
+                correct: 1,
+            },
+            {
+                question: "What green pigment traps sunlight?",
+                answers: ["Chlorophyll", "Melanin", "Keratin"],
+                correct: 0,
+            },
+            {
+                question: "What is the process of making food called?",
+                answers: ["Digestion", "Respiration", "Photosynthesis"],
+                correct: 2,
             }
         ];
 
-        // ----- 3. LEVEL MAPS -----
-        // Adjusted to have exactly 3 scrolls ($) per level for the minigame
-        const LEVELS = [
-            // --- Level 1: Northern Factories ---
-            [
-                "                                        ",
-                "                                        ",
-                "                                        ",
-                "                         $              ",
-                "                        ------          ",
-                "                                        ",
-                "           ------           $           ",
-                "                           ------    >  ",
-                "       $                           ==== ",
-                "   ------                               ",
-                "                                        ",
-                "  @              =====     ===          ",
-                "========   ^^^  ========  ======  ======",
-            ],
-            // --- Level 2: Southern Plantations ---
-            [
-                "                                        ",
-                "                                   >    ",
-                "                                  ===   ",
-                "                          $             ",
-                "                      ------            ",
-                "           $                            ",
-                "          ---              ------       ",
-                "                                        ",
-                "              $                         ",
-                "   ---    ------  -----                 ",
-                "                                        ",
-                "  @                          ===        ",
-                "=====  ^^^  ====  ^^^  ====  ^^^^^^  ===",
-            ],
-        ];
-
-        // ----- 4. INITIALIZE KAPLAY -----
-        kaplay({
-            width: 800,
-            height: 480,
-            scale: 1,
-            crisp: true,
-            global: true,
-            letterbox: true,
-            buttons: {
-                jump: { keyboard: ["space", "w", "up"], gamepad: ["south"] },
-                left: { keyboard: ["a", "left"], gamepad: ["dpad-left"] },
-                right: { keyboard: ["d", "right"], gamepad: ["dpad-right"] },
-            },
-            // Default background, will be overridden per level
-            background: CONFIG.colors.northSky, 
-        });
-
-        const TILE = 32;
-
-        // ----- 5. HELPER: Build Level -----
-        function buildLevel(mapData, levelIdx) {
-            const levelConfig = FACT_DATA[levelIdx];
-            const objects = { scrolls: [], hazards: [], platforms: [], portals: [] };
-            let spawnPos = vec2(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y);
-            let scrollCount = 0;
-
-            // Background for this level
-            add([
-                rect(width() * 2, height() * 2), // Oversized to cover camera movement
-                pos(-width()/2, -height()/2),
-                color(...levelConfig.sky),
-                fixed(),
-                z(-1000),
-                "bg"
-            ]);
-
-            for (let row = 0; row < mapData.length; row++) {
-                for (let col = 0; col < mapData[row].length; col++) {
-                    const ch = mapData[row][col];
-                    const x = col * TILE;
-                    const y = row * TILE;
-
-                    switch (ch) {
-                        // Ground
-                        case "=":
-                            add([
-                                rect(TILE, TILE),
-                                pos(x, y),
-                                area(),
-                                body({ isStatic: true }),
-                                color(...levelConfig.ground),
-                                outline(2, rgb(0, 0, 0)),
-                                "ground",
-                            ]);
-                            break;
-
-                        // Platforms (Wooden)
-                        case "-":
-                            add([
-                                rect(TILE, TILE / 2),
-                                pos(x, y + TILE / 2),
-                                area(),
-                                body({ isStatic: true }),
-                                color(...CONFIG.colors.wood),
-                                outline(2, rgb(40, 30, 10)),
-                                "platform",
-                            ]);
-                            break;
-
-                        // Player Spawn
-                        case "@":
-                            spawnPos = vec2(x, y);
-                            break;
-
-                        // Fact Scroll (Collectible)
-                        case "$":
-                            // Assign a specific fact from the level's pool
-                            const factIndex = scrollCount % levelConfig.facts.length;
-                            const fact = levelConfig.facts[factIndex];
-                            
-                            const scroll = add([
-                                rect(20, 14),
-                                pos(x + TILE / 2, y + TILE / 2),
-                                area(),
-                                anchor("center"),
-                                color(...CONFIG.colors.scrollWhite),
-                                outline(1, rgb(0,0,0)),
-                                z(5),
-                                "scroll",
-                                { fact: fact } // Attach data to object
-                            ]);
-                            
-                            // Ribbon detail
-                            scroll.add([
-                                rect(4, 14),
-                                pos(0, 0),
-                                anchor("center"),
-                                color(...CONFIG.colors.scrollRibbon)
-                            ]);
-
-                            objects.scrolls.push(scroll);
-                            scrollCount++;
-                            break;
-
-                        // Policy Spike (Hazard)
-                        case "^":
-                            add([
-                                polygon([vec2(0, TILE), vec2(TILE / 2, 4), vec2(TILE, TILE)]),
-                                pos(x, y),
-                                area({ shape: new Rect(vec2(4, 8), TILE - 8, TILE - 8) }),
-                                color(...CONFIG.colors.hazardIron),
-                                "hazard",
-                            ]);
-                            break;
-
-                        // Telegraph Station (Portal)
-                        case ">":
-                            // Tower body
-                            const portal = add([
-                                rect(TILE, TILE * 1.5),
-                                pos(x, y - TILE * 0.5),
-                                area(),
-                                anchor("top"),
-                                color(...CONFIG.colors.portalMetal),
-                                z(1),
-                                "portal",
-                            ]);
-                            
-                            // Blinking light
-                            const light = portal.add([
-                                circle(6),
-                                pos(TILE/2, 6),
-                                color(...CONFIG.colors.portalLight),
-                                opacity(0.8),
-                                "portalLight"
-                            ]);
-                            
-                            // Simple blink animation
-                            loop(0.5, () => {
-                                light.opacity = light.opacity === 0.8 ? 0.2 : 0.8;
-                            });
-
-                            objects.portals.push(portal);
-                            break;
-                    }
+        // -- Shuffle utility --
+        function shuffleAnswers() {
+            QUESTIONS.forEach((q) => {
+                const correctAnswer = q.answers[q.correct];
+                // Fisher-Yates shuffle
+                for (let i = q.answers.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.answers[i], q.answers[j]] = [q.answers[j], q.answers[i]];
                 }
-            }
-            return { spawnPos, totalScrolls: scrollCount };
+                q.correct = q.answers.indexOf(correctAnswer);
+            });
         }
 
-        // ----- 6. MAIN GAME SCENE -----
-        scene("game", (levelIdx = 0) => {
-            setGravity(CONFIG.gravity);
+        const canvasW = 800;
+        const canvasH = 450;
+        
+        kaplay({ 
+            width: canvasW, 
+            height: canvasH, 
+            background: C.bg, 
+            crisp: true, 
+            letterbox: true 
+        });
 
-            const { spawnPos, totalScrolls } = buildLevel(LEVELS[levelIdx], levelIdx);
-            
+        loadBean(); // Keeping bean as a fallback/debug sprite if needed, though we use primitives
+
+        // ==================
+        //  GAME SCENE
+        // ==================
+        scene("game", () => {
+            shuffleAnswers(); 
+
             // Game State
-            let hp = CONFIG.playerHealth;
-            let collectedFacts = []; // Array of fact objects
+            let score = 0;
+            let hp = C.playerHP;
+            let charge = 0;          // 0 to 100
+            let isBlooming = false;  // Addon state
+            let questionIdx = 0;
+            let nextGateX = canvasW + 200;
+            let answered = new Set();
+            
+            // Lane Setup
+            const laneYs = [];
+            for (let i = 0; i < C.laneCount; i++) {
+                laneYs.push(C.floorY - (C.laneCount - 1 - i) * C.laneHeight);
+            }
+            let currentLane = 1; // Middle lane
+            let targetY = laneYs[currentLane];
 
-            // --- Player Object (History Scout) ---
+            // -- BACKGROUND --
+            // Ground
+            add([
+                rect(canvasW, canvasH - C.floorY + C.laneHeight),
+                pos(0, C.floorY + C.laneHeight / 2),
+                color(...C.floorCol),
+                fixed(),
+                z(0),
+            ]);
+
+            // Lane Lines (Vines)
+            for (let i = 0; i < C.laneCount; i++) {
+                add([
+                    rect(canvasW, 4),
+                    pos(0, laneYs[i] + C.laneHeight / 2),
+                    color(...C.laneLineCol),
+                    opacity(0.15),
+                    fixed(),
+                    z(1),
+                ]);
+            }
+
+            // -- PLAYER (The Sprout) --
             const player = add([
-                rect(24, 32),
-                pos(spawnPos),
+                rect(32, 32, { radius: 16 }), // Rounded sprout shape
+                pos(100, laneYs[currentLane]),
+                anchor("center"),
+                color(...C.playerCol),
+                scale(1),
                 area(),
-                body(),
-                anchor("botleft"),
-                color(...CONFIG.colors.unionBlue),
-                outline(1, rgb(0,0,0)),
-                z(10),
+                z(20),
                 "player",
             ]);
 
-            // Face detail
+            // Add a little leaf detail to player
             player.add([
-                rect(14, 12),
-                pos(12, 8),
-                anchor("center"),
-                color(...CONFIG.colors.skinTan)
+                rect(10, 20, { radius: 5 }),
+                pos(0, -20),
+                anchor("bottom"),
+                color(40, 180, 40),
+                rotate(20),
             ]);
 
-            // --- HUD ---
-            const hpLabel = add([
-                text(`Unity: ${hp}`, { size: 18, font: "monospace" }),
-                pos(16, 12),
-                fixed(),
-                z(100),
-                color(100, 200, 255),
-            ]);
+            // -- CONTROLS --
+            function changeLane(dir) {
+                currentLane += dir;
+                if (currentLane < 0) currentLane = 0;
+                if (currentLane >= C.laneCount) currentLane = C.laneCount - 1;
+                targetY = laneYs[currentLane];
+            }
+            onKeyPress("up", () => changeLane(-1));
+            onKeyPress("w", () => changeLane(-1));
+            onKeyPress("down", () => changeLane(1));
+            onKeyPress("s", () => changeLane(1));
 
-            const factsLabel = add([
-                text(`Facts: 0/${totalScrolls}`, { size: 18, font: "monospace" }),
-                pos(16, 36),
-                fixed(),
-                z(100),
-                color(255, 215, 0),
-            ]);
-
-            add([
-                text(FACT_DATA[levelIdx].region, { size: 18, font: "monospace" }),
-                pos(width() - 16, 12),
-                anchor("topright"),
-                fixed(),
-                z(100),
-                color(255, 255, 255),
-            ]);
-
-            // --- Movement ---
-            onButtonDown("left", () => {
-                player.move(-CONFIG.moveSpeed, 0);
-                player.flipX = true; // Primitive rects don't flip, but we can animate face if needed
+            // Smooth Movement
+            onUpdate(() => {
+                player.pos.y = lerp(player.pos.y, targetY, dt() * 12);
             });
 
-            onButtonDown("right", () => {
-                player.move(CONFIG.moveSpeed, 0);
-            });
-
-            onButtonPress("jump", () => {
-                if (player.isGrounded()) {
-                    player.jump(CONFIG.jumpForce);
-                }
-            });
-
-            player.onUpdate(() => {
-                if (player.vel && player.vel.y > CONFIG.maxFallSpeed) {
-                    player.vel.y = CONFIG.maxFallSpeed;
-                }
-            });
-
-            // Camera
-            player.onUpdate(() => {
-                camPos(
-                    lerp(camPos().x, player.pos.x + 100, 0.05),
-                    lerp(camPos().y, player.pos.y - 50, 0.05),
-                );
-            });
-
-            // --- Scroll Collection ---
-            player.onCollide("scroll", (scroll) => {
-                collectedFacts.push(scroll.fact);
-                destroy(scroll);
-                
-                // Feedback
-                factsLabel.text = `Facts: ${collectedFacts.length}/${totalScrolls}`;
-                
-                // Show floating text of what was found
+            // -- AMBIENT PARTICLES (Leaves) --
+            loop(0.2, () => {
                 add([
-                    text("Fact Found!", { size: 14 }),
-                    pos(player.pos.x, player.pos.y - 40),
-                    anchor("center"),
-                    color(255, 255, 255),
-                    move(vec2(0, -50), 30),
-                    lifespan(1, { fade: 0.5 }), // Fades out
-                    opacity(1),
-                    z(20)
+                    circle(rand(2, 4)),
+                    pos(canvasW + 20, rand(0, C.floorY)),
+                    color(60, 100, 60),
+                    opacity(rand(0.2, 0.5)),
+                    move(LEFT, C.scrollSpeed * 0.5),
+                    z(5),
+                    "leaf",
+                    lifespan(6),
                 ]);
             });
 
-            // --- Hazards ---
-            player.onCollide("hazard", () => {
-                hp--;
-                hpLabel.text = `Unity: ${hp}`;
-                shake(6);
-                if (hp <= 0) {
-                    go("gameover", { level: levelIdx });
-                } else {
-                    player.pos = spawnPos.clone();
-                    player.vel = vec2(0, 0);
-                }
-            });
+            // =========================
+            //  ADDON: CHLOROPLAST CHARGE
+            // =========================
 
-            // --- Portal / Level Exit ---
-            player.onCollide("portal", () => {
-                if (collectedFacts.length >= totalScrolls) {
-                    // Go to Sorting Minigame
-                    go("sorting", { 
-                        facts: collectedFacts, 
-                        nextLevel: levelIdx + 1,
-                        currentRegion: FACT_DATA[levelIdx].region
-                    });
-                } else {
-                    // Warning message
-                    const warning = add([
-                        text("Collect all Facts first!", { size: 16 }),
-                        pos(player.pos.x, player.pos.y - 60),
-                        anchor("center"),
-                        color(255, 100, 100),
-                        lifespan(2, { fade: 1 }),
-                        opacity(1),
-                        z(100)
-                    ]);
-                }
-            });
+            // Charge Bar UI
+            add([
+                rect(104, 24, { radius: 4 }),
+                pos(18, 58),
+                color(0, 0, 0),
+                fixed(),
+                z(50)
+            ]);
+            const chargeBar = add([
+                rect(0, 16, { radius: 2 }),
+                pos(20, 62),
+                color(0, 255, 0),
+                fixed(),
+                z(51),
+                "chargeBar"
+            ]);
+            add([
+                text("CHLOROPLAST CHARGE", { size: 10 }),
+                pos(20, 46),
+                color(150, 255, 150),
+                fixed(),
+                z(51)
+            ]);
 
-            // --- Fall Death ---
-            player.onUpdate(() => {
-                if (player.pos.y > LEVELS[levelIdx].length * TILE + 200) {
-                    hp--;
-                    hpLabel.text = `Unity: ${hp}`;
-                    if (hp <= 0) {
-                        go("gameover", { level: levelIdx });
-                    } else {
-                        player.pos = spawnPos.clone();
-                        player.vel = vec2(0, 0);
+            // Bloom Logic
+            function startBloom() {
+                if (isBlooming) return;
+                isBlooming = true;
+                charge = 100;
+                
+                // Transform Player
+                player.use(color(...C.playerBloomCol));
+                tween(player.scale, vec2(1.3), 0.5, (v) => player.scale = v, easings.easeOutBack);
+                
+                addKaboom(player.pos);
+                shake(5);
+
+                // Bloom Text
+                const bloomLabel = add([
+                    text("BLOOM STATE!", { size: 32 }),
+                    pos(center()),
+                    anchor("center"),
+                    color(255, 100, 200),
+                    lifespan(2, { fade: 0.5 }),
+                    fixed(),
+                    z(100)
+                ]);
+
+                // End Bloom Timer
+                wait(C.bloomDuration, endBloom);
+            }
+
+            function endBloom() {
+                if (!isBlooming) return; // Already ended
+                isBlooming = false;
+                charge = 0;
+                
+                // Revert Player
+                player.use(color(...C.playerCol));
+                tween(player.scale, vec2(1), 0.5, (v) => player.scale = v, easings.easeOutBack);
+            }
+
+            // Update Charge Bar Visual
+            onUpdate(() => {
+                chargeBar.width = lerp(chargeBar.width, charge, dt() * 10);
+                
+                // Bloom Effects
+                if (isBlooming) {
+                    // Spawn Oxygen Trails
+                    if (time() % 0.1 < dt()) {
+                        add([
+                            circle(6),
+                            pos(player.pos.add(rand(-10, 10), rand(-10, 10))),
+                            color(200, 240, 255),
+                            opacity(0.8),
+                            move(LEFT, 150),
+                            lifespan(0.6, { fade: 0.6 }),
+                            z(19),
+                        ]);
+                    }
+                    
+                    // Spawn Glucose Coins Ahead
+                    if (time() % 0.3 < dt()) {
+                        const yPos = laneYs[Math.floor(rand(0, 3))];
+                        add([
+                            circle(8),
+                            pos(canvasW + 50, yPos),
+                            color(255, 255, 0),
+                            area({ scale: 1.5 }), // larger pickup area
+                            anchor("center"),
+                            z(25),
+                            "glucose",
+                            { val: 50 }
+                        ]);
                     }
                 }
             });
-        });
 
-        // ----- 7. SORTING MINIGAME SCENE (Addon) -----
-        scene("sorting", ({ facts, nextLevel, currentRegion }) => {
-            // Background
-            add([
-                rect(width(), height()),
-                color(30, 30, 40),
-                fixed()
-            ]);
+            // Glucose Magnet & Collection
+            onUpdate("glucose", (g) => {
+                g.pos.x -= C.scrollSpeed * dt(); // Natural scroll
+                
+                if (isBlooming) {
+                    // Magnet effect
+                    const dir = player.pos.sub(g.pos).unit();
+                    const dist = player.pos.dist(g.pos);
+                    if (dist < 400) {
+                        g.move(dir.scale(500)); // Fly towards player
+                    }
+                }
+                
+                if (g.pos.x < -50) destroy(g);
+            });
 
-            // Header
-            add([
-                text("LEGISLATIVE DISPATCH", { size: 32, font: "monospace" }),
-                pos(width() / 2, 40),
-                anchor("center"),
-                color(255, 255, 255)
+            onCollide("player", "glucose", (p, g) => {
+                destroy(g);
+                score += g.val;
+                add([
+                    text("+" + g.val, { size: 14 }),
+                    pos(p.pos.x, p.pos.y - 30),
+                    color(255, 255, 0),
+                    move(UP, 100),
+                    lifespan(0.5, { fade: 0.5 }),
+                    z(100)
+                ]);
+            });
+
+
+            // =========================
+            //  QUIZ MECHANICS
+            // =========================
+            function spawnGate(qIdx) {
+                if (qIdx >= QUESTIONS.length) return;
+                const q = QUESTIONS[qIdx];
+                const gateX = nextGateX;
+
+                // Question Banner
+                add([
+                    text(q.question, { size: 18, width: 400, align: "center" }),
+                    pos(gateX, C.floorY - C.laneCount * C.laneHeight - 30),
+                    anchor("center"),
+                    color(...C.questionCol),
+                    z(25),
+                    "scrollable",
+                    { gateIdx: qIdx },
+                ]);
+
+                // Answer Blocks
+                for (let lane = 0; lane < C.laneCount; lane++) {
+                    const isCorrect = lane === q.correct;
+                    const block = add([
+                        rect(90, C.laneHeight - 12, { radius: 8 }),
+                        pos(gateX, laneYs[lane]),
+                        anchor("center"),
+                        color(...C.neutralCol),
+                        outline(3, rgb(60, 80, 60)),
+                        area(),
+                        z(15),
+                        "answerblock",
+                        "scrollable",
+                        {
+                            gateIdx: qIdx,
+                            lane,
+                            isCorrect,
+                            revealed: false,
+                        },
+                    ]);
+
+                    // Answer Text
+                    block.add([
+                        text(q.answers[lane], { size: 13, width: 80, align: "center" }),
+                        anchor("center"),
+                        color(40, 60, 40),
+                    ]);
+                }
+
+                nextGateX += C.gateSpacing;
+            }
+
+            // Scroll Logic
+            onUpdate("scrollable", (s) => {
+                s.pos.x -= C.scrollSpeed * dt();
+                if (s.pos.x < -300) destroy(s);
+            });
+
+            // Collision with Gate
+            onCollide("player", "answerblock", (p, block) => {
+                if (block.revealed) return;
+                if (answered.has(block.gateIdx)) return;
+                
+                answered.add(block.gateIdx);
+
+                // Reveal logic for all blocks in this gate
+                get("answerblock").forEach((b) => {
+                    if (b.gateIdx === block.gateIdx) {
+                        b.revealed = true;
+                        b.color = b.isCorrect ? rgb(...C.correctCol) : rgb(...C.wrongCol);
+                    }
+                });
+
+                if (block.isCorrect) {
+                    // CORRECT
+                    score += 100;
+                    addKaboom(player.pos);
+                    
+                    // Add Charge
+                    if (!isBlooming) {
+                        charge += C.chargeGain;
+                        if (charge >= 100) startBloom();
+                    }
+
+                    // Floating Text
+                    add([
+                        text("Input Acquired!", { size: 20 }),
+                        pos(player.pos.x, player.pos.y - 50),
+                        anchor("center"),
+                        color(100, 255, 100),
+                        move(UP, 50),
+                        lifespan(1.0, { fade: 0.5 }),
+                        z(100),
+                    ]);
+
+                } else {
+                    // WRONG
+                    shake(8);
+                    
+                    // Penalty: Lose HP and Stress
+                    hp--;
+                    
+                    add([
+                        text("Stressor!", { size: 20 }),
+                        pos(player.pos.x, player.pos.y - 50),
+                        anchor("center"),
+                        color(255, 80, 80),
+                        move(UP, 50),
+                        lifespan(1.0, { fade: 0.5 }),
+                        z(100),
+                    ]);
+
+                    // If blooming, maybe end it early or reduce time? 
+                    // Let's just reduce HP for simplicity as per plan.
+                    
+                    if (hp <= 0) {
+                        wait(1, () => go("gameover", { score, answered: answered.size, total: QUESTIONS.length }));
+                    }
+                }
+
+                // Win check
+                if (answered.size >= QUESTIONS.length) {
+                    // Wait a bit before winning to finish animations
+                    wait(2.0, () => {
+                        go("win", { score, hp, total: QUESTIONS.length });
+                    });
+                }
+            });
+
+            // Spawn all gates
+            for (let i = 0; i < QUESTIONS.length; i++) {
+                spawnGate(i);
+            }
+
+            // HUD
+            const scoreText = add([
+                text(`Score: 0`, { size: 20 }),
+                pos(20, 20), color(255, 255, 255), fixed(), z(50),
             ]);
             
-            add([
-                text(`Categorize facts from ${currentRegion}`, { size: 18 }),
-                pos(width() / 2, 80),
-                anchor("center"),
-                color(200, 200, 200)
+            // Lives (Hearts)
+            const hpContainer = add([
+                pos(200, 22), fixed(), z(50)
             ]);
-
-            // Bins
-            const binY = 140;
-            const binWidth = 200;
-            const binHeight = 250;
-
-            // Union Bin
-            add([
-                rect(binWidth, binHeight),
-                pos(width() * 0.25, binY),
-                anchor("center"),
-                color(...CONFIG.colors.unionBlue),
-                outline(4, rgb(255, 255, 255)),
-                "bin_union"
-            ]);
-            add([
-                text("UNION\n(North)", { size: 24, align: "center" }),
-                pos(width() * 0.25, binY - 100),
-                anchor("center"),
-                color(255, 255, 255)
-            ]);
-
-            // Confederacy Bin
-            add([
-                rect(binWidth, binHeight),
-                pos(width() * 0.75, binY),
-                anchor("center"),
-                color(...CONFIG.colors.confedGray),
-                outline(4, rgb(255, 255, 255)),
-                "bin_confed"
-            ]);
-            add([
-                text("CONFEDERACY\n(South)", { size: 24, align: "center" }),
-                pos(width() * 0.75, binY - 100),
-                anchor("center"),
-                color(255, 255, 255)
-            ]);
-
-            // Fact Objects
-            // We'll place them in the middle initially
-            facts.forEach((fact, index) => {
-                const factBtn = add([
-                    rect(300, 40),
-                    pos(width() / 2, 160 + index * 50),
-                    anchor("center"),
-                    color(200, 200, 200), // Default neutral color
-                    area(),
-                    outline(2, rgb(0,0,0)),
-                    "factBtn",
-                    {
-                        data: fact,
-                        assigned: null // null, "Union", "Confederacy"
-                    }
-                ]);
-
-                factBtn.add([
-                    text(fact.text, { size: 14, width: 290, align: "center" }),
-                    anchor("center"),
-                    color(0, 0, 0)
-                ]);
-
-                // Click interaction
-                factBtn.onClick(() => {
-                    // Cycle state: Neutral -> Union -> Confed -> Neutral
-                    if (factBtn.assigned === null) {
-                        factBtn.assigned = "Union";
-                        factBtn.color = rgb(...CONFIG.colors.unionBlue);
-                        factBtn.pos.x = width() * 0.25; // Move visually to bin
-                    } else if (factBtn.assigned === "Union") {
-                        factBtn.assigned = "Confederacy";
-                        factBtn.color = rgb(...CONFIG.colors.confedGray);
-                        factBtn.pos.x = width() * 0.75;
-                    } else {
-                        factBtn.assigned = null;
-                        factBtn.color = rgb(200, 200, 200);
-                        factBtn.pos.x = width() / 2;
-                    }
-                });
+            
+            // Update HUD
+            onUpdate(() => {
+                scoreText.text = `Score: ${score}`;
+                hpContainer.removeAll();
+                // Draw hearts
+                for(let i=0; i<hp; i++){
+                    hpContainer.add([
+                        text("♥", { size: 22 }),
+                        pos(i * 24, 0),
+                        color(255, 100, 100)
+                    ]);
+                }
             });
-
-            // Submit Button
-            const submitBtn = add([
-                rect(200, 50),
-                pos(width() / 2, height() - 60),
+            
+            add([
+                text("UP/DOWN to Switch Lanes", { size: 12 }),
+                pos(canvasW/2, canvasH - 20),
                 anchor("center"),
-                area(),
-                color(40, 180, 80),
-                outline(2, rgb(255, 255, 255)),
-                "submit"
+                color(150, 180, 150),
+                fixed(),
+                z(50)
             ]);
 
-            submitBtn.add([
-                text("SEND DISPATCH", { size: 20 }),
-                anchor("center"),
-                color(255, 255, 255)
-            ]);
-
-            // Validation Logic
-            submitBtn.onClick(() => {
-                let correct = 0;
-                let allSorted = true;
-                const factObjs = get("factBtn");
-
-                factObjs.forEach(obj => {
-                    if (obj.assigned === null) allSorted = false;
-                    if (obj.assigned === obj.data.side) correct++;
-                });
-
-                if (!allSorted) {
-                    shake(5);
-                    add([
-                        text("Sort all facts first!", { size: 24 }),
-                        pos(width()/2, height()/2),
-                        anchor("center"),
-                        color(255, 100, 100),
-                        lifespan(1, { fade: 0.5 }),
-                        opacity(1),
-                        z(200)
-                    ]);
-                    return;
-                }
-
-                if (correct === facts.length) {
-                    // Success!
-                    playSuccessEffects();
-                    wait(1.5, () => {
-                        if (nextLevel < LEVELS.length) {
-                            go("game", nextLevel);
-                        } else {
-                            go("win", { score: facts.length }); // Simplified win tracking
-                        }
-                    });
-                } else {
-                    // Failure
-                    shake(10);
-                    add([
-                        text(`Inaccuracies Detected!\n(${correct}/${facts.length} Correct)`, { size: 24, align: "center" }),
-                        pos(width()/2, height()/2),
-                        anchor("center"),
-                        color(255, 50, 50),
-                        lifespan(2, { fade: 0.5 }),
-                        opacity(1),
-                        z(200)
-                    ]);
-                }
+            // Ground Markers for Speed sensation
+            loop(0.4, () => {
+                add([
+                    rect(30, 4),
+                    pos(canvasW + 10, C.floorY + C.laneHeight/2 + rand(0, 30)),
+                    color(50, 40, 30),
+                    opacity(0.3),
+                    move(LEFT, C.scrollSpeed),
+                    lifespan(3),
+                    z(2)
+                ]);
             });
         });
 
-        function playSuccessEffects() {
+        // ==================
+        //  GAME OVER SCENE
+        // ==================
+        scene("gameover", ({ score, answered, total }) => {
             add([
-                text("DISPATCH SENT!", { size: 48 }),
-                pos(center()),
-                anchor("center"),
-                color(50, 255, 50),
-                lifespan(2, { fade: 0.5 }),
-                opacity(1),
-                z(200)
+                rect(canvasW, canvasH),
+                color(20, 20, 20),
+            ]);
+            add([
+                text("PLANT WITHERED", { size: 48 }), 
+                pos(center()), 
+                anchor("center"), 
+                color(220, 60, 60)
+            ]);
+            add([
+                text(`Score: ${score}  |  Questions: ${answered}/${total}`, { size: 20 }), 
+                pos(center().x, center().y + 60), 
+                anchor("center"), 
+                color(255, 255, 255)
+            ]);
+            add([
+                text("Press SPACE to sprout again", { size: 16 }), 
+                pos(center().x, center().y + 120), 
+                anchor("center"), 
+                color(150, 150, 150)
+            ]);
+            
+            onKeyPress("space", () => go("game"));
+            onClick(() => go("game"));
+        });
+
+        // ==================
+        //  WIN SCENE
+        // ==================
+        scene("win", ({ score, hp, total }) => {
+            add([
+                rect(canvasW, canvasH),
+                color(20, 40, 20),
             ]);
             // Confetti
-            for(let i=0; i<20; i++) {
+            loop(0.1, () => {
                 add([
-                    rect(4,4),
-                    pos(rand(0, width()), rand(0, height())),
-                    color(rand(200,255), rand(200,255), 0),
-                    move(vec2(0, 100), rand(50, 150)),
+                    rect(6, 6),
+                    pos(rand(0, canvasW), 0),
+                    color(rand(100, 255), rand(100, 255), 100),
+                    move(DOWN, rand(100, 200)),
                     lifespan(2),
-                    opacity(1)
                 ]);
-            }
-        }
+            });
 
-        // ----- 8. GAME OVER SCENE -----
-        scene("gameover", ({ level }) => {
             add([
-                rect(width(), height()),
-                color(20, 0, 0),
+                text("FULL BLOOM!", { size: 48 }), 
+                pos(center()), 
+                anchor("center"), 
+                color(100, 255, 100)
             ]);
             add([
-                text("HISTORY REPEATS ITSELF", { size: 48, align: "center" }),
-                pos(center()),
-                anchor("center"),
-                color(220, 60, 80),
+                text(`Final Score: ${score}`, { size: 24 }), 
+                pos(center().x, center().y + 60), 
+                anchor("center"), 
+                color(255, 255, 100)
             ]);
             add([
-                text("The Union is fractured.", { size: 20 }),
-                pos(center().x, center().y + 60),
-                anchor("center"),
-                color(200, 200, 200),
+                text("You mastered Photosynthesis!", { size: 16 }), 
+                pos(center().x, center().y + 100), 
+                anchor("center"), 
+                color(200, 220, 200)
             ]);
             add([
-                text("Press SPACE to try again", { size: 18 }),
-                pos(center().x, center().y + 110),
-                anchor("center"),
-                color(150, 150, 180),
+                text("Press SPACE to play again", { size: 14 }), 
+                pos(center().x, center().y + 140), 
+                anchor("center"), 
+                color(150, 180, 150)
             ]);
-            onKeyPress("space", () => go("game", level));
-            onClick(() => go("game", level));
+
+            onKeyPress("space", () => go("game"));
+            onClick(() => go("game"));
         });
 
-        // ----- 9. WIN SCENE -----
-        scene("win", () => {
-             add([
-                rect(width(), height()),
-                color(0, 40, 0),
-            ]);
-            add([
-                text("UNION PRESERVED!", { size: 48 }),
-                pos(center()),
-                anchor("center"),
-                color(100, 255, 150),
-            ]);
-            add([
-                text("You successfully navigated the\nhistory of the Civil War.", { size: 20, align: "center" }),
-                pos(center().x, center().y + 80),
-                anchor("center"),
-                color(255, 210, 50),
-            ]);
-            add([
-                text("Press SPACE to restart history", { size: 18 }),
-                pos(center().x, center().y + 150),
-                anchor("center"),
-                color(150, 150, 180),
-            ]);
-            onKeyPress("space", () => go("game", 0));
-            onClick(() => go("game", 0));
-        });
-
-        // Start
-        go("game", 0);
+        // -- START --
+        go("game");
 
     </script>
 </body>
