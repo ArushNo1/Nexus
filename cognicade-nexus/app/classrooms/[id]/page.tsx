@@ -18,6 +18,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Classroom, UserProfile, Lesson } from '@/lib/types';
 import { getClassroomDetails, getLessonsForClassroom, getMembersForClassroom } from '@/lib/services/classrooms';
 import { getUserProfile } from '@/lib/services/user';
+import AssignLessonModal from '@/components/assign-lesson-modal';
 
 export default function ClassroomDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id: classroomId } = use(params);
@@ -29,6 +30,7 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'lessons' | 'students'>('lessons');
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -70,6 +72,16 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
 
         fetchData();
     }, [classroomId, router]);
+
+    const refreshLessons = async () => {
+        try {
+            const supabase = createClient();
+            const lessonData = await getLessonsForClassroom(supabase, classroomId);
+            setLessons(lessonData);
+        } catch (error) {
+            console.error('Error refreshing lessons:', error);
+        }
+    };
 
     if (loading) {
         return (
@@ -118,7 +130,10 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
                                     <Settings size={16} />
                                     Settings
                                 </button>
-                                <button className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_2px_0_#065f46] hover:translate-y-[1px] hover:shadow-[0_1px_0_#065f46] flex items-center gap-2 text-sm">
+                                <button
+                                    onClick={() => setAssignModalOpen(true)}
+                                    className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-[#0d281e] font-bold rounded-lg transition-all shadow-[0_2px_0_#065f46] hover:translate-y-[1px] hover:shadow-[0_1px_0_#065f46] flex items-center gap-2 text-sm"
+                                >
                                     <Plus size={16} />
                                     Assign Lesson
                                 </button>
@@ -170,7 +185,10 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
                                             {isTeacher ? "Assign your first lesson to this classroom." : "No lessons have been assigned yet."}
                                         </p>
                                         {isTeacher && (
-                                            <button className="px-5 py-2 bg-emerald-500/10 text-emerald-400 rounded-lg hover:bg-emerald-500/20 transition-all border border-emerald-500/20 font-medium">
+                                            <button
+                                                onClick={() => setAssignModalOpen(true)}
+                                                className="px-5 py-2 bg-emerald-500/10 text-emerald-400 rounded-lg hover:bg-emerald-500/20 transition-all border border-emerald-500/20 font-medium"
+                                            >
                                                 Browse Library
                                             </button>
                                         )}
@@ -252,6 +270,16 @@ export default function ClassroomDetailPage({ params }: { params: Promise<{ id: 
                     </div>
                 </div>
             </div>
+            {isTeacher && userProfile && (
+                <AssignLessonModal
+                    open={assignModalOpen}
+                    onOpenChange={setAssignModalOpen}
+                    classroomId={classroomId}
+                    teacherId={userProfile.id}
+                    assignedLessonIds={lessons.map((l) => l.id)}
+                    onAssigned={refreshLessons}
+                />
+            )}
         </div>
     );
 }
