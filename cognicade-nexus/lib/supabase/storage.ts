@@ -9,7 +9,7 @@ import path from 'path';
  *                         When omitted, a cookie-based server client is created.
  */
 export async function uploadToStorage(
-    bucket: 'videos' | 'audio' | 'sprites',
+    bucket: 'videos' | 'audio' | 'sprites' | 'bg-images' | 'thumbnails',
     filePath: string,
     userId: string,
     filename?: string,
@@ -68,7 +68,7 @@ export async function uploadToStorage(
  * Upload multiple files to Supabase Storage
  */
 export async function uploadMultipleToStorage(
-    bucket: 'videos' | 'audio' | 'sprites',
+    bucket: 'videos' | 'audio' | 'sprites' | 'bg-images' | 'thumbnails',
     files: { path: string; filename?: string }[],
     userId: string
 ): Promise<{ urls: string[]; errors: (Error | null)[] }> {
@@ -86,7 +86,7 @@ export async function uploadMultipleToStorage(
  * Delete file from Supabase Storage
  */
 export async function deleteFromStorage(
-    bucket: 'videos' | 'audio' | 'sprites',
+    bucket: 'videos' | 'audio' | 'sprites' | 'bg-images' | 'thumbnails',
     filePath: string
 ): Promise<{ success: boolean; error: Error | null }> {
     try {

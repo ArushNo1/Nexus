@@ -116,6 +116,17 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
         }),
       }).catch((err) => console.error("Game generation request failed:", err));
 
+      // 4.5. Fire off thumbnail generation (fire-and-forget)
+      fetch("/api/generate-thumbnail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lessonId,
+          title: lp.title || file.name.replace(/\.[^.]+$/, ""),
+          subject: lp.subject || null,
+        }),
+      }).catch((err) => console.error("Thumbnail generation failed:", err));
+
       // 5. Redirect to lesson detail page immediately
       router.push(`/lessons/${lessonId}?generating=true`);
     } catch (err: any) {

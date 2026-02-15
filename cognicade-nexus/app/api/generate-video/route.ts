@@ -27,6 +27,8 @@ interface VideoScene {
     beats: Beat[];
     audioUrl?: string | null;
     spriteUrls?: Record<string, string | null>;
+    backgroundImageUrl?: string | null;
+    bgImagePrompt?: string;
 }
 
 interface VideoPalette {
@@ -151,6 +153,36 @@ async function fetchSpritesForElements(
     }
 }
 
+async function fetchBackgroundImage(
+    prompt: string,
+    outputPath: string
+): Promise<boolean> {
+    try {
+        const encodedPrompt = encodeURIComponent(prompt);
+        const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1280&height=720&nologo=true`;
+        console.log('[bg-image] Fetching:', url.slice(0, 120));
+
+        const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+        if (!response.ok) {
+            console.warn('[bg-image] HTTP error:', response.status);
+            return false;
+        }
+
+        const buffer = Buffer.from(await response.arrayBuffer());
+        if (buffer.length < 1000) {
+            console.warn('[bg-image] Image too small, likely failed');
+            return false;
+        }
+
+        await fs.writeFile(outputPath, buffer);
+        console.log('[bg-image] Saved:', outputPath, `(${Math.round(buffer.length / 1024)}KB)`);
+        return true;
+    } catch (e) {
+        console.error('[bg-image] Failed:', e);
+        return false;
+    }
+}
+
 async function renderVideoWithRemotion(
     videoData: VideoData,
     userId: string,
@@ -228,6 +260,35 @@ async function renderVideoWithRemotion(
             ...scene,
             spriteUrls: spriteUrlsSupabase,
         }));
+
+        // 3.5. Fetch background images for each scene (in parallel)
+        console.log('[generate-video] Fetching background images...');
+        const bgImageDir = path.join(tempDir, 'bg-images');
+        await fs.mkdir(bgImageDir, { recursive: true });
+
+        const bgImagePromises = scenesWithSupabaseAssets.map(async (scene, i) => {
+            const prompt = (scene as any).bgImagePrompt
+                || `dark cinematic educational illustration of ${scene.narration.split('.')[0].slice(0, 80)}`;
+            const bgImagePath = path.join(bgImageDir, `bg-${timestamp}-${i}.jpg`);
+            const success = await fetchBackgroundImage(prompt, bgImagePath);
+
+            if (success) {
+                const bgFilename = `bg-${timestamp}-${i}.jpg`;
+                const { url } = await uploadToStorage('bg-images', bgImagePath, userId, bgFilename, supabase);
+                return url || null;
+            }
+            return null;
+        });
+
+        const bgImageUrls = await Promise.all(bgImagePromises);
+        console.log('[generate-video] Background images fetched:', bgImageUrls.filter(Boolean).length, '/', scenesWithSupabaseAssets.length);
+
+        // Attach background image URLs to scenes
+        bgImageUrls.forEach((url, i) => {
+            if (url) {
+                (scenesWithSupabaseAssets[i] as any).backgroundImageUrl = url;
+            }
+        });
 
         // 4. Write props file
         const propsData = {
@@ -540,6 +601,7 @@ Return JSON (NO markdown fences, ONLY raw JSON):
   "scenes": [
     {
       "narration": "60-100 words of narration text...",
+      "bgImagePrompt": "dark cinematic illustration of a right triangle with glowing sides",
       "beats": [
         {
           "startSec": 0,
@@ -565,6 +627,18 @@ Return JSON (NO markdown fences, ONLY raw JSON):
   ],
   "keyTakeaways": ["takeaway 1", "takeaway 2", "takeaway 3"]
 }
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BACKGROUND IMAGE PROMPT RULES (bgImagePrompt):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Each scene MUST have a "bgImagePrompt" field — a 5-12 word visual description for generating a background image.
+- Start with "dark cinematic educational illustration of" to match the dark video aesthetic
+- Describe what the scene is ABOUT visually, not the layout
+- GOOD: "dark cinematic educational illustration of photosynthesis in a green leaf"
+- GOOD: "dark cinematic educational illustration of ancient Roman soldiers in battle"
+- BAD: "list of elements" (too abstract)
+- BAD: "educational video background" (too generic)
 
 CRITICAL: beats[0].startSec must be 0. palette.bg lightness MUST be < 15%. Generate 2-5 scenes based on topic complexity. For math/science: ALWAYS use "equation" layout when showing a formula. Set "text" and "subtitle" on equation/graph/diagram beats. For humanities: stick to focus/process/list/comparison layouts.${gameDesignDoc ? `
 

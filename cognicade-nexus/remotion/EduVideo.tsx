@@ -7,6 +7,7 @@ import {
     spring,
     Sequence,
     Audio,
+    Img,
     staticFile,
 } from 'remotion';
 
@@ -28,6 +29,8 @@ export interface ScreenplayScene {
     beats: Beat[];
     audioUrl?: string | null;
     spriteUrls?: Record<string, string | null>;
+    backgroundImageUrl?: string | null;
+    bgImagePrompt?: string;
 }
 
 // Palette passed in from the screenplay — Gemini picks colors per topic
@@ -148,6 +151,45 @@ const DecoShapes: React.FC<{ palette: VideoPalette; seed: number }> = ({ palette
                 if (s.type === 1) return <div key={i} style={{ ...base, width: s.size, height: s.size, borderRadius: 4, border: `1.5px solid ${s.color}` }} />;
                 return <div key={i} style={{ ...base, width: s.size, height: s.size, borderRadius: 4, border: `1.5px solid ${s.color}`, transform: `translate(${xF}px, ${yF}px) rotate(${rot + 45}deg)` }} />;
             })}
+        </>
+    );
+};
+
+// ── Scene Background Image ──────────────────────────────────────────────
+
+const SceneBgImage: React.FC<{ src: string; palette: VideoPalette }> = ({ src, palette }) => {
+    const frame = useCurrentFrame();
+    // Slow ken burns: gentle scale up over time
+    const scale = interpolate(frame, [0, 300], [1.0, 1.12], { extrapolateRight: 'clamp' });
+    // Fade in
+    const opacity = interpolate(frame, [0, 20], [0, 0.18], { extrapolateRight: 'clamp' });
+
+    return (
+        <>
+            <Img
+                src={src}
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    opacity,
+                    transform: `scale(${scale})`,
+                    transformOrigin: 'center center',
+                    filter: 'blur(2px)',
+                }}
+            />
+            {/* Dark overlay to preserve text readability */}
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: `linear-gradient(180deg, ${palette.bg}ee 0%, ${palette.bg}aa 40%, ${palette.bg}cc 100%)`,
+            }} />
         </>
     );
 };
@@ -1131,7 +1173,7 @@ const BeatRenderer: React.FC<{
 // SCENES
 // ══════════════════════════════════════════════════════════════════════════
 
-const IntroScene: React.FC<{ title: string; audience: string; palette: VideoPalette; seed: number }> = ({ title, audience, palette, seed }) => {
+const IntroScene: React.FC<{ title: string; audience: string; palette: VideoPalette; seed: number; backgroundImageUrl?: string | null }> = ({ title, audience, palette, seed, backgroundImageUrl }) => {
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
     const ent = spring({ frame, fps, config: { damping: 14, stiffness: 80 } });
@@ -1142,6 +1184,7 @@ const IntroScene: React.FC<{ title: string; audience: string; palette: VideoPale
 
     return (
         <AbsoluteFill style={{ background: makeBg(palette, seed) }}>
+            {backgroundImageUrl && <SceneBgImage src={backgroundImageUrl} palette={palette} />}
             <Particles palette={palette} count={18 + (seed % 8)} seed={seed} />
             <DecoShapes palette={palette} seed={seed} />
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: `translate(-50%, -50%) scale(${ent})`, textAlign: 'center', opacity: tOp }}>
@@ -1186,6 +1229,7 @@ const ContentScene: React.FC<{
 
     return (
         <AbsoluteFill style={{ background: makeBg(palette, sceneSeed), opacity: bgOp }}>
+            {scene.backgroundImageUrl && <SceneBgImage src={scene.backgroundImageUrl} palette={palette} />}
             <Particles palette={palette} count={14 + (sceneSeed % 6)} seed={sceneSeed} />
             <DecoShapes palette={palette} seed={sceneSeed + 500} />
             <Badge n={idx + 1} palette={palette} />
@@ -1209,7 +1253,7 @@ const ContentScene: React.FC<{
     );
 };
 
-const OutroScene: React.FC<{ title: string; palette: VideoPalette; seed: number }> = ({ title, palette, seed }) => {
+const OutroScene: React.FC<{ title: string; palette: VideoPalette; seed: number; backgroundImageUrl?: string | null }> = ({ title, palette, seed, backgroundImageUrl }) => {
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
     const s = spring({ frame, fps, config: { damping: 12, stiffness: 80 } });
@@ -1218,6 +1262,7 @@ const OutroScene: React.FC<{ title: string; palette: VideoPalette; seed: number 
 
     return (
         <AbsoluteFill style={{ background: makeBg(palette, seed + 77) }}>
+            {backgroundImageUrl && <SceneBgImage src={backgroundImageUrl} palette={palette} />}
             <Particles palette={palette} count={20} seed={seed + 77} />
             <DecoShapes palette={palette} seed={seed + 333} />
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: `translate(-50%, -50%) scale(${s})`, textAlign: 'center', opacity: op }}>
@@ -1277,7 +1322,7 @@ export const EduVideo: React.FC<EduVideoProps> = ({
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         }}>
             <Sequence from={0} durationInFrames={introDur}>
-                <IntroScene title={title} audience={targetAudience} palette={pal} seed={seed} />
+                <IntroScene title={title} audience={targetAudience} palette={pal} seed={seed} backgroundImageUrl={scenes[0]?.backgroundImageUrl} />
             </Sequence>
 
             {scenes.map((scene, i) => (
@@ -1287,7 +1332,7 @@ export const EduVideo: React.FC<EduVideoProps> = ({
             ))}
 
             <Sequence from={introDur + totalSceneFrames} durationInFrames={outroDur}>
-                <OutroScene title={title} palette={pal} seed={seed} />
+                <OutroScene title={title} palette={pal} seed={seed} backgroundImageUrl={scenes[scenes.length - 1]?.backgroundImageUrl} />
             </Sequence>
 
             <PBar p={frame / total} palette={pal} />

@@ -4,9 +4,18 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Sidebar from '@/components/sidebar';
 import ChalkEquations from '@/components/ui/chalk-equations';
-import { BookOpen, Play, Trash2, Users, Star, Plus } from 'lucide-react';
+import { BookOpen, Play, Trash2, Plus } from 'lucide-react';
 import { createClient as createSupabaseClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+
+const PLACEHOLDER_THUMBNAILS = [
+    'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&h=300&fit=crop',
+];
 
 export default function LessonsPage() {
     const [loading, setLoading] = useState(true);
@@ -129,37 +138,29 @@ export default function LessonsPage() {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {lessons.map((lesson) => {
-                                const colors = {
-                                    text: 'text-emerald-400',
-                                    bg: 'bg-emerald-500/10',
-                                    border: 'border-emerald-500/20',
-                                };
-
-                                return (
+                            {lessons.map((lesson, idx) => (
                                     <div
                                         key={lesson.id}
-                                        className={`group relative bg-[#0d281e] border ${colors.border} rounded-2xl p-6 hover:scale-[1.02] transition-all cursor-pointer overflow-hidden`}
+                                        className="group relative bg-[#0d281e] border border-emerald-500/20 rounded-2xl hover:scale-[1.02] transition-all cursor-pointer overflow-hidden"
                                     >
-                                        <div className={`absolute inset-0 ${colors.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                                        <div className="relative z-10">
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div>
-                                                    <h3 className="text-xl font-bold text-white mb-1 font-sans-clean">{lesson.title}</h3>
-                                                    <p className="text-slate-400 text-sm font-sans-clean">{lesson.subject || 'General'}</p>
-                                                </div>
-                                            </div>
+                                        {/* Thumbnail */}
+                                        <div className="relative h-44 overflow-hidden">
+                                            <img
+                                                src={lesson.thumbnail_url || PLACEHOLDER_THUMBNAILS[idx % PLACEHOLDER_THUMBNAILS.length]}
+                                                alt={lesson.title}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-[#0d281e] via-transparent to-transparent" />
+                                        </div>
 
-                                            {lesson.description && (
-                                                <p className="text-slate-400 text-sm mb-4 line-clamp-2 font-sans-clean">
-                                                    {lesson.description}
-                                                </p>
-                                            )}
+                                        <div className="p-5">
+                                            <h3 className="text-lg font-bold text-white mb-1 font-sans-clean truncate">{lesson.title}</h3>
+                                            <p className="text-slate-400 text-sm font-sans-clean mb-4 truncate">{lesson.subject || 'General'}</p>
 
-                                            <div className="mt-4 flex gap-3">
+                                            <div className="flex gap-3">
                                                 <Link href={`/lessons/${lesson.id}`} className="flex-1">
-                                                    <button className={`w-full flex items-center justify-center gap-2 px-4 py-2 ${colors.bg} ${colors.text} rounded-lg hover:bg-opacity-80 transition-all text-sm font-medium border ${colors.border} font-sans-clean`}>
-                                                        <Play size={16} />
+                                                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl hover:bg-emerald-500/20 transition-all text-sm font-medium border border-emerald-500/20 font-sans-clean">
+                                                        <Play size={14} />
                                                         {userRole === 'teacher' ? 'View' : 'Launch'}
                                                     </button>
                                                 </Link>
@@ -172,16 +173,15 @@ export default function LessonsPage() {
                                                             await supabase.from('lessons').delete().eq('id', lesson.id);
                                                             setLessons(prev => prev.filter(l => l.id !== lesson.id));
                                                         }}
-                                                        className="px-4 py-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-all text-sm font-medium border border-red-500/20"
+                                                        className="px-3 py-2.5 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500/20 transition-all text-sm border border-red-500/20"
                                                     >
-                                                        <Trash2 size={16} />
+                                                        <Trash2 size={14} />
                                                     </button>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
-                                );
-                            })}
+                            ))}
                         </div>
                     )}
                 </div>
