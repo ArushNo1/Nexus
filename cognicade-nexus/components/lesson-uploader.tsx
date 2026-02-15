@@ -247,9 +247,6 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
                   <span className="text-sm font-medium font-sans-clean">
                     Concept Video
                   </span>
-                  <span className="text-[9px] font-pixel text-slate-600 ml-1">
-                    LATER
-                  </span>
                 </div>
               </div>
             </div>
