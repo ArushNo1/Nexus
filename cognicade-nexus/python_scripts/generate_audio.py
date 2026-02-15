@@ -9,9 +9,23 @@ import json
 import asyncio
 import os
 import requests
+from dotenv import load_dotenv
 
-# API Key provided by user
-ELEVENLABS_API_KEY = "99b55b3d5bdb12a95285d7c820545e8ee7f9bf07dc0da0ede97e23b0e9d59bcd"
+# Load environment variables from .env.local or .env
+# Try explicit paths first since the script is in a subdirectory
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(base_dir, '.env.local'))
+load_dotenv(os.path.join(base_dir, '.env'))
+
+# API Key provided by environment variable
+ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY")
+
+if not ELEVENLABS_API_KEY:
+    # Print error but don't crash yet, let the main execution handle it or error out when used
+    print(json.dumps({
+        "success": False,
+        "error": "ELEVENLABS_API_KEY not found in environment variables"
+    }), file=sys.stderr)
 
 # Voice mappings from Edge TTS names to ElevenLabs Voice IDs
 VOICE_MAPPING = {
