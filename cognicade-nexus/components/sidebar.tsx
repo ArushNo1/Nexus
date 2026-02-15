@@ -23,7 +23,6 @@ import { createClient } from '@/lib/supabase/client';
 const TEACHER_NAV_ITEMS = [
     { label: 'Dashboard', href: '/dashboard', icon: Home },
     { label: 'My Classrooms', href: '/classrooms', icon: Users },
-    { label: 'Create Lesson', href: '/create', icon: Plus },
     { label: 'My Lessons', href: '/lessons', icon: BookOpen },
     { label: 'Analytics', href: '/analytics', icon: BarChart3 },
     { label: 'Students', href: '/students', icon: Users },
@@ -44,10 +43,14 @@ const BOTTOM_ITEMS = [
     { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
+// Skeleton placeholders shown while auth loads
+const SKELETON_NAV_COUNT = 6;
+
 export default function Sidebar() {
     const [collapsed, setCollapsed] = useState(false);
     const [userRole, setUserRole] = useState<'student' | 'teacher' | null>(null);
     const [userProfile, setUserProfile] = useState<any>(null);
+    const [ready, setReady] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
 
@@ -68,6 +71,7 @@ export default function Sidebar() {
                     setUserRole(profile.role);
                 }
             }
+            setReady(true);
         };
 
         fetchUserProfile();
@@ -119,97 +123,132 @@ export default function Sidebar() {
                 </button>
             )}
 
-            {/* User Stats Card */}
-            {!collapsed && userProfile && (
-                <div className="mx-4 mt-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 font-bold font-sans-clean">
-                            {userProfile.full_name
-                                ? userProfile.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
-                                : userRole === 'teacher' ? 'ED' : 'ST'}
-                        </div>
-                        <div>
-                            <div className="text-white font-bold text-sm font-sans-clean">
-                                {userProfile.full_name || (userRole === 'teacher' ? 'Educator' : 'Student')}
-                            </div>
-                            <div className="text-slate-400 text-xs font-sans-clean capitalize">{userRole}</div>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Zap size={14} className="text-yellow-400" />
-                        <div className="flex-1 bg-black/20 rounded-full h-2 overflow-hidden">
-                            <div className="bg-gradient-to-r from-yellow-400 to-emerald-400 h-full w-3/4"></div>
-                        </div>
-                        <span className="text-xs text-slate-400 font-sans-clean">75%</span>
-                    </div>
-                </div>
-            )}
-
-            {/* Navigation Items */}
-            <nav className="flex-1 overflow-y-auto py-6 px-3">
-                <div className="space-y-1">
-                    {navItems.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = pathname === item.href;
-                        return (
-                            <Link key={item.href} href={item.href}>
-                                <div
-                                    className={`group flex items-center gap-3 px-3 py-3 rounded-lg transition-all cursor-pointer ${
-                                        isActive
-                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                            : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                                    }`}
-                                >
-                                    <Icon size={20} className={isActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-white'} />
-                                    {!collapsed && (
-                                        <span className="text-sm font-medium font-sans-clean">{item.label}</span>
-                                    )}
-                                    {isActive && !collapsed && (
-                                        <div className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
-                                    )}
+            {!ready ? (
+                <>
+                    {/* Skeleton user card */}
+                    {!collapsed && (
+                        <div className="mx-4 mt-4 p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl animate-pulse">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="w-10 h-10 bg-white/5 rounded-full" />
+                                <div className="flex-1">
+                                    <div className="h-3 bg-white/5 rounded w-24 mb-2" />
+                                    <div className="h-2 bg-white/5 rounded w-14" />
                                 </div>
-                            </Link>
-                        );
-                    })}
-                </div>
-            </nav>
-
-            {/* Bottom Section */}
-            <div className="border-t border-white/10 p-3">
-                {BOTTOM_ITEMS.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = pathname === item.href;
-                    return (
-                        <Link key={item.href} href={item.href}>
-                            <div
-                                className={`group flex items-center gap-3 px-3 py-3 rounded-lg transition-all cursor-pointer mb-2 ${
-                                    isActive
-                                        ? 'bg-emerald-500/20 text-emerald-400'
-                                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                                }`}
-                            >
-                                <Icon size={20} />
-                                {!collapsed && <span className="text-sm font-medium font-sans-clean">{item.label}</span>}
                             </div>
-                        </Link>
-                    );
-                })}
+                            <div className="h-2 bg-white/5 rounded-full" />
+                        </div>
+                    )}
+                    {/* Skeleton nav items */}
+                    <nav className="flex-1 overflow-y-auto py-6 px-3">
+                        <div className="space-y-1">
+                            {Array.from({ length: SKELETON_NAV_COUNT }).map((_, i) => (
+                                <div key={i} className="flex items-center gap-3 px-3 py-3 rounded-lg animate-pulse">
+                                    <div className="w-5 h-5 bg-white/5 rounded" />
+                                    {!collapsed && <div className="h-3 bg-white/5 rounded w-28" />}
+                                </div>
+                            ))}
+                        </div>
+                    </nav>
+                    {/* Skeleton bottom */}
+                    <div className="border-t border-white/10 p-3">
+                        <div className="flex items-center gap-3 px-3 py-3 animate-pulse">
+                            <div className="w-5 h-5 bg-white/5 rounded" />
+                            {!collapsed && <div className="h-3 bg-white/5 rounded w-20" />}
+                        </div>
+                        <div className="flex items-center gap-3 px-3 py-3 animate-pulse">
+                            <div className="w-5 h-5 bg-white/5 rounded" />
+                            {!collapsed && <div className="h-3 bg-white/5 rounded w-16" />}
+                        </div>
+                    </div>
+                </>
+            ) : (
+                <>
+                    {/* User Stats Card */}
+                    {!collapsed && userProfile && (
+                        <div className="mx-4 mt-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400 font-bold font-sans-clean">
+                                    {userProfile.full_name
+                                        ? userProfile.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+                                        : userRole === 'teacher' ? 'ED' : 'ST'}
+                                </div>
+                                <div>
+                                    <div className="text-white font-bold text-sm font-sans-clean">
+                                        {userProfile.full_name || (userRole === 'teacher' ? 'Educator' : 'Student')}
+                                    </div>
+                                    <div className="text-slate-400 text-xs font-sans-clean capitalize">{userRole}</div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Zap size={14} className="text-yellow-400" />
+                                <div className="flex-1 bg-black/20 rounded-full h-2 overflow-hidden">
+                                    <div className="bg-gradient-to-r from-yellow-400 to-emerald-400 h-full w-3/4"></div>
+                                </div>
+                                <span className="text-xs text-slate-400 font-sans-clean">75%</span>
+                            </div>
+                        </div>
+                    )}
 
-                {/* Logout Button */}
-                <button
-                    onClick={handleLogout}
-                    className="w-full group flex items-center gap-3 px-3 py-3 rounded-lg text-red-400 hover:bg-red-500/10 transition-all"
-                >
-                    <LogOut size={20} />
-                    {!collapsed && <span className="text-sm font-medium font-sans-clean">Logout</span>}
-                </button>
-            </div>
+                    {/* Navigation Items */}
+                    <nav className="flex-1 overflow-y-auto py-6 px-3">
+                        <div className="space-y-1">
+                            {navItems.map((item) => {
+                                const Icon = item.icon;
+                                const isActive = pathname === item.href;
+                                return (
+                                    <Link key={item.href} href={item.href}>
+                                        <div
+                                            className={`group flex items-center gap-3 px-3 py-3 rounded-lg transition-all cursor-pointer ${
+                                                isActive
+                                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                            }`}
+                                        >
+                                            <Icon size={20} className={isActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-white'} />
+                                            {!collapsed && (
+                                                <span className="text-sm font-medium font-sans-clean">{item.label}</span>
+                                            )}
+                                            {isActive && !collapsed && (
+                                                <div className="ml-auto w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
+                                            )}
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </nav>
 
-            {/* Decorative Pixel Coin */}
-            {!collapsed && (
-                <div className="absolute bottom-28 right-4 opacity-10 pointer-events-none">
-                    <img src="/coin.png" alt="" className="w-8 h-8 animate-float-gentle image-pixelated" />
-                </div>
+                    {/* Bottom Section */}
+                    <div className="border-t border-white/10 p-3">
+                        {BOTTOM_ITEMS.map((item) => {
+                            const Icon = item.icon;
+                            const isActive = pathname === item.href;
+                            return (
+                                <Link key={item.href} href={item.href}>
+                                    <div
+                                        className={`group flex items-center gap-3 px-3 py-3 rounded-lg transition-all cursor-pointer mb-2 ${
+                                            isActive
+                                                ? 'bg-emerald-500/20 text-emerald-400'
+                                                : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                        }`}
+                                    >
+                                        <Icon size={20} />
+                                        {!collapsed && <span className="text-sm font-medium font-sans-clean">{item.label}</span>}
+                                    </div>
+                                </Link>
+                            );
+                        })}
+
+                        {/* Logout Button */}
+                        <button
+                            onClick={handleLogout}
+                            className="w-full group flex items-center gap-3 px-3 py-3 rounded-lg text-red-400 hover:bg-red-500/10 transition-all"
+                        >
+                            <LogOut size={20} />
+                            {!collapsed && <span className="text-sm font-medium font-sans-clean">Logout</span>}
+                        </button>
+                    </div>
+                </>
             )}
         </div>
     );

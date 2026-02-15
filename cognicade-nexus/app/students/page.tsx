@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Sidebar from '@/components/sidebar';
-import DashboardNavbar from '@/components/ui/dashboard-navbar';
+import ChalkEquations from '@/components/ui/chalk-equations';
 import { Users, UserPlus, Search, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
@@ -58,6 +58,7 @@ export default function StudentsPage() {
                 .font-sans-clean { font-family: 'Inter', sans-serif; }
             `}</style>
 
+            <ChalkEquations />
             <Sidebar />
 
             <div

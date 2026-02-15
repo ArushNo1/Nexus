@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { LessonUploader } from '@/components/lesson-uploader';
 import Sidebar from '@/components/sidebar';
+import ChalkEquations from '@/components/ui/chalk-equations';
 import { getClassroomsForTeacher } from '@/lib/services/classrooms';
 import { Classroom } from '@/lib/types';
 import { ChevronDown, Loader2, Users } from 'lucide-react';
@@ -74,6 +75,7 @@ export default function CreateLessonPage() {
                 .font-sans-clean { font-family: 'Inter', sans-serif; }
             `}</style>
 
+            <ChalkEquations />
             <Sidebar />
 
             <div

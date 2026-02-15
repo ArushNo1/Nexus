@@ -1,6 +1,7 @@
 'use client';
 
 import Sidebar from '@/components/sidebar';
+import ChalkEquations from '@/components/ui/chalk-equations';
 import { Trophy, Award, Star, Target } from 'lucide-react';
 
 export default function AchievementsPage() {
@@ -15,6 +16,7 @@ export default function AchievementsPage() {
                 .font-sans-clean { font-family: 'Inter', sans-serif; }
             `}</style>
 
+            <ChalkEquations />
             <Sidebar />
 
             <div
