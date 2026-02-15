@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Check, User, GraduationCap } from "lucide-react";
+import { User, GraduationCap } from "lucide-react";
 
 export function SignUpForm({
   className,
@@ -107,32 +107,35 @@ export function SignUpForm({
               <div className="grid gap-2">
                 <Label>I am a...</Label>
                 <div className="grid grid-cols-2 gap-4">
-                  <div
+                  <button
+                    type="button"
                     className={cn(
                       "cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all hover:border-emerald-500/50",
                       role === 'student' ? "border-emerald-500 bg-emerald-500/5" : "border-slate-200 dark:border-slate-800"
                     )}
                     onClick={() => setRole('student')}
+                    aria-pressed={role === 'student'}
                   >
                     <div className={cn("p-2 rounded-full", role === 'student' ? "bg-emerald-500 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500")}>
                       <User size={20} />
                     </div>
                     <span className="font-medium text-sm">Student</span>
-                    {role === 'student' && <Check size={16} className="text-emerald-500 absolute top-2 right-2 hidden" />}
-                  </div>
+                  </button>
 
-                  <div
+                  <button
+                    type="button"
                     className={cn(
                       "cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all hover:border-emerald-500/50",
                       role === 'teacher' ? "border-emerald-500 bg-emerald-500/5" : "border-slate-200 dark:border-slate-800"
                     )}
                     onClick={() => setRole('teacher')}
+                    aria-pressed={role === 'teacher'}
                   >
                     <div className={cn("p-2 rounded-full", role === 'teacher' ? "bg-emerald-500 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500")}>
                       <GraduationCap size={20} />
                     </div>
                     <span className="font-medium text-sm">Teacher</span>
-                  </div>
+                  </button>
                 </div>
               </div>
 
@@ -171,7 +174,7 @@ export function SignUpForm({
                   onChange={(e) => setRepeatPassword(e.target.value)}
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && <p id="signup-error" className="text-sm text-red-500" role="alert">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Creating an account..." : "Sign up"}
               </Button>

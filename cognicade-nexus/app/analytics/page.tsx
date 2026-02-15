@@ -60,7 +60,8 @@ export default function AnalyticsPage() {
             <ChalkEquations />
             <Sidebar />
 
-            <div
+            <main
+                id="main-content"
                 className="min-h-screen transition-[margin] duration-300"
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
@@ -103,7 +104,7 @@ export default function AnalyticsPage() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

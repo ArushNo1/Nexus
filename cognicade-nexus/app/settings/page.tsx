@@ -110,14 +110,14 @@ export default function SettingsPage() {
                 `}</style>
                 <ChalkEquations />
             <Sidebar />
-                <div className="min-h-screen transition-[margin] duration-300" style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}>
+                <main id="main-content" className="min-h-screen transition-[margin] duration-300" style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}>
                     <div className="flex items-center justify-center py-32">
                         <div className="flex items-center gap-3 text-emerald-400 font-sans-clean">
                             <Loader2 size={24} className="animate-spin" />
                             Loading settings...
                         </div>
                     </div>
-                </div>
+                </main>
             </div>
         );
     }
@@ -135,7 +135,7 @@ export default function SettingsPage() {
             <ChalkEquations />
             <Sidebar />
 
-            <div className="min-h-screen transition-[margin] duration-300" style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}>
+            <main id="main-content" className="min-h-screen transition-[margin] duration-300" style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}>
 
                 <div className="px-8 py-12">
                     {/* Header */}
@@ -336,7 +336,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

@@ -223,6 +223,7 @@ export default function PricingPage() {
 
             <LandingNavbar scrolled={scrolled} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
 
+            <main id="main-content">
             {/* ── HERO ── */}
             <section ref={heroRef} className="relative pt-40 pb-16 overflow-hidden">
                 <div className="absolute top-0 left-1/3 w-[500px] h-[500px] bg-emerald-500/6 blur-[120px] rounded-full pointer-events-none" />
@@ -265,6 +266,9 @@ export default function PricingPage() {
                     >
                         <span className={`text-sm font-sans-clean transition-colors ${!annual ? 'text-white font-semibold' : 'text-slate-500'}`}>Monthly</span>
                         <button
+                            role="switch"
+                            aria-checked={annual}
+                            aria-label="Toggle annual billing"
                             onClick={() => setAnnual(!annual)}
                             className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${annual ? 'bg-emerald-500' : 'bg-white/10'}`}
                         >
@@ -388,6 +392,7 @@ export default function PricingPage() {
                                 style={faqInView ? { animation: `reveal-up 0.6s cubic-bezier(0.16,1,0.3,1) ${0.15 + i * 0.07}s forwards` } : {}}
                             >
                                 <button
+                                    aria-expanded={openFaq === i}
                                     className="w-full px-6 py-5 text-left flex justify-between items-center gap-4"
                                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
                                 >
@@ -444,6 +449,8 @@ export default function PricingPage() {
                     </div>
                 </div>
             </section>
+
+            </main>
 
             {/* ── FOOTER ── */}
             <footer className="border-t border-white/5 py-10">

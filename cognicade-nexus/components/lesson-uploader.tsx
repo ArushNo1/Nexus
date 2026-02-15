@@ -116,6 +116,17 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
         }),
       }).catch((err) => console.error("Game generation request failed:", err));
 
+      // 4.5. Fire off thumbnail generation (fire-and-forget)
+      fetch("/api/generate-thumbnail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lessonId,
+          title: lp.title || file.name.replace(/\.[^.]+$/, ""),
+          subject: lp.subject || null,
+        }),
+      }).catch((err) => console.error("Thumbnail generation failed:", err));
+
       // 5. Redirect to lesson detail page immediately
       router.push(`/lessons/${lessonId}?generating=true`);
     } catch (err: any) {
@@ -151,6 +162,9 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             {/* Drop zone */}
             <div
+              role="button"
+              tabIndex={0}
+              aria-label={file ? `Selected file: ${file.name}. Press to change.` : "Drop your lesson plan here or press to browse"}
               className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
                 dragOver
                   ? "border-emerald-400 bg-emerald-500/10"
@@ -159,6 +173,7 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
                     : "border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.02]"
               }`}
               onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); }}}
               onDragOver={(e) => {
                 e.preventDefault();
                 setDragOver(true);
@@ -172,6 +187,7 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
                 accept=".pdf,.txt,.md,.json,.pptx,.docx"
                 onChange={handleFileChange}
                 className="hidden"
+                aria-label="Upload lesson plan file"
               />
 
               {file ? (
@@ -236,9 +252,6 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
                   <span className="text-sm font-medium font-sans-clean">
                     Concept Video
                   </span>
-                  <span className="text-[9px] font-pixel text-slate-600 ml-1">
-                    LATER
-                  </span>
                 </div>
               </div>
             </div>
@@ -268,8 +281,8 @@ export function LessonUploader({ classroomId }: LessonUploaderProps) {
 
             {/* Error */}
             {error && (
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-                <span className="text-red-400 shrink-0 mt-0.5 text-lg">✕</span>
+              <div role="alert" className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                <span className="text-red-400 shrink-0 mt-0.5 text-lg" aria-hidden="true">✕</span>
                 <p className="text-red-400 text-sm font-sans-clean">{error}</p>
               </div>
             )}

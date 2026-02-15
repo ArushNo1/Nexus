@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, X, LogOut } from 'lucide-react';
+import { Menu, X, LayoutDashboard } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -37,12 +37,8 @@ export default function LandingNavbar({ scrolled, isMenuOpen, setIsMenuOpen }: L
     return () => subscription?.unsubscribe();
   }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-  };
   return (
-    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-[#0d281e]/90 backdrop-blur-md py-4 border-b border-white/5 shadow-md' : 'bg-transparent py-8'}`}>
+    <nav aria-label="Landing page navigation" className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-[#0d281e]/90 backdrop-blur-md py-4 border-b border-white/5 shadow-md' : 'bg-transparent py-8'}`}>
       <div className="w-full px-8 lg:px-12 xl:px-16 2xl:px-24 flex justify-between items-center">
         {/* Logo */}
         <Link href="/landing" className="flex items-center gap-3">
@@ -59,9 +55,12 @@ export default function LandingNavbar({ scrolled, isMenuOpen, setIsMenuOpen }: L
 {/* Conditional Auth Button */}
           {!isLoading && (
             user ? (
-              <button onClick={handleLogout} className="px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition-all shadow-md flex items-center gap-2">
-                Logout
-              </button>
+              <Link href="/dashboard">
+                <button className="px-6 py-2.5 bg-white text-[#0d281e] font-bold rounded-lg hover:bg-slate-200 transition-all shadow-md flex items-center gap-2">
+                  <LayoutDashboard className="w-4 h-4" />
+                  Dashboard
+                </button>
+              </Link>
             ) : (
               <Link href="/auth/login">
                 <button className="px-6 py-2.5 bg-white text-[#0d281e] font-bold rounded-lg hover:bg-slate-200 transition-all shadow-md">
@@ -73,7 +72,12 @@ export default function LandingNavbar({ scrolled, isMenuOpen, setIsMenuOpen }: L
         </div>
 
         {/* Mobile Toggle */}
-        <button className="md:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+        <button
+          className="md:hidden text-white"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={isMenuOpen}
+        >
           {isMenuOpen ? <X /> : <Menu />}
         </button>
       </div>

@@ -162,6 +162,7 @@ export default function FeaturesPage() {
 
             <LandingNavbar scrolled={scrolled} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
 
+            <main id="main-content">
             {/* ── HERO ── */}
             <section ref={heroRef} className="relative pt-40 pb-24 overflow-hidden">
                 {/* Ambient glows */}
@@ -354,6 +355,8 @@ export default function FeaturesPage() {
                     </div>
                 </div>
             </section>
+
+            </main>
 
             {/* ── FOOTER ── */}
             <footer className="border-t border-white/5 py-10">

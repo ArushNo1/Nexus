@@ -43,6 +43,7 @@ export interface Lesson {
     grade_level: string | null;
     objectives: string[] | null;
     content: any | null; // JSONB
+    thumbnail_url: string | null;
     created_at: string;
     updated_at: string;
 }

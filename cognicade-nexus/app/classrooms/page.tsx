@@ -153,7 +153,8 @@ export default function ClassroomsPage() {
             <ChalkEquations />
             <Sidebar />
 
-            <div
+            <main
+                id="main-content"
                 className="min-h-screen transition-[margin] duration-300"
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
@@ -290,7 +291,7 @@ export default function ClassroomsPage() {
                         </div>
                     )}
                 </div>
-            </div>
+            </main>
 
             {/* Create Classroom Modal */}
             {showCreateModal && (
