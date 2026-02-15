@@ -88,14 +88,9 @@ export default function LessonsPage() {
             <ChalkEquations />
             <Sidebar />
 
-<<<<<<< Updated upstream
             <main
                 id="main-content"
-                className="min-h-screen transition-[margin] duration-300"
-=======
-            <div
                 className="min-h-screen transition-[margin] duration-300 relative"
->>>>>>> Stashed changes
                 style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
             >
                 {/* Ambient background glows — matches landing page */}
