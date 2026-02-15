@@ -33,25 +33,61 @@ export async function POST(req: NextRequest) {
 
         console.log('[generate-thumbnail] Fetching image for lesson:', lessonId);
 
-        const response = await fetch(imageUrl, { signal: AbortSignal.timeout(30000) });
-        if (!response.ok) {
-            console.error('[generate-thumbnail] Pollinations HTTP error:', response.status);
-            return NextResponse.json({ error: 'Image generation failed' }, { status: 502 });
+        let buffer: Buffer | null = null;
+        const maxRetries = 3;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const response = await fetch(imageUrl, { signal: AbortSignal.timeout(30000) });
+                if (!response.ok) {
+                    console.error(`[generate-thumbnail] Pollinations HTTP error (attempt ${attempt}/${maxRetries}):`, response.status);
+                    if (attempt < maxRetries) {
+                        await new Promise(r => setTimeout(r, 2000 * attempt));
+                        continue;
+                    }
+                    break;
+                }
+
+                const data = Buffer.from(await response.arrayBuffer());
+                if (data.length < 1000) {
+                    console.error(`[generate-thumbnail] Image too small (attempt ${attempt}/${maxRetries})`);
+                    if (attempt < maxRetries) {
+                        await new Promise(r => setTimeout(r, 2000 * attempt));
+                        continue;
+                    }
+                    break;
+                }
+
+                buffer = data;
+                break;
+            } catch (fetchErr) {
+                console.error(`[generate-thumbnail] Fetch error (attempt ${attempt}/${maxRetries}):`, fetchErr);
+                if (attempt < maxRetries) {
+                    await new Promise(r => setTimeout(r, 2000 * attempt));
+                }
+            }
         }
 
-        const buffer = Buffer.from(await response.arrayBuffer());
-        if (buffer.length < 1000) {
-            console.error('[generate-thumbnail] Image too small, likely failed');
-            return NextResponse.json({ error: 'Image generation returned invalid data' }, { status: 502 });
+        // Fallback: generate a simple SVG placeholder if Pollinations is unavailable
+        if (!buffer) {
+            console.warn('[generate-thumbnail] Pollinations unavailable, using placeholder');
+            const initials = title.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+            const hue = [...title].reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
+                <rect width="800" height="600" fill="hsl(${hue}, 50%, 25%)"/>
+                <text x="400" y="320" text-anchor="middle" font-family="sans-serif" font-size="120" font-weight="bold" fill="hsl(${hue}, 70%, 70%)">${initials}</text>
+            </svg>`;
+            buffer = Buffer.from(svg);
         }
 
         // Save to temp file, upload to Supabase, then clean up
+        const isSvg = buffer[0] === 0x3C; // '<' — SVG fallback
+        const ext = isSvg ? 'svg' : 'jpg';
         const tempDir = path.join(process.cwd(), 'temp');
         await fs.mkdir(tempDir, { recursive: true });
-        const tempPath = path.join(tempDir, `thumb-${lessonId}.jpg`);
+        const tempPath = path.join(tempDir, `thumb-${lessonId}.${ext}`);
         await fs.writeFile(tempPath, buffer);
 
-        const filename = `thumb-${lessonId}.jpg`;
+        const filename = `thumb-${lessonId}.${ext}`;
         const { url: thumbnailUrl } = await uploadToStorage('thumbnails', tempPath, user.id, filename, supabase);
 
         await fs.unlink(tempPath).catch(() => {});
