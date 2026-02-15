@@ -4,6 +4,7 @@ from typing import TypedDict, Literal
 class AgentState(TypedDict):
     # ── Input ──
     lesson_plan: dict              # The raw JSON lesson plan
+    game_id: str                   # UUID of the games row in Supabase
 
     # ── Game Planner output ──
     game_type: str                 # One of: beatemup, fighter, maze, platformer, shootemup

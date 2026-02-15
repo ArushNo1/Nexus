@@ -11,6 +11,7 @@ from utils.llm import get_llm, extract_text
 from utils.logger import get_logger
 from utils.debug import dump_debug_state
 from utils.prompts import load_prompt, render_template
+from utils.supabase import update_game
 
 log = get_logger("game_planner")
 
@@ -64,6 +65,10 @@ async def game_planner_node(state: AgentState) -> dict:
     game_type = _parse_game_type(content)
     template_code = _load_template(game_type)
 
+    # Generate a short game title from lesson plan + game type
+    lesson_title = state["lesson_plan"].get("title", "Untitled")
+    game_title = f"{lesson_title}: {game_type.replace('_', ' ').title()}"
+
     result = {
         "game_type": game_type,
         "template_code": template_code,
@@ -73,5 +78,15 @@ async def game_planner_node(state: AgentState) -> dict:
 
     log.info(f"[bold cyan]Node 1 — Game Planner[/bold cyan] | selected: {game_type} | done → status: evaluating")
     dump_debug_state("game_planner", {**state, **result})
+
+    # Push status + title to Supabase
+    game_id = state.get("game_id")
+    if game_id:
+        update_game(game_id, {
+            "status": "evaluating",
+            "title": game_title,
+            "target_audience": "K12",
+            "design_doc_data": content,
+        })
 
     return result
