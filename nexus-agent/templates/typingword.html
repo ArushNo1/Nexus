@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Kaplay Typing Game Template</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #111;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="https://unpkg.com/kaplay@3001.0.19/dist/kaplay.js"></script>
+    <script>
+        // =============================================
+        //  TYPING GAME TEMPLATE — Kaplay.js
+        //
+        //  HOW IT WORKS:
+        //    - Words fall from the top of the screen.
+        //    - Type the word to destroy it before it reaches the bottom.
+        //    - Typing the first letter of a word "targets" it (highlights it).
+        //    - Continue typing to complete and destroy the word.
+        //    - If a word reaches the bottom, you lose a life.
+        //    - Destroy all words to win, or lose all lives = game over.
+        //
+        //  SCENES: "game", "gameover", "win"
+        //
+        //  EDUCATIONAL POTENTIAL:
+        //    - WORDS array is the lesson content — vocab, spelling, key terms
+        //    - Words can be foreign-language vocabulary
+        //    - Show definitions after typing a word correctly
+        //    - Works for any subject that has key terms to memorize
+        // =============================================
+
+        // -- CONFIG --
+        const C = {
+            w: 640,
+            h: 480,
+            fallSpeed: 30,       // pixels/sec — how fast words fall
+            spawnInterval: 2.5,  // seconds between word spawns
+            lives: 5,            // lives before game over
+            bg: [12, 15, 30],
+            wordCol: [200, 200, 220],       // default word color
+            targetCol: [80, 220, 255],      // currently-targeted word color
+            typedCol: [80, 255, 120],       // color of typed portion
+            dangerCol: [255, 80, 80],       // word near bottom
+            dangerY: 400,                   // Y threshold for danger color
+        };
+
+        // -- WORDS: The AI should replace this with lesson-specific vocabulary --
+        const WORDS = [
+            "photosynthesis", "mitochondria", "ecosystem", "chromosome",
+            "evolution", "neuron", "organism", "molecule",
+            "nucleus", "enzyme", "protein", "habitat",
+            "gravity", "velocity", "friction", "energy",
+            "climate", "erosion", "volcano", "mineral",
+        ];
+
+        kaplay({ width: C.w, height: C.h, background: C.bg, crisp: true, letterbox: true });
+        loadBean();
+
+        // ==================
+        //  GAME SCENE
+        // ==================
+        scene("game", () => {
+            let lives = C.lives;
+            let score = 0;
+            let wordsSpawned = 0;
+            let wordsCleared = 0;
+            let targetWord = null;     // the word entity currently being typed
+            let typedSoFar = "";       // what the player has typed toward the target
+
+            // Shuffle the word list each game
+            const wordList = [...WORDS].sort(() => Math.random() - 0.5);
+
+            // -- SECTION: Spawn a falling word --
+            function spawnWord() {
+                if (wordsSpawned >= wordList.length) return;
+
+                const word = wordList[wordsSpawned];
+                wordsSpawned++;
+
+                // Random X position, avoiding edges
+                const x = 60 + Math.random() * (C.w - 120);
+
+                add([
+                    text(word, { size: 18 }),
+                    pos(x, -20),
+                    anchor("center"),
+                    color(...C.wordCol),
+                    "fallingword",
+                    { word, typed: 0 },  // typed = how many chars have been matched
+                ]);
+            }
+
+            // -- SECTION: Word falling movement --
+            onUpdate("fallingword", (w) => {
+                w.move(0, C.fallSpeed);
+
+                // Danger coloring when near bottom
+                if (w !== targetWord && w.pos.y > C.dangerY) {
+                    w.color = rgb(...C.dangerCol);
+                }
+
+                // Word hit bottom — lose a life
+                if (w.pos.y > C.h + 10) {
+                    lives--;
+                    shake(6);
+                    // If this was our target, clear targeting
+                    if (w === targetWord) { targetWord = null; typedSoFar = ""; }
+                    destroy(w);
+                    if (lives <= 0) go("gameover", score);
+                }
+            });
+
+            // -- SECTION: Keyboard input --
+            onCharInput((ch) => {
+                const c = ch.toLowerCase();
+
+                // If no target, find a word that starts with this character
+                if (!targetWord) {
+                    const candidates = get("fallingword").filter(
+                        (w) => w.typed === 0 && w.word[0].toLowerCase() === c
+                    );
+                    if (candidates.length === 0) return;
+
+                    // Target the lowest word (closest to danger)
+                    candidates.sort((a, b) => b.pos.y - a.pos.y);
+                    targetWord = candidates[0];
+                    targetWord.typed = 1;
+                    typedSoFar = c;
+                    targetWord.color = rgb(...C.targetCol);
+
+                    // Update display to show typed portion
+                    updateWordDisplay(targetWord);
+
+                    // Check if single-letter word (unlikely but safe)
+                    if (targetWord.typed >= targetWord.word.length) {
+                        clearWord(targetWord);
+                    }
+                    return;
+                }
+
+                // We have a target — check next expected character
+                const expected = targetWord.word[targetWord.typed];
+                if (expected && expected.toLowerCase() === c) {
+                    targetWord.typed++;
+                    typedSoFar += c;
+                    updateWordDisplay(targetWord);
+
+                    // Whole word typed — destroy it!
+                    if (targetWord.typed >= targetWord.word.length) {
+                        clearWord(targetWord);
+                    }
+                }
+                // Wrong key? Just ignore it (keep target, no penalty)
+            });
+
+            // -- SECTION: Update word text to show typed vs untyped --
+            function updateWordDisplay(w) {
+                if (!w.exists()) return;
+                // Show the full word but Kaplay text doesn't support inline color,
+                // so we just update the whole color to show progress
+                const progress = w.typed / w.word.length;
+                w.color = rgb(
+                    lerp(C.targetCol[0], C.typedCol[0], progress),
+                    lerp(C.targetCol[1], C.typedCol[1], progress),
+                    lerp(C.targetCol[2], C.typedCol[2], progress),
+                );
+            }
+
+            // -- SECTION: Clear a completed word --
+            function clearWord(w) {
+                score += w.word.length * 10;
+                wordsCleared++;
+                addKaboom(w.pos);
+                destroy(w);
+                targetWord = null;
+                typedSoFar = "";
+
+                // Win condition: all words cleared
+                if (wordsCleared >= wordList.length && get("fallingword").length === 0) {
+                    go("win", score);
+                }
+            }
+
+            // -- SECTION: Spawn words on interval --
+            spawnWord(); // spawn first word immediately
+            const spawnLoop = loop(C.spawnInterval, () => {
+                spawnWord();
+            });
+
+            // Check win after all spawned and cleared
+            onUpdate(() => {
+                if (wordsSpawned >= wordList.length && get("fallingword").length === 0 && wordsCleared >= wordList.length) {
+                    go("win", score);
+                }
+            });
+
+            // -- SECTION: HUD --
+            const scoreHud = add([text("", { size: 16 }), pos(8, 8), color(255, 220, 80), fixed(), z(50)]);
+            const livesHud = add([text("", { size: 16 }), pos(C.w - 8, 8), anchor("topright"), color(255, 100, 100), fixed(), z(50)]);
+            const typingHud = add([text("", { size: 14 }), pos(C.w / 2, C.h - 16), anchor("center"), color(80, 220, 255), fixed(), z(50)]);
+            const progressHud = add([text("", { size: 12 }), pos(C.w / 2, 8), anchor("top"), color(120, 120, 150), fixed(), z(50)]);
+
+            onUpdate(() => {
+                scoreHud.text = `Score: ${score}`;
+                livesHud.text = `Lives: ${lives}`;
+                typingHud.text = typedSoFar ? `Typing: ${typedSoFar}_` : "Type to start...";
+                progressHud.text = `${wordsCleared}/${wordList.length} words`;
+            });
+
+            // -- SECTION: Danger line indicator --
+            add([rect(C.w, 2), pos(0, C.dangerY), color(255, 50, 50), opacity(0.2), fixed(), z(-1)]);
+        });
+
+        // ==================
+        //  GAME OVER
+        // ==================
+        scene("gameover", (score) => {
+            add([text("GAME OVER", { size: 48 }), pos(center()), anchor("center"), color(220, 60, 60)]);
+            add([text(`Score: ${score}`, { size: 24 }), pos(center().x, center().y + 50), anchor("center"), color(255, 220, 80)]);
+            add([text("Press SPACE to retry", { size: 14 }), pos(center().x, center().y + 90), anchor("center"), color(150, 150, 180)]);
+            onKeyPress("space", () => go("game"));
+            onClick(() => go("game"));
+        });
+
+        // ==================
+        //  WIN SCENE
+        // ==================
+        scene("win", (score) => {
+            add([text("ALL WORDS TYPED!", { size: 40 }), pos(center()), anchor("center"), color(100, 255, 150)]);
+            add([text(`Score: ${score}`, { size: 24 }), pos(center().x, center().y + 50), anchor("center"), color(255, 220, 80)]);
+            add([text("Press SPACE to play again", { size: 14 }), pos(center().x, center().y + 90), anchor("center"), color(150, 150, 180)]);
+            onKeyPress("space", () => go("game"));
+            onClick(() => go("game"));
+        });
+
+        go("game");
+    </script>
+</body>
+
+</html>
