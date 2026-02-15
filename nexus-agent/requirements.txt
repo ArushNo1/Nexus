@@ -1,0 +1,11 @@
+langgraph
+chromadb
+playwright
+pydantic
+jinja2
+rich
+pydantic-settings
+langchain-google-genai
+beautifulsoup4
+requests
+html2text

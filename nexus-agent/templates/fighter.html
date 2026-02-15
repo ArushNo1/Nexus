@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Kaplay Fighting Game Template</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="https://unpkg.com/kaplay@3001.0.19/dist/kaplay.js"></script>
+    <script>
+        // =============================================
+        //  FIGHTING GAME TEMPLATE — Kaplay.js
+        //  P1: WASD + F punch / G kick
+        //  P2: Arrows + J punch / K kick
+        //
+        //  ARCHITECTURE:
+        //    Two scenes: "fight" (gameplay) and "matchover" (final result + rematch).
+        //    "fight" is re-entered for each round; win counts persist via outer-scope vars p1wins/p2wins.
+        //    Tags used: "p1", "p2" (fighters only — no bullet/projectile entities).
+        //    Both fighters share one factory (makeFighter) and one attack function (doAttack).
+        //    Physics: Kaplay gravity + body() for jumping/landing. Walls are invisible static bodies.
+        //    Combat: distance-based hit detection (not collision), with blocking, knockback, stun, and cooldowns.
+        //    Match structure: first to C.rounds (default 3) round wins takes the match.
+        // =============================================
+
+        // -- CONFIG: All tunable gameplay constants --
+        const C = {
+            speed: 220,
+            jumpForce: 520,
+            gravity: 1200,
+            punchDmg: 8,
+            kickDmg: 14,          // kick does ~2x punch damage but has longer cooldown
+            punchRange: 55,       // distance in pixels for hit detection
+            kickRange: 65,
+            punchCD: 0.25,        // seconds before can punch again
+            kickCD: 0.5,
+            knockback: 260,       // horizontal push on hit (pixels moved via .move())
+            maxHP: 100,
+            floorY: 400,          // y-position of the arena floor top edge
+            rounds: 3,            // rounds needed to win the match
+            bg: [20, 16, 30],
+        };
+
+        kaplay({ width: 800, height: 500, background: C.bg, crisp: true, letterbox: true });
+        loadBean();
+
+        // -- MATCH STATE: persists across rounds (scenes), reset on rematch --
+        let p1wins = 0;
+        let p2wins = 0;
+
+        // ==================
+        //  FIGHT SCENE
+        // ==================
+        scene("fight", () => {
+            setGravity(C.gravity);
+
+            // -- ARENA: floor (visible) + invisible left/right walls to contain fighters --
+            add([rect(800, 120), pos(0, C.floorY), color(40, 35, 55), body({ isStatic: true }), area()]);
+            add([rect(760, 2), pos(20, C.floorY), color(70, 60, 100), z(-1)]); // decorative floor line
+            // Invisible walls at screen edges (10px wide, full height)
+            add([rect(10, 500), pos(-10, 0), body({ isStatic: true }), area(), color(0, 0, 0), opacity(0)]);
+            add([rect(10, 500), pos(800, 0), body({ isStatic: true }), area(), color(0, 0, 0), opacity(0)]);
+
+            let roundOver = false;
+
+            // -- FIGHTER FACTORY --
+            // Creates a fighter entity with: rect body (36x56), circle head (child entity),
+            // physics body for gravity/jumping, and custom state for HP/facing/cooldowns/blocking/stun.
+            // `controls` maps action names to key strings for input abstraction.
+            function makeFighter(tag, startX, col, controls) {
+                const f = add([
+                    rect(36, 56, { radius: 4 }),
+                    pos(startX, C.floorY - 60),
+                    area(),
+                    body(),           // affected by gravity, supports isGrounded() and jump()
+                    anchor("bot"),    // anchored at feet for floor alignment
+                    color(...col),
+                    outline(3, rgb(0, 0, 0)),
+                    z(10),
+                    {
+                        hp: C.maxHP,
+                        facing: 1,        // 1 = right, -1 = left (auto-set toward opponent)
+                        canPunch: true,    // cooldown flag, set false on attack, restored via wait()
+                        canKick: true,
+                        blocking: false,   // true while holding down + grounded
+                        stunTimer: 0,      // seconds of hitstun remaining (blocks movement)
+                        ctrl: controls,    // key bindings object
+                        tag_: tag,         // "p1" or "p2" string, used in endRound() to track winner
+                    },
+                    tag,
+                ]);
+
+                // Head: child entity (moves with parent automatically)
+                f.add([
+                    circle(14),
+                    pos(0, -44),
+                    anchor("center"),
+                    color(...col),
+                    outline(3, rgb(0, 0, 0)),
+                ]);
+
+                return f;
+            }
+
+            // -- INSTANTIATE FIGHTERS --
+            // P1 starts left (x=200), P2 starts right (x=600)
+            const p1 = makeFighter("p1", 200, [70, 170, 255], {
+                left: "a", right: "d", up: "w", down: "s", punch: "f", kick: "g",
+            });
+            const p2 = makeFighter("p2", 600, [255, 90, 90], {
+                left: "left", right: "right", up: "up", down: "down", punch: "j", kick: "k",
+            });
+
+            // -- HP BARS --
+            // P1 bar: left-aligned, shrinks from right. P2 bar: right-aligned (anchor topright), shrinks from left.
+            const barW = 280;
+            add([rect(barW + 4, 22), pos(18, 18), color(30, 30, 30), fixed(), z(49)]); // P1 bg
+            const p1bar = add([rect(barW, 18), pos(20, 20), color(70, 170, 255), fixed(), z(50)]);
+            add([text("P1", { size: 14 }), pos(24, 42), color(70, 170, 255), fixed(), z(50)]);
+
+            add([rect(barW + 4, 22), pos(width() - 22 - barW, 18), color(30, 30, 30), fixed(), z(49)]); // P2 bg
+            const p2bar = add([rect(barW, 18), pos(width() - 20, 20), anchor("topright"), color(255, 90, 90), fixed(), z(50)]);
+            add([text("P2", { size: 14 }), pos(width() - 24, 42), anchor("topright"), color(255, 90, 90), fixed(), z(50)]);
+
+            // Round score display (center top)
+            const roundTxt = add([
+                text(`${p1wins} - ${p2wins}`, { size: 20 }),
+                pos(width() / 2, 22), anchor("top"), color(220, 220, 220), fixed(), z(50),
+            ]);
+
+            // HP bar width scales linearly with remaining HP
+            function updateBars() {
+                p1bar.width = Math.max(0, (p1.hp / C.maxHP) * barW);
+                p2bar.width = Math.max(0, (p2.hp / C.maxHP) * barW);
+            }
+
+            // -- MOVEMENT HANDLER (called per-frame for each fighter) --
+            // Blocked by: roundOver, stunTimer > 0. Auto-faces opponent.
+            // Blocking: hold down while grounded.
+            function handleMovement(f, opponent) {
+                if (roundOver || f.stunTimer > 0) return;
+                const ctrl = f.ctrl;
+
+                if (isKeyDown(ctrl.left)) { f.move(-C.speed, 0); }
+                if (isKeyDown(ctrl.right)) { f.move(C.speed, 0); }
+                if (isKeyDown(ctrl.up) && f.isGrounded()) { f.jump(C.jumpForce); }
+
+                f.blocking = isKeyDown(ctrl.down) && f.isGrounded();
+
+                // Auto-face: always look toward opponent
+                f.facing = opponent.pos.x > f.pos.x ? 1 : -1;
+            }
+
+            // -- ATTACK SYSTEM (shared by both punch and kick) --
+            // Distance-based hit detection: checks horizontal distance < range AND vertical distance < 60px.
+            // NOT collision-based — no hitbox entity is spawned, just a VFX circle.
+            //
+            // Blocking reduces damage to 20% ("chip damage") with small knockback and no stun.
+            // Full hit applies: full damage, 0.3s stun, full knockback, screen shake + flash.
+            //
+            // Attacker gets a brief squash/stretch on their rect (width/height tweak) as hit feedback.
+            // Cooldown is enforced via cdKey flag ("canPunch"/"canKick") + wait() to re-enable.
+            function doAttack(attacker, defender, range, dmg, cdKey, cdTime, fxCol) {
+                if (roundOver || !attacker[cdKey] || attacker.stunTimer > 0) return;
+                attacker[cdKey] = false; // start cooldown
+
+                // VFX: brief circle in front of attacker to visualize the attack arc
+                const hitX = attacker.pos.x + attacker.facing * range * 0.5;
+                const hitPos = vec2(hitX, attacker.pos.y - 28);
+                add([
+                    circle(range * 0.35),
+                    pos(hitPos), anchor("center"),
+                    color(...fxCol), opacity(0.6),
+                    z(15), lifespan(0.12, { fade: 0.08 }),
+                ]);
+
+                // -- HIT DETECTION: simple distance check, not physics collision --
+                const dist = Math.abs(attacker.pos.x - defender.pos.x);
+                const yOk = Math.abs(attacker.pos.y - defender.pos.y) < 60;
+
+                if (dist < range && yOk) {
+                    let finalDmg = dmg;
+                    if (defender.blocking) {
+                        // BLOCKED: 20% chip damage, reduced knockback, no stun, white flash on defender
+                        finalDmg = Math.floor(dmg * 0.2);
+                        defender.move(attacker.facing * C.knockback * 0.3, 0);
+                        add([
+                            rect(40, 56), pos(defender.pos.x, defender.pos.y - 28),
+                            anchor("center"), color(255, 255, 255), opacity(0.4),
+                            z(14), lifespan(0.08),
+                        ]);
+                    } else {
+                        // FULL HIT: stun + full knockback + screen effects
+                        defender.stunTimer = 0.3;
+                        defender.move(attacker.facing * C.knockback, 0);
+                        shake(5);
+                        flash(rgb(255, 255, 255), 0.04);
+                    }
+                    defender.hp -= finalDmg;
+                    updateBars();
+
+                    // KO check: if HP depleted, end the round
+                    if (defender.hp <= 0) {
+                        defender.hp = 0;
+                        updateBars();
+                        endRound(attacker.tag_);
+                    }
+                }
+
+                // -- ATTACKER SQUASH/STRETCH: brief rect deformation as attack feedback --
+                // Punch: wider + shorter. Kick: narrower + taller.
+                const origW = 36, origH = 56;
+                if (cdKey === "canPunch") {
+                    attacker.width = origW + 6; attacker.height = origH - 4;
+                    wait(0.07, () => { attacker.width = origW; attacker.height = origH; });
+                } else {
+                    attacker.width = origW - 4; attacker.height = origH + 6;
+                    wait(0.09, () => { attacker.width = origW; attacker.height = origH; });
+                }
+
+                // Re-enable attack after cooldown
+                wait(cdTime, () => attacker[cdKey] = true);
+            }
+
+            // -- INPUT BINDINGS --
+            // Each key press calls doAttack with the appropriate attacker/defender pair and attack params.
+            onKeyPress("f", () => doAttack(p1, p2, C.punchRange, C.punchDmg, "canPunch", C.punchCD, [180, 220, 255]));
+            onKeyPress("g", () => doAttack(p1, p2, C.kickRange, C.kickDmg, "canKick", C.kickCD, [100, 180, 255]));
+            onKeyPress("j", () => doAttack(p2, p1, C.punchRange, C.punchDmg, "canPunch", C.punchCD, [255, 180, 180]));
+            onKeyPress("k", () => doAttack(p2, p1, C.kickRange, C.kickDmg, "canKick", C.kickCD, [255, 120, 120]));
+
+            // -- FRAME UPDATE: movement, stun decay, visual feedback --
+            onUpdate(() => {
+                handleMovement(p1, p2);
+                handleMovement(p2, p1);
+
+                for (const f of [p1, p2]) {
+                    // Stun timer countdown + flicker effect while stunned
+                    if (f.stunTimer > 0) {
+                        f.stunTimer -= dt();
+                        f.opacity = wave(0.4, 1, time() * 20);
+                    } else {
+                        f.opacity = 1;
+                    }
+                    // Keep fighters within screen bounds
+                    f.pos.x = clamp(f.pos.x, 20, width() - 20);
+                }
+
+                // Visual block indicator: darken fighter color while blocking
+                p1.color = p1.blocking ? rgb(40, 100, 160) : rgb(70, 170, 255);
+                p2.color = p2.blocking ? rgb(160, 50, 50) : rgb(255, 90, 90);
+            });
+
+            // -- ROUND END: increment win count, check for match win or prompt next round --
+            function endRound(winnerTag) {
+                if (roundOver) return;
+                roundOver = true;
+
+                if (winnerTag === "p1") p1wins++;
+                else p2wins++;
+
+                const winText = winnerTag === "p1" ? "P1 WINS" : "P2 WINS";
+                const winCol = winnerTag === "p1" ? [70, 170, 255] : [255, 90, 90];
+
+                // Explosion on the loser
+                addKaboom(winnerTag === "p1" ? p2.pos : p1.pos);
+
+                wait(0.6, () => {
+                    add([
+                        text(winText, { size: 42 }),
+                        pos(center().x, center().y - 40), anchor("center"),
+                        color(...winCol), fixed(), z(60),
+                    ]);
+
+                    // Match win check: if either player hits C.rounds wins, go to matchover
+                    if (p1wins >= C.rounds || p2wins >= C.rounds) {
+                        wait(1.5, () => go("matchover", { p1wins, p2wins }));
+                    } else {
+                        // Otherwise prompt for next round (re-enters "fight" scene, resetting HP but keeping win counts)
+                        add([
+                            text("Press SPACE for next round", { size: 14 }),
+                            pos(center().x, center().y + 20), anchor("center"),
+                            color(180, 180, 200), fixed(), z(60),
+                        ]);
+                        onKeyPress("space", () => go("fight"));
+                    }
+                });
+            }
+
+            // Controls hint
+            add([
+                text("P1: WASD + F/G  |  P2: Arrows + J/K  |  Hold DOWN to block", { size: 11 }),
+                pos(width() / 2, height() - 10), anchor("bot"),
+                color(90, 90, 120), fixed(), z(50),
+            ]);
+        });
+
+        // ==================
+        //  MATCH OVER SCENE
+        // ==================
+        // Displays overall match winner and final score. Space/click resets wins and starts fresh.
+        scene("matchover", ({ p1wins, p2wins }) => {
+            const winner = p1wins >= C.rounds ? "PLAYER 1" : "PLAYER 2";
+            const col = p1wins >= C.rounds ? [70, 170, 255] : [255, 90, 90];
+
+            add([text(`${winner} WINS`, { size: 48 }), pos(center().x, center().y - 30), anchor("center"), color(...col)]);
+            add([text(`${p1wins} - ${p2wins}`, { size: 28 }), pos(center().x, center().y + 30), anchor("center"), color(200, 200, 200)]);
+            add([text("Press SPACE to rematch", { size: 15 }), pos(center().x, center().y + 80), anchor("center"), color(140, 140, 170)]);
+
+            // Reset win counters on rematch (note: modifies outer-scope vars)
+            onKeyPress("space", () => { p1wins = 0; p2wins = 0; go("fight"); });
+            onClick(() => { p1wins = 0; p2wins = 0; go("fight"); });
+        });
+
+        // -- ENTRY POINT --
+        go("fight");
+    </script>
+</body>
+
+</html>

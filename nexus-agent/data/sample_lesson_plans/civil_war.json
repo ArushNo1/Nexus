@@ -1,0 +1,44 @@
+{
+  "lessonPlan": {
+    "title": "Introduction to the American Civil War",
+    "duration": "60 minutes",
+    "gradeLevel": "Level: 8th Grade",
+    "subject": "Social Studies/History",
+    "objectives": [
+      "Students will be able to identify the main causes of the Civil War (slavery, states' rights, economic differences).",
+      "Students will explain the differences between the Union and Confederate states.",
+      "Students will describe key events and outcomes of the Civil War.",
+      "Students will understand the significance of the Civil War in American history."
+    ],
+    "standards": [
+      "CCSS.ELA-LITERACY.RH.6-8.2: Determine the central ideas or information of a primary or secondary source.",
+      "NCSS Theme 2: Time, Continuity, and Change - Understanding causes and effects of historical events."
+    ],
+    "materials": [
+      "Could not extract materials"
+    ],
+    "content": {
+      "introduction": "Could not extract introduction",
+      "procedure": "Could not extract procedure",
+      "closure": "Could not extract closure"
+    }
+  },
+  "rubrics": {
+    "title": "Extracted Rubric",
+    "criteria": []
+  },
+  "assessments": [
+    {
+      "type": "Extracted Assessment",
+      "title": "Assessment",
+      "questions": [
+        {
+          "questionText": "- Formative: participation in class discussion about causes of the war.\n- Summative: Civil War timeline and map worksheet accuracy.\n- Quiz (to be given next class):\n  1. What were the two sides in the Civil War? (Union/North and Confederacy/South)\n  2. What was the main issue that divided the North and South? (Slavery)\n  3. Who was the President of the United States during the Civil War? (Abraham Lincoln)",
+          "options": [],
+          "correctAnswer": "",
+          "points": 0
+        }
+      ]
+    }
+  ]
+}

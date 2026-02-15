@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Union Scout: Timeline Runner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #2c2c2c;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- KAPLAY.js CDN -->
+    <script src="https://unpkg.com/kaplay@3001/dist/kaplay.js"></script>
+    <script>
+        // ============================================================
+        //  THE UNION SCOUT: TIMELINE RUNNER
+        //  A Civil War themed platformer with historical fact-checking.
+        // ============================================================
+
+        /**
+         * EDUCATIONAL OBJECTIVES:
+         * 1. Identify key political and military figures of the Civil War.
+         * 2. Distinguish between Union and Confederate states/ideologies.
+         * 3. Understand the chronological progression of the war.
+         */
+
+        // ----- 1. GAME DATA: HISTORY FACTS -----
+        const BRIDGES = [
+            {
+                q: "Who was the President of the Union?",
+                a: { text: "Abraham Lincoln", isCorrect: true },
+                b: { text: "Jefferson Davis", isCorrect: false }
+            },
+            {
+                q: "Which side fought to end slavery?",
+                a: { text: "The Confederacy", isCorrect: false },
+                b: { text: "The Union", isCorrect: true }
+            },
+            {
+                q: "The war effectively ended at...",
+                a: { text: "Appomattox Court", isCorrect: true },
+                b: { text: "Bull Run", isCorrect: false }
+            }
+        ];
+
+        // ----- 2. GAME CONFIGURATION -----
+        const CONFIG = {
+            // Physics
+            gravity: 1600,
+            jumpForce: 650,
+            moveSpeed: 300,
+            maxFallSpeed: 900,
+
+            // Player Stats
+            playerStartPos: { x: 50, y: 0 },
+            playerHealth: 5, // Morale
+
+            // Visual Palette (Civil War Theme)
+            bgColor: [245, 235, 205], // Parchment Paper
+            
+            // Level 1: Industrial North
+            floorColorL1: [100, 60, 50],  // Brick Red
+            // Level 2: Agrarian South
+            floorColorL2: [120, 100, 60], // Muddy Brown
+            
+            platformColor: [100, 100, 120], // Iron / Wood
+            hazardColor: [80, 80, 80],      // Iron (Barbed Wire/Cannons)
+            coinColor: [184, 134, 11],      // Aged Gold (Telegrams)
+            portalColor: [255, 255, 250],   // White Paper (Treaty)
+            textColor: [40, 30, 20],        // Ink Black
+        };
+
+        // ----- 3. LEVEL MAPS -----
+        // New Symbols:
+        // ? : Fact-Check Bridge (Spawns two choice platforms)
+        // S : History Scroll (Checkpoint)
+        const LEVELS = [
+            // --- Level 1: The Industrial North ---
+            [
+                "                                                  ",
+                "                                                  ",
+                "                                                  ",
+                "                                                  ",
+                "                                                  ",
+                "                                                  ",
+                "                  $    $                          ",
+                "                 -------                          ",
+                "          $                     ?           >     ",
+                "        =====                 (   )        ====   ",
+                "                             (     )              ",
+                "  @                         (       )             ",
+                "======= ^^^ =======   S    (         )   ======   ",
+                "==================================================",
+            ],
+            // --- Level 2: The Agrarian South ---
+            [
+                "                                                  ",
+                "                                                  ",
+                "                                   ?         >    ",
+                "                                (     )     ===   ",
+                "                      $        (       )          ",
+                "                     ---      (         )         ",
+                "           $                                      ",
+                "          ---                  ?                  ",
+                "                            (     )               ",
+                "    $         $            (       )              ",
+                "   ---    ------          (         )             ",
+                "                                                  ",
+                "  @                 S                    S        ",
+                "=====  ^^^  ====  ======  ^^^     ^^^  ======  ===",
+            ],
+        ];
+
+        // ----- 4. INITIALIZE KAPLAY -----
+        kaplay({
+            background: CONFIG.bgColor,
+            width: 800,
+            height: 480,
+            scale: 1,
+            crisp: true,
+            letterbox: true,
+            buttons: {
+                jump: { keyboard: ["space", "w", "up"], gamepad: ["south"] },
+                left: { keyboard: ["a", "left"], gamepad: ["dpad-left"] },
+                right: { keyboard: ["d", "right"], gamepad: ["dpad-right"] },
+            },
+        });
+
+        // ----- 5. ASSETS & HELPERS -----
+        const TILE = 32;
+
+        // ----- 6. BUILD LEVEL -----
+        function buildLevel(mapData, levelIdx) {
+            const objects = [];
+            let spawnPos = vec2(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y);
+            let bridgeCounter = 0; // Tracks which question to use
+
+            // Determine palette based on level
+            const floorColor = levelIdx === 0 ? CONFIG.floorColorL1 : CONFIG.floorColorL2;
+
+            for (let row = 0; row < mapData.length; row++) {
+                for (let col = 0; col < mapData[row].length; col++) {
+                    const ch = mapData[row][col];
+                    const x = col * TILE;
+                    const y = row * TILE;
+
+                    switch (ch) {
+                        // Ground
+                        case "=":
+                            add([
+                                rect(TILE, TILE),
+                                pos(x, y),
+                                area(),
+                                body({ isStatic: true }),
+                                color(...floorColor),
+                                outline(2, rgb(40, 30, 20)),
+                                "ground",
+                            ]);
+                            break;
+
+                        // Standard Platform
+                        case "-":
+                            add([
+                                rect(TILE, TILE / 2),
+                                pos(x, y + TILE / 2),
+                                area(),
+                                body({ isStatic: true }),
+                                color(...CONFIG.platformColor),
+                                outline(2, rgb(40, 30, 20)),
+                                "platform",
+                            ]);
+                            break;
+
+                        // Player Spawn
+                        case "@":
+                            spawnPos = vec2(x, y);
+                            break;
+
+                        // Collectible (Telegram)
+                        case "$":
+                            add([
+                                rect(20, 14), // Letter shape
+                                pos(x + TILE / 2, y + TILE / 2),
+                                area(),
+                                anchor("center"),
+                                color(...CONFIG.coinColor),
+                                outline(1, rgb(100, 80, 0)),
+                                "coin", // Tag
+                            ]);
+                            break;
+
+                        // Hazard (Barbed Wire)
+                        case "^":
+                            add([
+                                polygon([vec2(0, TILE), vec2(TILE / 2, 4), vec2(TILE, TILE)]),
+                                pos(x, y),
+                                area({ shape: new Rect(vec2(4, 12), TILE - 8, TILE - 12) }),
+                                color(...CONFIG.hazardColor),
+                                "hazard",
+                            ]);
+                            break;
+
+                        // Portal (Peace Treaty)
+                        case ">":
+                            add([
+                                rect(TILE, TILE * 1.5),
+                                pos(x, y - TILE * 0.5),
+                                area(),
+                                anchor("top"),
+                                color(...CONFIG.portalColor),
+                                outline(2, rgb(0, 0, 0)),
+                                "portal",
+                            ]);
+                            break;
+
+                        // History Scroll (Checkpoint)
+                        case "S":
+                            add([
+                                rect(TILE, TILE * 0.8),
+                                pos(x, y + (TILE * 0.2)),
+                                area(),
+                                color(255, 255, 200), // Lighter parchment
+                                outline(2, rgb(139, 69, 19)),
+                                "checkpoint",
+                                { isActive: false } // Custom state
+                            ]);
+                            // Add text label "SCROLL"
+                            add([
+                                text("SCROLL", { size: 10 }),
+                                pos(x, y - 10),
+                                color(0, 0, 0)
+                            ]);
+                            break;
+
+                        // FACT-CHECK BRIDGE SPAWNER
+                        case "?":
+                            // Get current question data
+                            // We use a global counter across the game or calculate based on level
+                            // For simplicity, we assume linear progression through BRIDGES array
+                            // But since buildLevel runs every restart, we need a way to track.
+                            // We'll calculate an index based on level + occurance.
+                            let qIndex = 0;
+                            if (levelIdx === 0) qIndex = 0;
+                            if (levelIdx === 1) qIndex = 1 + bridgeCounter; // Level 2 starts at index 1
+
+                            if (qIndex < BRIDGES.length) {
+                                const bridgeData = BRIDGES[qIndex];
+
+                                // Question Text (Floating in air)
+                                add([
+                                    text(bridgeData.q, { size: 14, width: 300, align: "center" }),
+                                    pos(x, y - 100), // Above the bridge
+                                    anchor("center"),
+                                    color(0, 0, 0),
+                                    z(50)
+                                ]);
+
+                                // Function to create choice platform
+                                const createChoice = (offsetY, choiceData) => {
+                                    const p = add([
+                                        rect(140, 20),
+                                        pos(x, y + offsetY), // Relative to '?'
+                                        area(),
+                                        body({ isStatic: true }),
+                                        anchor("center"),
+                                        color(...CONFIG.platformColor),
+                                        outline(2, rgb(0, 0, 0)),
+                                        choiceData.isCorrect ? "choice-correct" : "choice-wrong", // Tag
+                                        "bridge-platform"
+                                    ]);
+
+                                    // Add text label as child
+                                    p.add([
+                                        text(choiceData.text, { size: 12 }),
+                                        anchor("center"),
+                                        color(255, 255, 255),
+                                    ]);
+                                };
+
+                                // Spawn Choices (One High, One Low)
+                                createChoice(-40, bridgeData.a);
+                                createChoice(40, bridgeData.b);
+
+                                bridgeCounter++;
+                            }
+                            break;
+                    }
+                }
+            }
+
+            return spawnPos;
+        }
+
+        // ----- 7. MAIN GAME SCENE -----
+        scene("game", (levelIdx = 0) => {
+            setGravity(CONFIG.gravity);
+
+            // --- Game State ---
+            let score = 0;
+            let hp = CONFIG.playerHealth;
+            let currentSpawnPos = vec2(0, 0);
+
+            // Build Level
+            const startPos = buildLevel(LEVELS[levelIdx], levelIdx);
+            currentSpawnPos = startPos.clone();
+
+            // --- Player Object (Union Scout) ---
+            const player = add([
+                rect(24, 40), // Tall soldier shape
+                pos(startPos),
+                area(),
+                body(),
+                anchor("botleft"),
+                color(0, 50, 150), // Union Blue
+                outline(2, rgb(0, 0, 0)),
+                z(100),
+                { facing: 1 },
+                "player",
+            ]);
+
+            // Player Hat (Visual child)
+            player.add([
+                rect(28, 6),
+                pos(12, -40),
+                anchor("center"),
+                color(0, 40, 120)
+            ]);
+
+            // --- UI ---
+            const uiBox = add([
+                rect(width(), 40),
+                fixed(),
+                color(0, 0, 0),
+                opacity(0.2),
+                z(90)
+            ]);
+
+            const hpLabel = add([
+                text(`Morale: ${hp}`, { size: 20, font: "monospace" }),
+                pos(20, 10),
+                fixed(),
+                z(100),
+                color(0, 0, 0),
+            ]);
+
+            const scoreLabel = add([
+                text(`Messages: ${score}`, { size: 20, font: "monospace" }),
+                pos(200, 10),
+                fixed(),
+                z(100),
+                color(...CONFIG.coinColor), // Gold text
+            ]);
+
+            const levelName = levelIdx === 0 ? "The Industrial North" : "The Agrarian South";
+            add([
+                text(levelName, { size: 20, font: "monospace" }),
+                pos(width() - 20, 10),
+                anchor("topright"),
+                fixed(),
+                z(100),
+                color(50, 50, 50),
+            ]);
+
+            // --- Input & Movement ---
+            onButtonDown("left", () => {
+                player.move(-CONFIG.moveSpeed, 0);
+                player.facing = -1;
+            });
+
+            onButtonDown("right", () => {
+                player.move(CONFIG.moveSpeed, 0);
+                player.facing = 1;
+            });
+
+            let hasDoubleJump = true;
+
+            onButtonPress("jump", () => {
+                if (player.isGrounded()) {
+                    player.jump(CONFIG.jumpForce);
+                    hasDoubleJump = true;
+                } else if (hasDoubleJump) {
+                    player.jump(CONFIG.jumpForce * 0.85);
+                    hasDoubleJump = false;
+                }
+            });
+
+            player.onUpdate(() => {
+                if (player.vel.y > CONFIG.maxFallSpeed) player.vel.y = CONFIG.maxFallSpeed;
+                // Camera Follow
+                camPos(
+                    lerp(camPos().x, player.pos.x + 150, 0.08),
+                    lerp(camPos().y, player.pos.y, 0.08),
+                );
+            });
+
+            // --- Core Collisions ---
+
+            // Collectibles
+            player.onCollide("coin", (c) => {
+                destroy(c);
+                score++;
+                scoreLabel.text = `Messages: ${score}`;
+                scoreLabel.color = rgb(255, 255, 0); // Flash yellow
+                wait(0.2, () => scoreLabel.color = rgb(...CONFIG.coinColor));
+            });
+
+            // Hazards
+            player.onCollide("hazard", () => {
+                hurtPlayer();
+            });
+
+            // Portals
+            player.onCollide("portal", () => {
+                const nextLevel = levelIdx + 1;
+                if (nextLevel < LEVELS.length) {
+                    go("game", nextLevel);
+                } else {
+                    go("win", { score });
+                }
+            });
+
+            // Fall Death
+            player.onUpdate(() => {
+                if (player.pos.y > LEVELS[levelIdx].length * TILE + 400) {
+                    hurtPlayer();
+                }
+            });
+
+            function hurtPlayer() {
+                hp--;
+                hpLabel.text = `Morale: ${hp}`;
+                shake(10);
+                
+                if (hp <= 0) {
+                    go("gameover", { score, level: levelIdx });
+                } else {
+                    // Respawn logic
+                    player.pos = currentSpawnPos.clone();
+                    player.vel = vec2(0, 0);
+                    // Slight visual feedback
+                    add([
+                        text("-1 Morale", { size: 24 }),
+                        pos(width()/2, height()/2),
+                        anchor("center"),
+                        fixed(),
+                        color(255, 0, 0),
+                        opacity(1),
+                        lifespan(1),
+                        move(vec2(0, -50), 20)
+                    ]);
+                }
+            }
+
+            // --- ADDON: CHECKPOINT SYSTEM ---
+            player.onCollide("checkpoint", (s) => {
+                if (!s.isActive) {
+                    s.isActive = true;
+                    s.color = rgb(100, 255, 100); // Turn green
+                    currentSpawnPos = s.pos.sub(0, 20); // Set spawn slightly above
+                    add([
+                        text("Checkpoint!", { size: 16 }),
+                        pos(s.pos.x, s.pos.y - 30),
+                        color(0, 0, 0),
+                        opacity(1),
+                        lifespan(2),
+                        move(vec2(0, -20), 10)
+                    ]);
+                }
+            });
+
+            // --- ADDON: FACT-CHECK BRIDGE LOGIC ---
+            
+            // Correct Choice
+            player.onCollide("choice-correct", (p) => {
+                // Only reward if not already visited/colored
+                if (p.color.r !== 50) { 
+                    p.color = rgb(50, 160, 50); // Turn green
+                    score += 5;
+                    scoreLabel.text = `Messages: ${score}`;
+                    add([
+                        text("CORRECT! +5", { size: 18 }),
+                        pos(player.pos.x, player.pos.y - 50),
+                        color(0, 150, 0),
+                        opacity(1),
+                        lifespan(1),
+                        move(vec2(0, -50), 50)
+                    ]);
+                }
+            });
+
+            // Wrong Choice
+            player.onCollide("choice-wrong", (p) => {
+                destroy(p); // Remove platform immediately
+                shake(5);
+                add([
+                    text("INCORRECT!", { size: 18 }),
+                    pos(player.pos.x, player.pos.y - 50),
+                    color(200, 50, 50),
+                    opacity(1),
+                    lifespan(1),
+                    move(vec2(0, -50), 50)
+                ]);
+                // Player will naturally fall to the 'S' checkpoint or hazard below
+            });
+
+        });
+
+        // ----- 8. END SCREENS -----
+        scene("gameover", ({ score, level }) => {
+            add([
+                text("DEFEAT", { size: 48, font: "monospace" }),
+                pos(center()),
+                anchor("center"),
+                color(220, 60, 80),
+            ]);
+            add([
+                text("The Union Morale has collapsed.", { size: 18 }),
+                pos(center().x, center().y + 50),
+                anchor("center"),
+            ]);
+            add([
+                text("Press SPACE to try again", { size: 18 }),
+                pos(center().x, center().y + 100),
+                anchor("center"),
+                color(150, 150, 150),
+            ]);
+            onKeyPress("space", () => go("game", level));
+            onClick(() => go("game", level));
+        });
+
+        scene("win", ({ score }) => {
+            add([
+                text("VICTORY", { size: 48, font: "monospace" }),
+                pos(center()),
+                anchor("center"),
+                color(50, 150, 50),
+            ]);
+            add([
+                text(`Messages Delivered: ${score}`, { size: 24 }),
+                pos(center().x, center().y + 60),
+                anchor("center"),
+                color(0, 0, 0),
+            ]);
+             add([
+                text("The Union is restored.", { size: 18 }),
+                pos(center().x, center().y + 100),
+                anchor("center"),
+                color(80, 80, 80),
+            ]);
+            add([
+                text("Press SPACE to replay", { size: 18 }),
+                pos(center().x, center().y + 150),
+                anchor("center"),
+                color(150, 150, 150),
+            ]);
+            onKeyPress("space", () => go("game", 0));
+            onClick(() => go("game", 0));
+        });
+
+        // Start Game
+        go("game", 0);
+
+    </script>
+</body>
+
+</html>
