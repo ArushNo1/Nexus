@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Photosynthesis Maze: Sunny's Cycle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #051a05;
+            /* Deep Forest Green */
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Use specific version as requested -->
+    <script src="https://unpkg.com/kaplay@3001/dist/kaplay.js"></script>
+    <script>
+        /**
+         * PHOTOSYNTHESIS MAZE
+         * 
+         * Lesson Objectives:
+         * 1. Understand inputs of photosynthesis: Sunlight, Water, CO2.
+         * 2. Understand output: Glucose (energy) and Oxygen (byproduct/power).
+         * 
+         * Mechanics:
+         * - Player (Chloroplast) collects Glucose (Dots) for score.
+         * - Collect Sun, Water, and CO2 to trigger "Oxygen Boost" (Power Mode).
+         * - Avoid Caterpillars (Herbivores) and Pollution.
+         */
+
+        // =============================================
+        //  CONFIG
+        // =============================================
+        const C = {
+            tile: 32,
+            playerSpeed: 160,
+            ghostSpeed: 100,
+            ghostCount: 3,
+            boostDuration: 10, // 10 seconds of power mode
+            // Colors
+            bg: [10, 30, 10], // Dark leaf interior
+            wallCol: [40, 100, 40], // Cell walls
+            wallOutline: [20, 60, 20],
+            dotCol: [240, 240, 200], // Glucose (sugar)
+            playerCol: [100, 255, 100], // Chloroplast Green
+            boostCol: [50, 255, 50], // Neon Green (Powered)
+            // Enemy Colors
+            caterpillarCols: [
+                [255, 100, 50], // Red/Orange
+                [255, 180, 50]  // Yellow/Orange
+            ],
+            pollutionCols: [
+                [100, 100, 120], // Smog Blue
+                [140, 100, 140]  // Smog Purple
+            ],
+            scaredCol: [100, 100, 255], // Vulnerable blue
+        };
+
+        // =============================================
+        //  MAZE LAYOUT
+        //  s = Sun, w = Water, c = CO2 (Ingredients)
+        //  . = Glucose (Dot)
+        //  # = Cell Wall
+        // =============================================
+        const MAZES = [
+            [
+                "#####################",
+                "#s........#........w#",
+                "#.###.###.#.###.###.#",
+                "#.#...#.......#...#.#",
+                "#.#.#.#.#####.#.#.#.#",
+                "#...#.....#.....#...#",
+                "###.#####.#.#####.###",
+                "#....c....G....s....#",
+                "#.###.#.#####.#.###.#",
+                "#.#...#...#...#...#.#",
+                "#.#.#####.#.#####.#.#",
+                "#...#.............#.#",
+                "#.###.#.#####.#.###.#",
+                "#w....#...@...#....c#",
+                "#####################",
+            ],
+        ];
+
+        const T = C.tile;
+        const mapW = MAZES[0][0].length;
+        const mapH = MAZES[0].length;
+
+        kaplay({
+            width: mapW * T,
+            height: mapH * T + 64, // Extra space for HUD
+            background: C.bg,
+            crisp: true,
+            letterbox: true,
+        });
+
+        // ==================
+        //  GAME SCENE
+        // ==================
+        scene("game", (levelIdx = 0) => {
+            const maze = MAZES[levelIdx];
+            
+            // Game State
+            let score = 0;
+            let totalDots = 0;
+            let collected = 0;
+            let lives = 3;
+            let powered = false;
+            let powerTimer = 0;
+            let gameOver = false;
+            let playerSpawn = vec2(1, 1);
+            const ghostSpawns = [];
+
+            // Recipe State (The Addon Mechanic)
+            let recipe = { sun: false, water: false, co2: false };
+
+            // -- MAZE BUILDER --
+            for (let row = 0; row < maze.length; row++) {
+                for (let col = 0; col < maze[row].length; col++) {
+                    const ch = maze[row][col];
+                    const x = col * T;
+                    const y = row * T;
+                    const centerPos = vec2(x + T / 2, y + T / 2);
+
+                    // Wall
+                    if (ch === "#") {
+                        add([
+                            rect(T, T),
+                            pos(x, y),
+                            color(...C.wallCol),
+                            outline(2, rgb(...C.wallOutline)),
+                            area(),
+                            body({ isStatic: true }),
+                            "wall",
+                        ]);
+                        continue;
+                    }
+
+                    // Floor Entities
+                    switch (ch) {
+                        case ".": // Glucose Dot
+                        case "@": // Player Spawn (has dot)
+                        case "G": // Ghost Spawn (has dot)
+                            totalDots++;
+                            add([
+                                circle(4), // Slightly larger for "molecule" look
+                                pos(centerPos),
+                                anchor("center"),
+                                color(...C.dotCol),
+                                area({ shape: new Rect(vec2(-6, -6), 12, 12) }),
+                                "dot",
+                            ]);
+                            break;
+                        
+                        case "s": // SUN Input
+                        case "w": // WATER Input
+                        case "c": // CO2 Input
+                            totalDots++;
+                            const type = ch === "s" ? "sun" : ch === "w" ? "water" : "co2";
+                            const itemColor = ch === "s" ? [255, 255, 0] : ch === "w" ? [50, 150, 255] : [180, 180, 180];
+                            
+                            const item = add([
+                                circle(9),
+                                pos(centerPos),
+                                anchor("center"),
+                                color(...itemColor),
+                                area({ shape: new Rect(vec2(-10, -10), 20, 20) }),
+                                "input",
+                                { inputType: type }
+                            ]);
+
+                            // Visual Details for Ingredients
+                            if (type === "sun") {
+                                // Rays
+                                item.onDraw(() => {
+                                    for(let i=0; i<8; i++) {
+                                        const angle = time() * 2 + (i * Math.PI / 4);
+                                        drawRect({
+                                            width: 4, height: 6,
+                                            pos: vec2(Math.cos(angle)*14, Math.sin(angle)*14),
+                                            anchor: "center",
+                                            angle: rad2deg(angle) + 90,
+                                            color: rgb(255, 255, 100)
+                                        });
+                                    }
+                                });
+                            } else if (type === "co2") {
+                                // Molecule (C + 2 O)
+                                item.add([ circle(4), pos(-8, -5), color(255, 100, 100) ]); // Oxygen
+                                item.add([ circle(4), pos(8, -5), color(255, 100, 100) ]);  // Oxygen
+                            } else if (type === "water") {
+                                // Shine
+                                item.add([ circle(3), pos(-3, -3), color(255, 255, 255), opacity(0.5) ]);
+                            }
+
+                            // Float animation
+                            item.onUpdate(() => {
+                                item.scale = vec2(wave(0.9, 1.1, time() * 3));
+                            });
+                            break;
+                    }
+
+                    // Spawns
+                    if (ch === "@") playerSpawn = centerPos;
+                    if (ch === "G") ghostSpawns.push(centerPos);
+                }
+            }
+
+            // -- PLAYER: SUNNY THE CHLOROPLAST --
+            const player = add([
+                circle(13),
+                pos(playerSpawn),
+                anchor("center"),
+                color(...C.playerCol),
+                area(), // Auto-detects circle
+                z(20),
+                { dir: vec2(0, 0), nextDir: vec2(0, 0) },
+                "player",
+            ]);
+
+            // Sunny's Face
+            const eyeL = player.add([ circle(2), pos(-4, -2), color(0, 50, 0) ]);
+            const eyeR = player.add([ circle(2), pos(4, -2), color(0, 50, 0) ]);
+            const mouth = player.add([ rect(6, 2, { radius: 1 }), pos(0, 4), anchor("center"), color(0, 50, 0) ]);
+
+            // Internal Chlorophyll stacks (decoration)
+            player.add([ circle(3), pos(0, -6), color(0, 150, 0), opacity(0.3) ]);
+            player.add([ circle(3), pos(-6, 3), color(0, 150, 0), opacity(0.3) ]);
+            player.add([ circle(3), pos(6, 3), color(0, 150, 0), opacity(0.3) ]);
+
+
+            // -- MOVEMENT LOGIC --
+            function canMove(from, direction) {
+                const target = from.add(direction.scale(T * 0.5));
+                const col = Math.floor(target.x / T);
+                const row = Math.floor(target.y / T);
+                if (row < 0 || row >= mapH || col < 0 || col >= mapW) return false;
+                return maze[row][col] !== "#";
+            }
+
+            onKeyDown("left", () => player.nextDir = vec2(-1, 0));
+            onKeyDown("right", () => player.nextDir = vec2(1, 0));
+            onKeyDown("up", () => player.nextDir = vec2(0, -1));
+            onKeyDown("down", () => player.nextDir = vec2(0, 1));
+            // WASD
+            onKeyDown("a", () => player.nextDir = vec2(-1, 0));
+            onKeyDown("d", () => player.nextDir = vec2(1, 0));
+            onKeyDown("w", () => player.nextDir = vec2(0, -1));
+            onKeyDown("s", () => player.nextDir = vec2(0, 1));
+
+            player.onUpdate(() => {
+                if (gameOver) return;
+
+                // Turn logic
+                if (canMove(player.pos, player.nextDir)) {
+                    player.dir = player.nextDir;
+                }
+                if (canMove(player.pos, player.dir)) {
+                    player.move(player.dir.scale(C.playerSpeed));
+                }
+
+                // Face direction
+                if (player.dir.x !== 0) {
+                    player.flipX = player.dir.x < 0; // Does not affect children added with .add(), manually flip eyes if needed? 
+                    // Kaplay sprites flip, but primitives don't implicitly flip children positions unless we scale.
+                    // Let's just move eyes for polish if we wanted, but static is fine.
+                }
+
+                // Boost visual effect
+                if (powered) {
+                    // Flash neon green
+                    player.color = Math.floor(time() * 10) % 2 === 0 ? rgb(...C.boostCol) : rgb(...C.playerCol);
+                } else {
+                    player.color = rgb(...C.playerCol);
+                }
+            });
+
+            // -- COLLISIONS --
+
+            // 1. Glucose Dots
+            player.onCollide("dot", (d) => {
+                destroy(d);
+                score += 10;
+                collected++;
+                updateHUD();
+                checkWin();
+            });
+
+            // 2. Ingredients (The Recipe Cycle)
+            player.onCollide("input", (item) => {
+                const type = item.inputType;
+                destroy(item);
+                collected++;
+                score += 50;
+                
+                // Update Recipe
+                recipe[type] = true;
+                
+                // Check if recipe complete
+                if (recipe.sun && recipe.water && recipe.co2) {
+                    activateOxygenBoost();
+                } else {
+                    // Play small sound or effect
+                    addKaboom(player.pos, { scale: 0.5 }); // Mini pop
+                }
+                
+                updateHUD();
+                checkWin();
+            });
+
+            function activateOxygenBoost() {
+                powered = true;
+                powerTimer = C.boostDuration;
+                recipe = { sun: false, water: false, co2: false }; // Reset cycle
+                addKaboom(player.pos); // Big pop
+                shake(5);
+            }
+
+            function checkWin() {
+                if (collected >= totalDots) {
+                    gameOver = true;
+                    wait(0.5, () => go("win", { score, lives }));
+                }
+            }
+
+            // Power Timer
+            onUpdate(() => {
+                if (powered) {
+                    powerTimer -= dt();
+                    if (powerTimer <= 0) powered = false;
+                }
+            });
+
+            // -- ENEMIES: CATERPILLARS & POLLUTION --
+            function spawnGhost(idx) {
+                const spawnPos = ghostSpawns.length > 0 
+                    ? ghostSpawns[idx % ghostSpawns.length] 
+                    : vec2(mapW * T / 2, mapH * T / 2);
+
+                // Determine type: Even = Caterpillar, Odd = Pollution
+                const isCaterpillar = idx % 2 === 0;
+                const baseColor = isCaterpillar 
+                    ? C.caterpillarCols[Math.floor(idx/2) % C.caterpillarCols.length]
+                    : C.pollutionCols[Math.floor(idx/2) % C.pollutionCols.length];
+
+                const ghost = add([
+                    circle(12),
+                    pos(spawnPos),
+                    anchor("center"),
+                    color(...baseColor),
+                    area(),
+                    z(15),
+                    {
+                        baseCol: baseColor,
+                        dir: choose([vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1)]),
+                        turnTimer: 0,
+                        spd: C.ghostSpeed + idx * 10,
+                        isCat: isCaterpillar
+                    },
+                    "ghost",
+                ]);
+
+                // Visual Customization
+                if (isCaterpillar) {
+                    // Caterpillar Face
+                    ghost.add([ circle(3), pos(-4, -4), color(0,0,0) ]);
+                    ghost.add([ circle(3), pos(4, -4), color(0,0,0) ]);
+                    // Antennae
+                    ghost.onDraw(() => {
+                        drawLine({ p1: vec2(-3, -8), p2: vec2(-6, -16), width: 2, color: rgb(0,0,0) });
+                        drawLine({ p1: vec2(3, -8), p2: vec2(6, -16), width: 2, color: rgb(0,0,0) });
+                    });
+                } else {
+                    // Pollution Cloud
+                    // Add lumps
+                    ghost.add([ circle(8), pos(-6, -4), color(...baseColor) ]);
+                    ghost.add([ circle(7), pos(6, 5), color(...baseColor) ]);
+                    ghost.add([ circle(9), pos(-5, 5), color(...baseColor) ]);
+                }
+
+                ghost.onUpdate(() => {
+                    if (gameOver) return;
+
+                    // Color Logic (Scared vs Normal)
+                    if (powered) {
+                        // Flash white near end of power
+                        ghost.color = powerTimer < 2 && Math.floor(time()*8)%2===0 
+                            ? rgb(255,255,255) 
+                            : rgb(...C.scaredCol);
+                    } else {
+                        ghost.color = rgb(...ghost.baseCol);
+                    }
+
+                    // AI Movement (Chase/Flee)
+                    ghost.turnTimer -= dt();
+                    const toPlayer = player.pos.sub(ghost.pos);
+                    // Caterpillars and Pollution both flee Oxygen
+                    const runAway = powered; 
+                    
+                    const desiredDir = runAway ? toPlayer.unit().scale(-1) : toPlayer.unit();
+
+                    if (ghost.turnTimer <= 0 || !canMove(ghost.pos, ghost.dir)) {
+                        ghost.turnTimer = rand(0.5, 1.0);
+                        const validDirs = [vec2(1, 0), vec2(-1, 0), vec2(0, 1), vec2(0, -1)]
+                            .filter(d => canMove(ghost.pos, d));
+
+                        if (validDirs.length > 0) {
+                            if (rand() < 0.7) { // 70% intelligence
+                                validDirs.sort((a, b) => a.sub(desiredDir).len() - b.sub(desiredDir).len());
+                                ghost.dir = validDirs[0];
+                            } else {
+                                ghost.dir = choose(validDirs);
+                            }
+                        } else {
+                            // Dead end, reverse
+                            ghost.dir = ghost.dir.scale(-1);
+                        }
+                    }
+
+                    if (canMove(ghost.pos, ghost.dir)) {
+                        const currentSpd = powered ? ghost.spd * 0.6 : ghost.spd;
+                        ghost.move(ghost.dir.scale(currentSpd));
+                    }
+                });
+            }
+
+            // Stagger Spawns
+            for (let i = 0; i < C.ghostCount; i++) {
+                wait(i * 2, () => spawnGhost(i));
+            }
+
+            // Ghost Collision
+            player.onCollide("ghost", (g) => {
+                if (gameOver) return;
+                if (powered) {
+                    // Eat Enemy
+                    score += 200;
+                    addKaboom(g.pos);
+                    destroy(g);
+                    updateHUD();
+                    // Respawn logic
+                    wait(4, () => { if (!gameOver) spawnGhost(Math.floor(rand(0, 4))); });
+                } else {
+                    // Hurt Player
+                    lives--;
+                    shake(10);
+                    addKaboom(player.pos, { color: rgb(255, 0, 0) });
+                    if (lives <= 0) {
+                        gameOver = true;
+                        wait(1, () => go("gameover", score));
+                    } else {
+                        // Reset positions
+                        player.pos = playerSpawn.clone();
+                        player.dir = vec2(0,0);
+                        player.nextDir = vec2(0,0);
+                    }
+                    updateHUD();
+                }
+            });
+
+
+            // ==================
+            //  HUD & UI
+            // ==================
+            const hudY = mapH * T + 10;
+            const hudLayer = add([ fixed(), z(100) ]);
+
+            // Text Labels
+            const scoreLabel = hudLayer.add([
+                text("Energy: 0", { size: 16 }),
+                pos(16, hudY),
+                color(240, 240, 200)
+            ]);
+            
+            const livesLabel = hudLayer.add([
+                text("", { size: 16 }),
+                pos(width() - 16, hudY),
+                anchor("topright"),
+                color(100, 255, 100)
+            ]);
+
+            const boostLabel = hudLayer.add([
+                text("", { size: 20 }),
+                pos(width() / 2, hudY - 40), // Floating above
+                anchor("center"),
+                color(50, 255, 50)
+            ]);
+
+            // Recipe Icons (Center Bottom)
+            const iconY = hudY + 24;
+            const centerX = width() / 2;
+            const spacing = 40;
+
+            // Sun Icon UI
+            const uiSun = hudLayer.add([
+                circle(8), pos(centerX - spacing, iconY), color(255, 255, 0), opacity(0.3)
+            ]);
+            // Water Icon UI
+            const uiWater = hudLayer.add([
+                circle(8), pos(centerX, iconY), color(50, 150, 255), opacity(0.3)
+            ]);
+            // CO2 Icon UI
+            const uiCo2 = hudLayer.add([
+                circle(8), pos(centerX + spacing, iconY), color(180, 180, 180), opacity(0.3)
+            ]);
+
+            // Labels for icons
+            hudLayer.add([ text("Sun", {size: 10}), pos(centerX - spacing, iconY + 12), anchor("center") ]);
+            hudLayer.add([ text("H2O", {size: 10}), pos(centerX, iconY + 12), anchor("center") ]);
+            hudLayer.add([ text("CO2", {size: 10}), pos(centerX + spacing, iconY + 12), anchor("center") ]);
+
+
+            function updateHUD() {
+                scoreLabel.text = `Energy: ${score}`;
+                livesLabel.text = "Integrity: " + "♥ ".repeat(lives);
+
+                // Update Recipe Visuals
+                uiSun.opacity = recipe.sun ? 1 : 0.3;
+                uiWater.opacity = recipe.water ? 1 : 0.3;
+                uiCo2.opacity = recipe.co2 ? 1 : 0.3;
+            }
+
+            onUpdate(() => {
+                if (powered) {
+                    boostLabel.text = `OXYGEN BOOST! ${Math.ceil(powerTimer)}`;
+                    boostLabel.opacity = wave(0.5, 1, time()*10);
+                } else {
+                    boostLabel.text = "";
+                }
+            });
+
+            // Initial Update
+            updateHUD();
+
+            // Tutorial Text
+            add([
+                text("Collect Sun + Water + CO2 to create Oxygen!", { size: 12 }),
+                pos(width()/2, hudY + 44),
+                anchor("center"),
+                color(150, 200, 150),
+                fixed(), z(100)
+            ]);
+
+        });
+
+        // ==================
+        //  SCENES: END & WIN
+        // ==================
+        scene("gameover", (score) => {
+            add([
+                text("WILTED", { size: 48 }),
+                pos(center()), anchor("center"), color(100, 100, 100)
+            ]);
+            add([
+                text(`Total Energy: ${score}`, { size: 24 }),
+                pos(center().x, center().y + 60), anchor("center"), color(240, 240, 200)
+            ]);
+            add([
+                text("Press SPACE to regrow", { size: 16 }),
+                pos(center().x, center().y + 100), anchor("center")
+            ]);
+            onKeyPress("space", () => go("game"));
+            onClick(() => go("game"));
+        });
+
+        scene("win", ({ score, lives }) => {
+            add([
+                text("PHOTOSYNTHESIS\nCOMPLETE!", { size: 32, align: "center" }),
+                pos(center().x, center().y - 20), anchor("center"), color(50, 255, 50)
+            ]);
+            add([
+                text(`Energy: ${score}\nLeaf Health: ${lives}`, { size: 20, align: "center" }),
+                pos(center().x, center().y + 60), anchor("center"), color(240, 240, 200)
+            ]);
+            add([
+                text("Press SPACE to play again", { size: 16 }),
+                pos(center().x, center().y + 110), anchor("center")
+            ]);
+            onKeyPress("space", () => go("game"));
+            onClick(() => go("game"));
+        });
+
+        // Start
+        go("game");
+
+    </script>
+</body>
+
+</html>

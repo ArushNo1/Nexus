@@ -1,0 +1,282 @@
+---
+title: Events
+description:
+    Learn how to manage events in KAPLAY, the HTML5 Game Engine for JavaScript
+    and TypeScript.
+url: events
+order: "basics-5"
+---
+
+import Info from "@/components/Content/Info.astro";
+
+# Events
+
+An **Event** is something that _happens_ in the game, for example, the player
+pressing a key, clicking the mouse or an enemy being hurt.
+
+An **Event Handler** is a method that listens for events and run code when they
+happen. These functions are named as `on{EventName}`.
+
+```js
+// onKeyPress() will run every time user press any key
+onKeyPress((key) => {
+    // Some events send you args related to them, in this case the key pressed
+    debug.log(key); // will log the key pressed
+});
+```
+
+**Event Handlers** also return an **Event Controller**. It works for cancel the
+event or pause it:
+
+```js
+const pressEvent = onKeyPress((key) => {
+    debug.log(key);
+});
+
+pressEvent.cancel(); // stop running the handler
+```
+
+There's many type of events that runs in different contexts:
+
+### App events
+
+**App events** run without neccesity of being attached to a game object. They
+are related to things like the game screen, input, etc.
+
+```js
+// Only runs when the user presses "a"
+onKeyPress("a", () => {
+    debug.log("aaa");
+});
+
+// Only runs when assets finish loading
+onLoad(() => {});
+```
+
+<Info crew="bobo" title="App events are also in objects">
+There's some events like `onKeyPress()` which also have a `obj.onKeyPress()` version. They are still App events but they got removed when the object was destroyed. See the [App Events list](/#app-events-list) below
+</Info>
+
+### Root events
+
+**Root events** run during the lifecycle of the **Root Game Object**, or the
+same, forever.
+
+```js
+// onUpdate() event runs every frame.
+onUpdate(() => {
+    // Bean moves 10px to the right every frame
+    bean.moveBy(10, 0);
+});
+
+// onDraw() event runs after update and must be used with drawXXXX functions.
+onDraw(() => {
+    // The sprite is drawn here to prevent it from disappearing after 1 frame.
+    drawSprite("bean");
+});
+```
+
+You can also associate these event handlers with **Tags**. This means you can
+run the event handler code _4 times_ if there's _4 objects_ with that tag. The
+**first argument** is always **the game object** it's running for.
+
+```js
+// imagine there's 4 objects with tag "friend"
+
+// onUpdate("friend") will be executed 4 times per frame (or the same, 1 time per object)
+onUpdate("friend", (o) => {
+    // o will take 4 different values
+    debug.log(o.id);
+});
+```
+
+### Game Object events
+
+**Game Object events** are like Root events, but they operate on individual
+**Game Objects**. These events run during specific points in the object's
+lifecycle, such as when it's added, updated, or removed.
+
+```js
+const obj = add([]);
+
+// Runs when the object is added
+obj.onAdd(() => {});
+// Runs when the object is destroyed
+obj.onDestroy(() => {});
+
+// They run while obj exists
+obj.onUpdate(() => {});
+obj.onDraw(() => {});
+```
+
+Both Object and Root events operate with [Object Events List](#object-events-list).
+
+## Game Object events given by components
+
+There are events and events handlers that comes from some components. They
+become events of the object after add the comp:
+
+```js
+const kat = add([
+    // health(initialHp) comp gives to the object a health system
+    health(4),
+]);
+
+// Given by health(), runs when we hurt the obj
+kat.onHurt(() => {
+    debug.log("you're a monster!");
+});
+
+// Run when user clicks
+onMousePress(() => {
+    kat.hurt(1); // we remove 1 hp, ouch
+});
+```
+
+## Generic handler
+
+`on()` is a way to create handlers without they being premade. In fact, all
+events handler are an `on()`.
+
+You can use **global** `on()`, it works for use **Game Object events** with
+certain tags. The first argument is always the object. It is useful when there's
+not a handler for tags, for example in the component events:
+
+```js
+// obj.onHurt() but for many objects
+on("hurt", "friend", (o) => {
+    debug.log(o.id);
+});
+
+on("update", "friend", (o) => {
+    debug.log(o.id + "exists");
+});
+```
+
+There's also the object version, `obj.on()`. Useful for listening to an event only
+in that obj:
+
+```js
+kat.on("hurt", () => {
+});
+```
+
+## Custom events
+
+Sometimes you will need create a custom event. For this, we use the `on()` and
+`obj.trigger()` functions.
+
+```js
+// Eat event for all objects with cake tag
+on("eat", "cake", () => {
+    debug.log("The cake is a lie!");
+});
+
+onKeyPress(() => {
+    obj.trigger("eat");
+});
+```
+
+## Events operations
+
+### How to listen for an event
+
+```js
+// a global event
+onUpdate(() => {});
+// an object event
+obj.onUpdate(() => {});
+// a custom event
+obj.on("hi", () => {});
+```
+
+### How to trigger an event
+
+```js
+// will execute obj.on("hi", () => {})
+obj.trigger("hi"); // :>
+```
+
+## List of events
+
+###### (🏷️ = Require tags for working)
+
+---
+
+### Object Events List
+
+| Event                  | Comp           | Description                                   | Global Handler        | Object Handler                    |
+| ---------------------- | -------------- | --------------------------------------------- | --------------------- | --------------------------------- |
+| update                 | None           | Runs every frame                              | `onUpdate()`          | `obj.onUpdate()`                  |
+| draw                   | None           | Runs every frame after update                 | `onDraw()`            | `obj.onDraw()`                    |
+| add                    | None           | Runs when an object is added as child         | `onAdd()`             | `obj.onAdd()`                     |
+| destroy                | None           | Runs when an object is destroyed              | `onDestroy()`         | `obj.onDestroy()`                 |
+| use                    | None           | Runs when a component is added                | `onUse()`             | `obj.onUse(comp)`                 |
+| unuse                  | None           | Runs when a component is unused               | `onUnuse()`           | `obj.onUnuse(comp)`               |
+| tag                    | None           | Runs when a tag is added                      | `onTag()`             | `obj.onTag(tag)`                  |
+| untag                  | None           | Runs when a tag is removed                    | `onUntag()`           | `obj.onUntag(tag)`                |
+| collide                | `area()`       | Runs when object collides with another object | `onCollide()` 🏷️       | `obj.onCollide(other, col)`       |
+| collideUpdate          | `area()`       | Runs every frame when objects are colliding   | `onCollideUpdate()` 🏷️ | `obj.onCollideUpdate()`           |
+| collideEnd             | `area()`       | Runs when object stops colliding              | `onCollideEnd()` 🏷️    | `obj.onCollideEnd()`              |
+| hurt                   | `health()`     | Runs when object is hurt                      | Using `on()`          | `obj.onHurt(damage)`              |
+| heal                   | `health()`     | Runs when object is healed                    | Using `on()`          | `obj.onHeal(amount)`              |
+| death                  | `health()`     | Runs when object dies                         | Using `on()`          | `obj.onDeath()`                   |
+| beforePhysicsResolve   | `body()`       | Runs before physics resolves                  | Using `on()`          | `obj.onBeforePhysicsResolve(col)` |
+| physicsResolve         | `body()`       | Runs after physics resolves                   | Using `on()`          | `obj.onPhysicsResolve(col)`       |
+| ground                 | `body()`       | Runs when object is on the ground             | Using `on()`          | `obj.onGround()`                  |
+| fall                   | `body()`       | Runs when object starts falling               | Using `on()`          | `obj.onFall()`                    |
+| fallOff                | `body()`       | Runs when object stops falling                | Using `on()`          | `obj.onFallOff()`                 |
+| headbutt               | `body()`       | Runs when object headbutts                    | Using `on()`          | `obj.onHeadbutt()`                |
+| land                   | `body()`       | Runs when object lands                        | Using `on()`          | `obj.onLand()`                    |
+| headbutted             | `body()`       | Runs when object is headbutted                | Using `on()`          | `obj.onHeadbutted()`              |
+| doubleJump             | `doubleJump()` | Runs when object double jumps                 | Using `on()`          | `obj.onDoubleJump()`              |
+| exitView               | `offscreen()`  | Runs when object goes out of view             | Using `on()`          | `obj.onExitScreen()`              |
+| enterView              | `offscreen()`  | Runs when object enters view                  | Using `on()`          | `obj.onEnterScreen()`             |
+| animStart              | `sprite()`     | Runs when animation starts                    | Using `on()`          | `obj.onAnimStart(anim)`           |
+| animEnd                | `sprite()`     | Runs when animation ends                      | Using `on()`          | `obj.onAnimEnd(anim)`             |
+| navigationNext         | `agent()`      | Runs when navigation moves to the next point  | Using `on()`          | `obj.onNavigationNext()`          |
+| navigationEnded        | `agent()`      | Runs when navigation ends                     | Using `on()`          | `obj.onNavigationEnded()`         |
+| navigationStarted      | `agent()`      | Runs when navigation starts                   | Using `on()`          | `obj.onNavigationStarted()`       |
+| targetReached          | `agent()`      | Runs when navigation target is reached        | Using `on()`          | `obj.onTargetReached()`           |
+| patrolFinished         | `patrol()`     | Runs when patrol finishes                     | Using `on()`          | `obj.onPatrolFinished()`          |
+| objectSpotted          | `sentry()`     | Runs when object spots another                | Using `on()`          | `obj.onObjectsSpotted()`          |
+| animateChannelFinished | `animate()`    | Runs when animation channel finishes          | Using `on()`          | `obj.onAnimateChannelFinished()`  |
+| animateFinished        | `animate()`    | Runs when animation finishes                  | Using `on()`          | `obj.onAnimateFinished()`         |
+| spatialMapChanged      | `level()`      | Runs when spatial map changes                 | Using `on()`          | `obj.onSpatialMapChanged()`       |
+| navigationMapInvalid   | `level()`      | Runs when navigation map becomes invalid      | Using `on()`          | `obj.onNavigationMapInvalid()`    |
+| navigationMapChanged   | `level()`      | Runs when navigation map changes              | Using `on()`          | `obj.onNavigationMapChanged()`    |
+
+---
+
+### App Events List
+
+| Event                | Description                                           | Global Handler             | Object Handler                 |
+| -------------------- | ----------------------------------------------------- | -------------------------- | ------------------------------ |
+| mouseMove            | Runs continuously while mouse moves                   | `onMouseMove()`            | `obj.onMouseMove()`            |
+| mouseDown            | Runs continuously while mouse is clicked              | `onMouseDown()`            | `obj.onMouseDown()`            |
+| mousePress           | Runs once when mouse button is pressed                | `onMousePress()`           | `obj.onMousePress()`           |
+| mouseRelease         | Runs once when mouse button is released               | `onMouseRelease()`         | `obj.onMouseRelease()`         |
+| charInput            | Runs continuously while user write in the keyboard    | `onCharInput()`            | `obj.onCharInput()`            |
+| keyPress             | Runs once when a key is pressed                       | `onKeyPress()`             | `obj.onKeyPress()`             |
+| keyDown              | Runs continuously while a key is held down            | `onKeyDown()`              | `obj.onKeyDown()`              |
+| keyPressRepeat       | Runs once when a key is repeatedly pressed            | `onKeyPressRepeat()`       | `obj.onKeyPressRepeat()`       |
+| keyRelease           | Runs once when a key is released                      | `onKeyRelease()`           | `obj.onKeyRelease()`           |
+| touchStart           | Runs once when a touch starts                         | `onTouchStart()`           | `obj.onTouchStart()`           |
+| touchMove            | Runs continously while a touch moves                  | `onTouchMove()`            | `obj.onTouchMove()`            |
+| touchEnd             | Runs once when a touch ends                           | `onTouchEnd()`             | `obj.onTouchEnd()`             |
+| gamepadButtonDown    | Runs continously while a gamepad button is held down  | `onGamepadButtonDown()`    | `obj.onGamepadButtonDown()`    |
+| gamepadButtonPress   | Runs once when a gamepad button is pressed            | `onGamepadButtonPress()`   | `obj.onGamepadButtonPress()`   |
+| gamepadButtonRelease | Runs once when a gamepad button is released           | `onGamepadButtonRelease()` | `obj.onGamepadButtonRelease()` |
+| gamepadStick         | Runs continuously while a gamepad stick moves         | `onGamepadStick()`         | `obj.onGamepadStick()`         |
+| gamepadConnect       | Runs once when a gamepad connects                     | `onGamepadConnect()`       | `obj.onGamepadConnect()`       |
+| gamepadDisconnect    | Runs once when a gamepad disconnects                  | `onGamepadDisconnect()`    | `obj.onGamepadDisconnect()`    |
+| buttonDown           | Runs continuously while an input binding is held down | `onButtonDown()`           | `obj.onButtonDown()`           |
+| buttonPress          | Runs once when an input binding is pressed            | `onButtonPress()`          | `obj.onButtonPress()`          |
+| buttonRelease        | Runs once when a binding button is released           | `onButtonRelease()`        | `obj.onButtonRelease()`        |
+| scroll               | Runs continuously while a scroll event occurs         | `onScroll()`               | `obj.onScroll()`               |
+| hide                 | Runs once when the game tab is hidden                 | `onHide()`                 | No ❌                          |
+| show                 | Runs once when the game tab is showed                 | `onShow()`                 | No ❌                          |
+| resize               | Runs continously when the game screen is resizing     | `onResize()`               | No ❌                          |
+| input                | Runs when the input is processed                      | No ❌                      | No ❌                          |
+
+---
