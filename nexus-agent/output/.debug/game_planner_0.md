@@ -1,8 +1,8 @@
-GAME_TYPE: quizrunner
+GAME_TYPE: platformer
 
-RATIONALE: The quizrunner format is ideal for 5th graders to practice identifying and categorizing the inputs and outputs of photosynthesis. It reinforces the lesson objectives by requiring players to make split-second decisions to differentiate between what a plant needs (inputs) and what it produces (outputs).
+RATIONALE: The lesson is structured chronologically, moving through four distinct historical eras (Ancient Rome, Middle Ages, Industrial Era, and Modern Day). A platformer allows the player to physically progress through these time periods as separate levels, reinforcing the sequential nature of the history.
 
-ADDON FEATURE: The Chloroplast Charge
-As the player runs, the gates are labeled with different substances (e.g., Oxygen, CO2, Sunlight, Glucose, Vinegar). Passing through a correct "Input" gate (Sunlight, Water, or CO2) fills a "Chloroplast Meter." When the meter is full, the plant enters a "Bloom State" for 5 seconds, turning the character into a flowering plant that automatically attracts "Glucose" coins and leaves behind "Oxygen" trails, visually reinforcing the relationship between inputs and outputs.
+ADDON FEATURE: Era-Authentic Collection
+In each level, the player must collect three specific "Historical Artifacts" mentioned in the text to unlock the exit portal. For example, in the Ancient Rome level, the player must find a "Secret Marriage Scroll," a "Roman Decree," and a "Prisoner’s Letter." When an item is collected, a small text box appears briefly explaining its significance (e.g., "You found Chaucer’s Poem! This 1382 work first linked Valentine’s Day to romance."), ensuring the player connects the gameplay to the historical content.
 
-VISUAL THEME: The game features a small "Sprout" character running through a vibrant garden ecosystem. Correct gates are represented by glowing suns or refreshing rain clouds, while incorrect gates or obstacles are represented by "Environmental Stressors" like salt piles or thick smoke clouds.
+VISUAL THEME: The player controls a "Historical Messenger" traveling through time. The background and platforms transition from Roman marble columns and temples (Ancient Rome) to stone castles and parchment-style forests (Middle Ages), then to Victorian-style lace-trimmed parlors (19th Century), and finally to a colorful, heart-filled modern candy shop. Enemies change from Roman soldiers to medieval crows to industrial-era printing presses.
