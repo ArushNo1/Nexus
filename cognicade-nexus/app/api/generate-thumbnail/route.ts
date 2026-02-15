@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { uploadToStorage } from '@/lib/supabase/storage';
+import OpenAI from 'openai';
 import fs from 'fs/promises';
 import path from 'path';
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req: NextRequest) {
     try {
@@ -27,49 +30,36 @@ export async function POST(req: NextRequest) {
         );
 
         // Build a visual prompt from the lesson title and subject
-        const prompt = `dark cinematic educational illustration of ${title}${subject ? `, ${subject}` : ''}, detailed, vibrant colors on dark background`;
-        const encodedPrompt = encodeURIComponent(prompt);
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=600&nologo=true`;
+        const prompt = `simple flat cartoonish educational illustration of ${title}${subject ? `, ${subject}` : ''}, minimalist, bold colors, clean shapes, dark background, no text`;
 
-        console.log('[generate-thumbnail] Fetching image for lesson:', lessonId);
+        console.log('[generate-thumbnail] Generating image for lesson:', lessonId);
 
         let buffer: Buffer | null = null;
-        const maxRetries = 3;
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                const response = await fetch(imageUrl, { signal: AbortSignal.timeout(30000) });
-                if (!response.ok) {
-                    console.error(`[generate-thumbnail] Pollinations HTTP error (attempt ${attempt}/${maxRetries}):`, response.status);
-                    if (attempt < maxRetries) {
-                        await new Promise(r => setTimeout(r, 2000 * attempt));
-                        continue;
-                    }
-                    break;
-                }
+        try {
+            const result = await openai.images.generate({
+                model: 'dall-e-3',
+                prompt,
+                n: 1,
+                size: '1024x1024',
+                response_format: 'url',
+            });
 
-                const data = Buffer.from(await response.arrayBuffer());
-                if (data.length < 1000) {
-                    console.error(`[generate-thumbnail] Image too small (attempt ${attempt}/${maxRetries})`);
-                    if (attempt < maxRetries) {
-                        await new Promise(r => setTimeout(r, 2000 * attempt));
-                        continue;
-                    }
-                    break;
-                }
-
-                buffer = data;
-                break;
-            } catch (fetchErr) {
-                console.error(`[generate-thumbnail] Fetch error (attempt ${attempt}/${maxRetries}):`, fetchErr);
-                if (attempt < maxRetries) {
-                    await new Promise(r => setTimeout(r, 2000 * attempt));
+            const dalleUrl = result.data[0]?.url;
+            if (dalleUrl) {
+                const response = await fetch(dalleUrl, { signal: AbortSignal.timeout(30000) });
+                if (response.ok) {
+                    buffer = Buffer.from(await response.arrayBuffer());
+                } else {
+                    console.error('[generate-thumbnail] Failed to download DALL-E image:', response.status);
                 }
             }
+        } catch (err) {
+            console.error('[generate-thumbnail] DALL-E generation failed:', err);
         }
 
-        // Fallback: generate a simple SVG placeholder if Pollinations is unavailable
+        // Fallback: generate a simple SVG placeholder if DALL-E is unavailable
         if (!buffer) {
-            console.warn('[generate-thumbnail] Pollinations unavailable, using placeholder');
+            console.warn('[generate-thumbnail] DALL-E unavailable, using placeholder');
             const initials = title.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
             const hue = [...title].reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
             const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
@@ -81,7 +71,7 @@ export async function POST(req: NextRequest) {
 
         // Save to temp file, upload to Supabase, then clean up
         const isSvg = buffer[0] === 0x3C; // '<' — SVG fallback
-        const ext = isSvg ? 'svg' : 'jpg';
+        const ext = isSvg ? 'svg' : 'png';
         const tempDir = path.join(process.cwd(), 'temp');
         await fs.mkdir(tempDir, { recursive: true });
         const tempPath = path.join(tempDir, `thumb-${lessonId}.${ext}`);

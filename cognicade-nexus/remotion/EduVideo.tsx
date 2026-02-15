@@ -1208,6 +1208,71 @@ const IntroScene: React.FC<{ title: string; audience: string; palette: VideoPale
     );
 };
 
+// ── Subtitles ────────────────────────────────────────────────────────────
+
+const Subtitles: React.FC<{ narration: string; sceneDurFrames: number; palette: VideoPalette }> = ({ narration, sceneDurFrames, palette }) => {
+    const frame = useCurrentFrame();
+    const { fps } = useVideoConfig();
+
+    const words = (narration || '').split(/\s+/).filter(Boolean);
+    if (words.length === 0) return null;
+
+    // Distribute words evenly across the scene duration (minus a small tail buffer)
+    const usableFrames = sceneDurFrames - fps; // leave 1s at end
+    const framesPerWord = usableFrames / words.length;
+
+    const currentWordIdx = Math.min(
+        Math.floor(frame / framesPerWord),
+        words.length - 1
+    );
+
+    // Show a chunk of ~8 words around the current word
+    const chunkSize = 8;
+    const chunkStart = Math.floor(currentWordIdx / chunkSize) * chunkSize;
+    const chunkEnd = Math.min(chunkStart + chunkSize, words.length);
+
+    // Fade in at start of scene, fade out at very end
+    const opacity = interpolate(frame, [0, 15, sceneDurFrames - 15, sceneDurFrames], [0, 1, 1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+
+    return (
+        <div style={{
+            position: 'absolute',
+            bottom: 48,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 100,
+            opacity,
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            gap: '6px 8px',
+            maxWidth: '85%',
+            padding: '10px 20px',
+            borderRadius: 12,
+            background: 'rgba(0,0,0,0.65)',
+            backdropFilter: 'blur(8px)',
+        }}>
+            {words.slice(chunkStart, chunkEnd).map((word, i) => {
+                const globalIdx = chunkStart + i;
+                const isActive = globalIdx === currentWordIdx;
+                const isPast = globalIdx < currentWordIdx;
+
+                return (
+                    <span key={globalIdx} style={{
+                        fontSize: 26,
+                        fontWeight: isActive ? 800 : 500,
+                        color: isActive ? 'white' : isPast ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.4)',
+                        textShadow: isActive ? `0 0 12px ${palette.primary}aa` : 'none',
+                        transition: 'all 0.15s',
+                    }}>
+                        {word}
+                    </span>
+                );
+            })}
+        </div>
+    );
+};
+
 const ContentScene: React.FC<{
     scene: ScreenplayScene; idx: number; palette: VideoPalette; seed: number;
     sceneDurFrames: number;
@@ -1248,6 +1313,7 @@ const ContentScene: React.FC<{
             {scene.audioUrl && (
                 <Audio src={scene.audioUrl.startsWith('http') ? scene.audioUrl : staticFile(scene.audioUrl.replace(/^\//, ''))} />
             )}
+            <Subtitles narration={scene.narration} sceneDurFrames={sceneDurFrames} palette={palette} />
             <PBar p={frame / sceneDurFrames} palette={palette} />
         </AbsoluteFill>
     );

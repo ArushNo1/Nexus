@@ -6,8 +6,10 @@ import path from 'path';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { uploadToStorage, uploadMultipleToStorage } from '@/lib/supabase/storage';
+import OpenAI from 'openai';
 
 const execAsync = promisify(exec);
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ── TypeScript Interfaces ──────────────────────────────────────────────────
 
@@ -158,22 +160,29 @@ async function fetchBackgroundImage(
     outputPath: string
 ): Promise<boolean> {
     try {
-        const encodedPrompt = encodeURIComponent(prompt);
-        const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1280&height=720&nologo=true`;
-        console.log('[bg-image] Fetching:', url.slice(0, 120));
+        console.log('[bg-image] Generating via DALL-E:', prompt.slice(0, 100));
 
-        const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+        const result = await openai.images.generate({
+            model: 'dall-e-3',
+            prompt,
+            n: 1,
+            size: '1792x1024',
+            response_format: 'url',
+        });
+
+        const dalleUrl = result.data[0]?.url;
+        if (!dalleUrl) {
+            console.warn('[bg-image] No URL returned from DALL-E');
+            return false;
+        }
+
+        const response = await fetch(dalleUrl, { signal: AbortSignal.timeout(30000) });
         if (!response.ok) {
-            console.warn('[bg-image] HTTP error:', response.status);
+            console.warn('[bg-image] Failed to download DALL-E image:', response.status);
             return false;
         }
 
         const buffer = Buffer.from(await response.arrayBuffer());
-        if (buffer.length < 1000) {
-            console.warn('[bg-image] Image too small, likely failed');
-            return false;
-        }
-
         await fs.writeFile(outputPath, buffer);
         console.log('[bg-image] Saved:', outputPath, `(${Math.round(buffer.length / 1024)}KB)`);
         return true;
@@ -268,7 +277,7 @@ async function renderVideoWithRemotion(
 
         const bgImagePromises = scenesWithSupabaseAssets.map(async (scene, i) => {
             const prompt = (scene as any).bgImagePrompt
-                || `dark cinematic educational illustration of ${scene.narration.split('.')[0].slice(0, 80)}`;
+                || `simple flat cartoonish illustration of ${scene.narration.split('.')[0].slice(0, 80)}, minimalist, bold colors, dark background`;
             const bgImagePath = path.join(bgImageDir, `bg-${timestamp}-${i}.jpg`);
             const success = await fetchBackgroundImage(prompt, bgImagePath);
 
@@ -601,7 +610,7 @@ Return JSON (NO markdown fences, ONLY raw JSON):
   "scenes": [
     {
       "narration": "60-100 words of narration text...",
-      "bgImagePrompt": "dark cinematic illustration of a right triangle with glowing sides",
+      "bgImagePrompt": "simple flat cartoonish illustration of a right triangle with colorful sides",
       "beats": [
         {
           "startSec": 0,
@@ -633,10 +642,10 @@ BACKGROUND IMAGE PROMPT RULES (bgImagePrompt):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Each scene MUST have a "bgImagePrompt" field — a 5-12 word visual description for generating a background image.
-- Start with "dark cinematic educational illustration of" to match the dark video aesthetic
+- Start with "simple flat cartoonish illustration of" for a clean, minimalist cartoon style
 - Describe what the scene is ABOUT visually, not the layout
-- GOOD: "dark cinematic educational illustration of photosynthesis in a green leaf"
-- GOOD: "dark cinematic educational illustration of ancient Roman soldiers in battle"
+- GOOD: "simple flat cartoonish illustration of photosynthesis in a green leaf"
+- GOOD: "simple flat cartoonish illustration of ancient Roman soldiers in battle"
 - BAD: "list of elements" (too abstract)
 - BAD: "educational video background" (too generic)
 

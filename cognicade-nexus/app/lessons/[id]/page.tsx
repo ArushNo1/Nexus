@@ -26,6 +26,7 @@ import {
   XCircle,
   FileText,
   Sparkles,
+  RefreshCw,
 } from "lucide-react";
 
 export default function LessonDetailPage() {
@@ -392,19 +393,31 @@ export default function LessonDetailPage() {
                         </p>
                       )}
                     </div>
-                    {video.status && (
-                      <span
-                        className={`ml-auto px-2.5 py-1 rounded-full text-[10px] font-bold uppercase font-pixel ${
-                          video.status === "completed"
-                            ? "bg-emerald-500/20 text-emerald-400"
-                            : video.status === "failed"
-                              ? "bg-red-500/20 text-red-400"
-                              : "bg-yellow-500/20 text-yellow-400"
-                        }`}
-                      >
-                        {video.status}
-                      </span>
-                    )}
+                    <div className="ml-auto flex items-center gap-2">
+                      {video.status && (
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase font-pixel ${
+                            video.status === "completed"
+                              ? "bg-emerald-500/20 text-emerald-400"
+                              : video.status === "failed"
+                                ? "bg-red-500/20 text-red-400"
+                                : "bg-yellow-500/20 text-yellow-400"
+                          }`}
+                        >
+                          {video.status}
+                        </span>
+                      )}
+                      {userRole === "teacher" && (video.status === "completed" || video.status === "failed") && (
+                        <button
+                          onClick={handleGenerateVideo}
+                          disabled={generatingVideo}
+                          title="Regenerate video"
+                          className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <RefreshCw size={14} className={generatingVideo ? "animate-spin" : ""} />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {video.video_url ? (
