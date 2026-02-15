@@ -63,7 +63,7 @@
             playerHealth: 3,
 
             // Camera
-            cameraFollow: true, // Enabled camera tracking
+            cameraFollow: true,
 
             // Visuals (Sepia / Parchment Theme)
             bgColor: [225, 205, 170],      // Parchment Tan
@@ -78,6 +78,7 @@
 
         // Levels
         const LEVELS = [
+            // --- Level 1 ---
             [
                 "                                        ",
                 "                                        ",
@@ -87,12 +88,13 @@
                 "            $  $                        ",
                 "           ------           $  $        ",
                 "                           ------    >  ",
-                "    $  $                           ====  ",
-                "   ------                               ",
+                "    $  $                          ====  ", // Added bridging platform for easier jump
+                "   ------                        -      ",
                 "                   $                    ",
                 "  @              =====     ===          ",
                 "========   ^^^  ========  ======  ======",
             ],
+            // --- Level 2 ---
             [
                 "                                        ",
                 "                                   >    ",
@@ -217,7 +219,7 @@
                                 circle(12),
                                 pos(x + TILE/2, y + TILE/2),
                                 anchor("center"),
-                                // FIX: Correctly instantiate Circle with center point (0,0 relative to parent) and radius
+                                // Correctly instantiate Circle with center point (0,0 relative to parent) and radius
                                 area({ shape: new Circle(vec2(0), 10) }),
                                 color(...CONFIG.hazardColor),
                                 outline(2, rgb(80, 40, 10)),
@@ -311,9 +313,9 @@
                 color(80, 60, 40),
             ]);
 
-            // Controls Info
+            // Controls Info - Fixed: Replaced brackets [] with parentheses () to prevent crash
             add([
-                text("[A/D] Move  [SPACE] Jump", { size: 14, font: "monospace" }),
+                text("(A/D) Move  (SPACE) Jump", { size: 14, font: "monospace" }),
                 pos(center().x, 12),
                 anchor("top"),
                 fixed(),
@@ -462,6 +464,7 @@
 
             // 3. Portal / Exit
             player.onCollide("portal", (portal) => {
+                // Since portal is top-anchored, collision happens easily, but we logic check:
                 if (portal.isOpen) {
                     const nextLevel = levelIdx + 1;
                     if (nextLevel < LEVELS.length) {

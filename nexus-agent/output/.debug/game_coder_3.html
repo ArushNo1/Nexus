@@ -26,12 +26,11 @@
 </head>
 
 <body>
-    <!-- JSDoc Header Mapping Lesson Objectives to Mechanics -->
     <!-- 
     LESSON OBJECTIVE: Identify the primary causes of the American Civil War.
     
     GAME MECHANICS:
-    1. Exploration: Player navigates a 19th-century environment.
+    1. Exploration: Player navigates a 19th-century environment (Movement/Jump).
     2. Discrimination: Player must distinguish between valid historical causes (Slavery, States' Rights, Economics) 
        and anachronistic distractors (Space Travel, Internet).
     3. Consequence: Choosing wrong answers results in HP loss and movement penalties (slowdown).
@@ -63,7 +62,7 @@
             playerHealth: 3,
 
             // Camera
-            cameraFollow: true, // Enabled camera tracking
+            cameraFollow: true,
 
             // Visuals (Sepia / Parchment Theme)
             bgColor: [225, 205, 170],      // Parchment Tan
@@ -78,6 +77,7 @@
 
         // Levels
         const LEVELS = [
+            // --- Level 1 ---
             [
                 "                                        ",
                 "                                        ",
@@ -87,12 +87,13 @@
                 "            $  $                        ",
                 "           ------           $  $        ",
                 "                           ------    >  ",
-                "    $  $                           ====  ",
-                "   ------                               ",
+                "    $  $                          ====  ", // Added bridging platform for easier jump
+                "   ------                        -      ",
                 "                   $                    ",
                 "  @              =====     ===          ",
                 "========   ^^^  ========  ======  ======",
             ],
+            // --- Level 2 ---
             [
                 "                                        ",
                 "                                   >    ",
@@ -217,8 +218,9 @@
                                 circle(12),
                                 pos(x + TILE/2, y + TILE/2),
                                 anchor("center"),
-                                // FIX: Correctly instantiate Circle with center point (0,0 relative to parent) and radius
-                                area({ shape: new Circle(vec2(0), 10) }),
+                                // FIXED: Use Rect for collision instead of Circle
+                                // Approximating a circle of radius 10 with a 20x20 square centered at (0,0)
+                                area({ shape: new Rect(vec2(-10, -10), 20, 20) }),
                                 color(...CONFIG.hazardColor),
                                 outline(2, rgb(80, 40, 10)),
                                 "hazard",
@@ -311,9 +313,9 @@
                 color(80, 60, 40),
             ]);
 
-            // Controls Info
+            // Controls Info - Fixed: Replaced brackets [] with parentheses () to prevent crash
             add([
-                text("[A/D] Move  [SPACE] Jump", { size: 14, font: "monospace" }),
+                text("(A/D) Move  (SPACE) Jump", { size: 14, font: "monospace" }),
                 pos(center().x, 12),
                 anchor("top"),
                 fixed(),
@@ -386,12 +388,17 @@
                 if (player.vel.y > CONFIG.maxFallSpeed) player.vel.y = CONFIG.maxFallSpeed;
             });
 
-            // Camera
+            // --- Camera Follow ---
             if (CONFIG.cameraFollow) {
                 player.onUpdate(() => {
+                    // Use camPos(vec2) to set position smoothly
+                    const currentCam = camPos();
+                    const targetX = player.pos.x + 100;
+                    const targetY = player.pos.y - 50;
+                    
                     camPos(
-                        lerp(camPos().x, player.pos.x + 100, 0.05),
-                        lerp(camPos().y, player.pos.y - 50, 0.05),
+                        lerp(currentCam.x, targetX, 0.05),
+                        lerp(currentCam.y, targetY, 0.05)
                     );
                 });
             }
@@ -462,6 +469,7 @@
 
             // 3. Portal / Exit
             player.onCollide("portal", (portal) => {
+                // Since portal is top-anchored, collision happens easily, but we logic check:
                 if (portal.isOpen) {
                     const nextLevel = levelIdx + 1;
                     if (nextLevel < LEVELS.length) {

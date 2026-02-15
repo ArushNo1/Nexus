@@ -9,6 +9,9 @@ import os
 from pathlib import Path
 from rich.console import Console
 
+from dotenv import load_dotenv
+load_dotenv(".env.local")
+
 from graph import build_graph
 from state import AgentState
 from utils.supabase import update_game
@@ -16,17 +19,10 @@ from utils.supabase import update_game
 app = FastAPI(title="Kaplay Game Generator API")
 console = Console()
 
-from dotenv import load_dotenv
-load_dotenv()  # This loads the .env file
-
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://your-nextjs-app.vercel.app",
-        "https://nexus.cognicade.org"
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

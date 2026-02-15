@@ -26,16 +26,18 @@
 </head>
 
 <body>
-    <!-- JSDoc Header Mapping Lesson Objectives to Mechanics -->
     <!-- 
     LESSON OBJECTIVE: Identify the primary causes of the American Civil War.
     
     GAME MECHANICS:
     1. Exploration: Player navigates a 19th-century environment.
     2. Discrimination: Player must distinguish between valid historical causes (Slavery, States' Rights, Economics) 
-       and anachronistic distractors (Space Travel, Internet).
-    3. Consequence: Choosing wrong answers results in HP loss and movement penalties (slowdown).
-    4. Gatekeeping: Progress to the next level is physically blocked until mastery (3 correct causes) is demonstrated.
+       and anachronistic distractors.
+    3. Gatekeeping: Progress is blocked until mastery (3 correct causes) is demonstrated.
+    
+    FIXES APPLIED:
+    - Implemented "Deck System" for scrolls to guarantee at least 3 valid causes per level (Preventing Soft-Lock).
+    - Updated Camera API to use setCamPos() and getCamPos().
     -->
 
     <script src="https://unpkg.com/kaplay@3001/dist/kaplay.js"></script>
@@ -47,7 +49,6 @@
 
         // ----- 1. GAME DATA & CONFIG -----
         
-        // Historical Content
         const VALID_CAUSES = ["Slavery", "States' Rights", "Economics", "Sectionalism", "Election 1860"];
         const DISTRACTORS = ["Space Travel", "The Internet", "Robots", "Aliens", "Television", "Smartphones"];
 
@@ -63,7 +64,7 @@
             playerHealth: 3,
 
             // Camera
-            cameraFollow: true, // Enabled camera tracking
+            cameraFollow: true,
 
             // Visuals (Sepia / Parchment Theme)
             bgColor: [225, 205, 170],      // Parchment Tan
@@ -78,6 +79,7 @@
 
         // Levels
         const LEVELS = [
+            // --- Level 1 ---
             [
                 "                                        ",
                 "                                        ",
@@ -87,12 +89,13 @@
                 "            $  $                        ",
                 "           ------           $  $        ",
                 "                           ------    >  ",
-                "    $  $                           ====  ",
-                "   ------                               ",
+                "    $  $                          ====  ",
+                "   ------                        -      ",
                 "                   $                    ",
                 "  @              =====     ===          ",
                 "========   ^^^  ========  ======  ======",
             ],
+            // --- Level 2 ---
             [
                 "                                        ",
                 "                                   >    ",
@@ -130,22 +133,53 @@
 
         // ----- 3. HELPER FUNCTIONS -----
 
-        // Helper to pick a random cause or distractor
-        function getScrollData() {
-            // 50/50 chance of being valid or distractor
-            // Ensure at least some are valid by tweaking prob if needed
-            const isValid = rand() > 0.4; 
-            const text = isValid 
-                ? choose(VALID_CAUSES) 
-                : choose(DISTRACTORS);
-            return { text, isValid };
-        }
-
         // Build Level Function
         function buildLevel(mapData) {
             const objects = { portals: [] };
             let spawnPos = vec2(CONFIG.playerStartPos.x, CONFIG.playerStartPos.y);
 
+            // --- STEP 1: PRE-CALCULATE SCROLLS (Fix Soft-Lock) ---
+            // Count total slots for scrolls in this map
+            let scrollSlots = 0;
+            for (const row of mapData) {
+                for (const char of row) {
+                    if (char === '$') scrollSlots++;
+                }
+            }
+
+            // Create a "deck" of scroll contents to ensure solvability
+            let scrollDeck = [];
+            const requiredValid = 3; 
+
+            // 1. Add guaranteed valid causes
+            // Shuffle the master list of valid causes to pick random ones
+            const shuffledValids = [...VALID_CAUSES].sort(() => 0.5 - Math.random());
+            
+            for (let i = 0; i < requiredValid; i++) {
+                // Use modulo in case requiredValid > VALID_CAUSES.length (unlikely here)
+                scrollDeck.push({
+                    text: shuffledValids[i % shuffledValids.length],
+                    isValid: true
+                });
+            }
+
+            // 2. Fill the remaining slots with random items (biased towards distractors)
+            const remainingSlots = Math.max(0, scrollSlots - requiredValid);
+            for (let i = 0; i < remainingSlots; i++) {
+                const isDistractor = Math.random() < 0.6; // 60% chance for distractor
+                if (isDistractor) {
+                    scrollDeck.push({ text: choose(DISTRACTORS), isValid: false });
+                } else {
+                    scrollDeck.push({ text: choose(VALID_CAUSES), isValid: true });
+                }
+            }
+
+            // 3. Shuffle the deck so the valid ones aren't always the first ones found
+            scrollDeck.sort(() => 0.5 - Math.random());
+            
+            let scrollIndex = 0;
+
+            // --- STEP 2: BUILD MAP ---
             for (let row = 0; row < mapData.length; row++) {
                 for (let col = 0; col < mapData[row].length; col++) {
                     const ch = mapData[row][col];
@@ -186,9 +220,12 @@
 
                         // Scrolls (Replaces Coins)
                         case "$":
-                            const data = getScrollData();
+                            // Pop data from our pre-calculated guaranteed deck
+                            const data = scrollDeck[scrollIndex] || { text: "Error", isValid: false };
+                            scrollIndex++;
+
                             const scroll = add([
-                                rect(24, 30), // Looks like a piece of paper
+                                rect(24, 30),
                                 pos(x + TILE/2, y + TILE/2),
                                 anchor("center"),
                                 area(),
@@ -198,7 +235,7 @@
                                 {
                                     causeText: data.text,
                                     isValid: data.isValid,
-                                    bobOffset: rand(0, 10) // For animation
+                                    bobOffset: rand(0, 10)
                                 }
                             ]);
                             
@@ -211,25 +248,25 @@
                             ]);
                             break;
 
-                        // Hazards (Tumbleweeds)
+                        // Hazards
                         case "^":
                             add([
                                 circle(12),
                                 pos(x + TILE/2, y + TILE/2),
                                 anchor("center"),
-                                // FIX: Correctly instantiate Circle with center point (0,0 relative to parent) and radius
-                                area({ shape: new Circle(vec2(0), 10) }),
+                                // Square hitbox for consistent collision
+                                area({ shape: new Rect(vec2(-10, -10), 20, 20) }),
                                 color(...CONFIG.hazardColor),
                                 outline(2, rgb(80, 40, 10)),
                                 "hazard",
-                                { rotSpeed: rand(2, 5) } // Rotation speed for tumbleweed
+                                { rotSpeed: rand(2, 5) }
                             ]);
                             break;
 
                         // Portal
                         case ">":
                             const portal = add([
-                                rect(TILE * 1.2, TILE * 2), // Tall door shape
+                                rect(TILE * 1.2, TILE * 2),
                                 pos(x, y - TILE),
                                 area(),
                                 anchor("top"),
@@ -240,11 +277,11 @@
                                 { isOpen: false }
                             ]);
                             
-                            // Door details
+                            // Knob
                             portal.add([
                                 circle(4),
                                 pos(TILE/2, TILE),
-                                color(200, 200, 0) // Knob
+                                color(200, 200, 0)
                             ]);
                             
                             objects.portals.push(portal);
@@ -269,12 +306,12 @@
 
             // --- Player ---
             const player = add([
-                rect(24, 32), // Silhouette shape
+                rect(24, 32),
                 pos(spawnPos),
                 area(),
                 body(),
                 anchor("botleft"),
-                color(40, 40, 40), // Dark silhouette
+                color(40, 40, 40),
                 outline(1, rgb(0,0,0)),
                 z(10),
                 { 
@@ -285,7 +322,6 @@
             ]);
 
             // --- HUD ---
-            // HP
             const hpLabel = add([
                 text(`Integrity: ${hp}`, { size: 16, font: "monospace" }),
                 pos(16, 12),
@@ -294,7 +330,6 @@
                 color(...CONFIG.textColor),
             ]);
 
-            // Cause List
             const listHeader = add([
                 text("Causes Found:", { size: 16, font: "monospace" }),
                 pos(16, 40),
@@ -313,7 +348,7 @@
 
             // Controls Info
             add([
-                text("[A/D] Move  [SPACE] Jump", { size: 14, font: "monospace" }),
+                text("(A/D) Move  (SPACE) Jump", { size: 14, font: "monospace" }),
                 pos(center().x, 12),
                 anchor("top"),
                 fixed(),
@@ -322,7 +357,6 @@
                 opacity(0.7)
             ]);
 
-            // Level Info
             add([
                 text(`Level ${levelIdx + 1}`, { size: 18, font: "monospace" }),
                 pos(width() - 16, 12),
@@ -342,7 +376,6 @@
                             p.isOpen = true;
                             p.color = rgb(...CONFIG.portalOpenColor);
                             p.use(opacity(0.8));
-                            // Add a visual "Open" label
                             p.add([
                                 text("OPEN", { size: 12 }),
                                 pos(TILE * 0.6, -10),
@@ -386,13 +419,19 @@
                 if (player.vel.y > CONFIG.maxFallSpeed) player.vel.y = CONFIG.maxFallSpeed;
             });
 
-            // Camera
+            // --- Camera Follow ---
             if (CONFIG.cameraFollow) {
                 player.onUpdate(() => {
-                    camPos(
-                        lerp(camPos().x, player.pos.x + 100, 0.05),
-                        lerp(camPos().y, player.pos.y - 50, 0.05),
-                    );
+                    // Smoothly interpolate camera position towards player
+                    const currentCam = getCamPos(); // Using new getter
+                    const targetX = player.pos.x + 100;
+                    const targetY = player.pos.y - 50;
+                    const targetPos = vec2(targetX, targetY);
+                    
+                    // Lerp vector for smoothness
+                    const newPos = currentCam.lerp(targetPos, 0.05);
+                    
+                    setCamPos(newPos); // Using new setter
                 });
             }
 
@@ -451,8 +490,6 @@
                 hpLabel.text = `Integrity: ${hp}`;
                 flash(rgb(...CONFIG.hazardColor), 0.15);
                 shake(10);
-                
-                // Knockback
                 player.jump(300);
                 
                 if (hp <= 0) {
@@ -470,7 +507,6 @@
                         go("win", { score });
                     }
                 } else {
-                    // Feedback for locked portal
                     shake(2);
                     add([
                         text("Need 3 Valid Causes!", { size: 18 }),

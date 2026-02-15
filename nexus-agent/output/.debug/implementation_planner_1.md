@@ -1,89 +1,99 @@
-This technical plan outlines the transformation of the base platformer template into a **Digital Testing Lab** game featuring the **Knowledge Gate** mechanic.
+This technical plan outlines the transformation of the Kaplay platformer template into an educational game about the American Civil War, featuring the "Historical Fact Gates" mechanic.
 
 ### 1. Visual Reskin Plan
 
-To achieve the "Digital Testing Lab" aesthetic, we will replace the organic colors with high-contrast neon palettes and add geometric details.
+To align with the American Civil War theme, we will modify the `CONFIG` object and the `buildLevel` visual components.
 
-**A. Color Palette & Environment (CONFIG Object)**
-*   **Background**: Change `bgColor` to `[10, 10, 25]` (Deep Midnight).
-*   **Ground/Walls**: Change `floorColor` to `[0, 255, 255]` (Neon Cyan).
-*   **Platforms**: Change `platformColor` to `[255, 0, 255]` (Neon Magenta).
-*   **Hazards**: Change `hazardColor` to `[255, 50, 50]` (Glitch Red).
-*   **Coins**: Change `coinColor` to `[255, 255, 0]` (Data Yellow).
+**A. Color Palette & UI (in `CONFIG`):**
+*   **Background (`bgColor`)**: Change to `[45, 55, 75]` (a somber, dusky blue sky).
+*   **Floor/Ground (`floorColor`)**: Change to `[101, 67, 33]` (earthy brown for dirt paths and mud).
+*   **Platforms (`platformColor`)**: Change to `[139, 69, 19]` (weathered wood for barricades).
+*   **Hazards (`hazardColor`)**: Change to `[60, 60, 60]` (iron/steel for cannons and spikes).
+*   **Collectibles (`coinColor`)**: Change to `[245, 245, 220]` (parchment/paper color for Abolitionist Pamphlets).
+*   **UI Labels**: 
+    *   Change "HP" to "MORALE".
+    *   Change "Coins" to "PAMPHLETS".
 
-**B. Game Objects**
-*   **Player (Data Probe)**:
-    *   Instead of just `sprite("bean")`, add a `rect` child or `outline(2, rgb(255, 255, 255))` to give it a robotic glow.
-    *   Scale it down to `0.8` for a "compact drone" look.
-*   **Hazards (Corrupted Files)**:
-    *   Replace `polygon` spikes with `rect(TILE, TILE)` blocks.
-    *   Add a `shake()` or `opacity()` flicker in an `onUpdate` loop to simulate "glitching."
-*   **Coins (Data Bits)**:
-    *   Change `circle(10)` to `rect(12, 12, { radius: 2 })` and rotate by 45 degrees (diamond shape).
-*   **HUD**:
-    *   Rename "Coins" to "Data Bits".
-    *   Use a monospace font if available or keep default with `size: 16` for a terminal feel.
+**B. Game Objects (in `buildLevel` and `scene("game")`):**
+*   **Player Character**:
+    *   **Current**: `sprite("bean")`
+    *   **New**: A Union Soldier. Use a `rect` with color `[0, 35, 102]` (Union Blue) and a secondary gold detail `[218, 165, 32]` representing buttons.
+*   **Collectibles (`$`)**:
+    *   **Current**: `circle(10)`
+    *   **New**: `rect(16, 22)` with color `[245, 245, 220]` and `outline(1)` to look like a folded pamphlet.
+*   **Hazards (`^`)**:
+    *   **Current**: `polygon` (spikes)
+    *   **New**: Keep `polygon` but set color to `[60, 60, 60]` and label them as "Iron Spikes/Barricades."
+*   **Exit Portal (`>`)**:
+    *   **Current**: Purple rectangle.
+    *   **New**: A tall vertical pole (`rect(4, 64)`) with a Union Flag (`rect(32, 20)`) at the top using colors `[200, 0, 0]` and `[255, 255, 255]`.
 
 ---
 
-### 2. Addon Mechanic Implementation: The Knowledge Gate
+### 2. Addon Mechanic Implementation Plan: Historical Fact Gates
 
-The Knowledge Gate consists of two portals at the end of each level. One represents the correct answer and the other represents the incorrect one.
+This feature introduces gates that require a correct historical choice to pass.
 
-#### A. Data Structure
-Add a constant `QUESTIONS` array before the `LEVELS` array to store lesson content.
+**A. Data Structure**
+Define a `FACTS` array to store the educational content:
 ```javascript
-const QUESTIONS = [
+const FACTS = [
     { 
-        q: "Which tag groups objects?", 
-        a: "Tags", // Correct
-        b: "Names", // Incorrect
-        correct: "a" 
+        q: "What was a main cause of the war?", 
+        options: ["Slavery", "Expansion of Trade"], 
+        correct: 0 
     },
-    // ... one for each level
+    { 
+        q: "Which side was Abraham Lincoln on?", 
+        options: ["Confederacy", "Union"], 
+        correct: 1 
+    }
 ];
 ```
 
-#### B. Level Map Updates
-Modify the `LEVELS` maps to remove the single `>` and add two specific symbols for the gates:
-*   `1`: Correct Portal
-*   `2`: Incorrect Portal
+**B. Level Map Integration**
+Add new symbols to the `LEVELS` array:
+*   `|`: The physical Gate (blocking the path).
+*   `[`: Left Choice Banner.
+*   `]`: Right Choice Banner.
 
-Example Level End:
-```text
-"          1  2   "
-"         ======  "
-```
+**C. `buildLevel` Modifications**
+Add cases to handle the new symbols:
+*   **Gate (`|`)**: A tall static body using `rect(10, TILE * 3)` with tag `"gate"`.
+*   **Banners (`[` and `]`)**: 
+    *   Create objects with tags `"banner"` and attributes `{ side: "left" }` or `{ side: "right" }`.
+    *   Use `text()` component to display the current question's options from the `FACTS` array.
+    *   **Visual**: A vertical hanging rectangle with text centered on it.
 
-#### C. Build Level Modification
-In the `buildLevel(mapData)` function, add cases for symbols `1` and `2`:
-1.  **Tagging**: Give them tags `"portal"` and a specific identifier (e.g., `"gateA"`, `"gateB"`).
-2.  **Labels**: Add a child text object to each portal using `obj.add([text(...)])` to display Answer A or Answer B from the `QUESTIONS` array.
+**D. State Management (in `scene("game")`)**
+*   Initialize `let currentGateIdx = 0;` to track which question is currently active.
 
-#### D. Logic Implementation (Inside `scene("game")`)
-Replace the existing `player.onCollide("portal", ...)` handler with the following logic:
-
-1.  **Collision Check**:
-    *   When player hits a portal, identify if it is the "correct" portal based on `QUESTIONS[levelIdx].correct`.
-2.  **Correct Path**:
-    *   If correct: Play a "success" sound/visual and call `go("game", levelIdx + 1)`.
-3.  **Incorrect Path (The Reboot)**:
-    *   If incorrect: 
-        *   Trigger `shake(10)` and a brief `flash(rgb(255,0,0), 0.2)`.
-        *   Reset `player.pos = spawnPos`.
-        *   Optional: Subtract a small amount of score as a penalty.
-
-#### E. Code Hints
-*   **Adding Child Text**: Use `gate.add([text(answerText, { size: 12 }), pos(0, -20), anchor("center")])`.
-*   **Detecting Gate Type**: Use custom properties during `add()`: `add([ ..., "portal", { isGateA: true } ])`.
+**E. Event Handlers**
+Implement collision logic for the banners:
+1.  **Collision Handler**: `player.onCollide("banner", (b) => { ... })`
+2.  **Logic**:
+    *   Check if the choice is correct: `(b.side === "left" && FACTS[currentGateIdx].correct === 0) || (b.side === "right" && FACTS[currentGateIdx].correct === 1)`.
+    *   **If Correct**:
+        *   `destroyAll("gate")` or `get("gate").forEach(g => g.destroy())`.
+        *   Play a success sound/effect.
+        *   Increment `currentGateIdx`.
+    *   **If Incorrect**:
+        *   Spawn a **"Skirmish"**: `add([rect(20, 20), color(150, 0, 0), pos(player.pos.x + 200, player.pos.y), area(), body(), "enemy", "hazard", opacity(1)])`.
+        *   Display a temporary message using `lifespan()` and `opacity()` (as required):
+            `add([text("INCORRECT - REGROUP!", {size: 14}), pos(player.pos), lifespan(2), opacity(1)])`.
+        *   Knock the player back slightly.
 
 ---
 
 ### 3. Integration Checklist
 
-*   **Scoring**: The "Data Bits" (coins) collected throughout the level are preserved even if the player hits the wrong gate and reboots. This rewards exploration while the gates test knowledge.
+*   **Scoring**: Collecting "Pamphlets" ($) increases the score. Correct Gate choices should award a large score bonus (e.g., +10 Pamphlets).
 *   **Win/Lose Conditions**:
-    *   The Knowledge Gate acts as the only way to trigger `nextLevel`.
-    *   The "Corrupted Files" (hazards) still reduce HP. If HP hits 0, it's a hard "Game Over." If a gate is wrong, it's just a "soft reset" (reboot).
-*   **Camera**: Ensure the camera is wide enough at the end of the level so the player can clearly see both gates and their labels before choosing.
-*   **Edge Case**: If the player jumps and hits the side of the portal instead of the front, ensure the `area()` component is large enough to trigger the collision reliably. Use `anchor("bot")` for gates to keep them flush with the floor.
+    *   Losing Morale (HP) leads to "Game Over" (Retreat).
+    *   Reaching the Flagpole (Portal) at the end of the final level leads to "Victory" (Reconstruction).
+*   **Mechanic Adjustments**:
+    *   The camera interpolation in `CONFIG.cameraFollow` might need to be adjusted if the Gate text is too large to see. Use `camScale(0.8)` when approaching a gate to give the player a wider view of the banners.
+*   **Edge Cases**:
+    *   If the player jumps through a banner multiple times: Use a local variable `gateActive = true` to prevent multiple spawns or multiple score awards for the same gate.
+    *   **Lifespan Usage**: Assert that every temporary alert or spawned enemy used with `lifespan()` also includes the `opacity()` component to ensure the engine handles the destruction correctly.
+    *   **Text Wrapping**: Use the `width` property in the `text()` component for banners (e.g., `text(opt, { width: TILE * 3 })`) to ensure long historical facts wrap within the banner boundaries.

@@ -21,3 +21,5 @@ Based on the game selection and addon feature above, create a detailed technical
 2. Implementing the addon mechanic on top of the existing template code
 
 Reference specific parts of the template code when describing where changes go.
+
+NOTE: Component "lifespan" requires component "opacity". For every object that you're trying to destroy, YOU MUST HAVE OPACITY(). Stop making this stupid mistake.

@@ -1,8 +1,8 @@
 GAME_TYPE: platformer
 
-RATIONALE: A platformer provides a clear, linear progression that mirrors the structure of a test or assessment. It allows for the segmentation of "Test content" into manageable levels, where players must demonstrate mastery of one concept before moving to the next.
+RATIONALE: The Civil War is best understood as a chronological progression of events and shifting geography, which mirrors the linear movement of a platformer. This genre allows the player to "advance" through the timeline of the war, moving from the causes of the conflict toward its major battles and ultimate resolution.
 
-ADDON FEATURE: The Knowledge Gate
-At the end of each platforming segment, the player encounters two portals labeled with different answers related to the lesson content. To progress to the next level, the player must jump into the portal representing the correct answer; jumping into the incorrect portal triggers a "reboot" effect that sends the player back to the start of the current segment to try again.
+ADDON FEATURE: Historical Fact Gates
+At the end of each level section, the player encounters a "Fortress Gate" blocked by two hanging banners. Each banner displays a historical statement regarding the war’s causes or factions (e.g., "The Confederacy supported States' Rights" vs. "The Union supported the expansion of slavery"). The player must jump through the banner containing the correct historical fact to unlock the gate and proceed; choosing the incorrect banner triggers a "skirmish" (spawns an extra enemy) and requires the player to re-read the prompt.
 
-VISUAL THEME: The game is set in a "Digital Testing Lab" with a neon-grid aesthetic. The player character is a "Data Probe" (a small hovering robot), and the hazards are "Corrupted Files" (glitching red blocks) that must be avoided while navigating the circuitry-themed platforms.
+VISUAL THEME: The player controls a Union soldier navigating 19th-century landscapes, including the woods of Virginia and fortified encampments. Collectibles are "Abolitionist Pamphlets," and hazards include period-accurate obstacles like wooden barricades, cannons, and opposing scouts.
