@@ -271,7 +271,9 @@ export default function Dashboard() {
                             {/* Recent Lessons */}
                             <div>
                                 <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-2xl font-serif-display text-white">Recent Lessons</h2>
+                                    <h2 className="text-2xl font-serif-display text-white">
+                                        {userRole === 'teacher' ? 'Recent Lessons' : 'Recent Lessons Played'}
+                                    </h2>
                                     <Link href="/lessons">
                                         <button className="text-emerald-400 text-sm font-medium hover:text-emerald-300 transition-colors flex items-center gap-2 font-sans-clean">
                                             View All <ArrowRight size={16} />
@@ -280,8 +282,12 @@ export default function Dashboard() {
                                 </div>
                                 {recentLessons.length === 0 ? (
                                     <div className="text-center py-12 bg-[#0d281e] border border-emerald-500/20 rounded-2xl">
-                                        <p className="text-slate-400">No lessons created yet.</p>
-                                        <Link href="/create" className="text-emerald-400 mt-2 block hover:underline">Create your first lesson</Link>
+                                        <p className="text-slate-400">
+                                            {userRole === 'teacher' ? 'No lessons created yet.' : 'No lessons assigned yet.'}
+                                        </p>
+                                        {userRole === 'teacher' && (
+                                            <Link href="/create" className="text-emerald-400 mt-2 block hover:underline">Create your first lesson</Link>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

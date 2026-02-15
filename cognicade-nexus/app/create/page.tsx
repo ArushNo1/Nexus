@@ -1,10 +1,55 @@
 'use client';
 
-import { Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import { LessonUploader } from '@/components/lesson-uploader';
 import CreateNavbar from '@/components/ui/create-navbar';
+import { Loader2 } from 'lucide-react';
 
 export default function CreateLessonPage() {
+    const router = useRouter();
+    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                router.push('/auth/login');
+                return;
+            }
+
+            const { data: profile } = await supabase
+                .from('user_profiles')
+                .select('role')
+                .eq('id', user.id)
+                .single();
+
+            if (!profile || profile.role !== 'teacher') {
+                console.error('Unauthorized access: Teachers only.');
+                router.push('/dashboard');
+                return;
+            }
+
+            setIsAuthorized(true);
+        };
+
+        checkAuth();
+    }, [router]);
+
+    if (isAuthorized === null) {
+        return (
+            <div className="min-h-screen bg-[#0a1f18] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 size={40} className="text-emerald-500 animate-spin" />
+                    <p className="text-emerald-400 font-pixel text-xs tracking-widest">VERIFYING AUTHORITY...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-[#0a1f18] text-slate-100 font-sans selection:bg-emerald-500/30">
             {/* Global Styles */}
