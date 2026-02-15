@@ -3,7 +3,8 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
-import { createClient } from '@/lib/supabase/server';
+import { createClient as createServerClient } from '@/lib/supabase/server';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { uploadToStorage, uploadMultipleToStorage } from '@/lib/supabase/storage';
 
 const execAsync = promisify(exec);
@@ -152,7 +153,8 @@ async function fetchSpritesForElements(
 
 async function renderVideoWithRemotion(
     videoData: VideoData,
-    userId: string
+    userId: string,
+    supabase: SupabaseClient
 ): Promise<{ videoUrl: string | null; audioFiles: string[]; spriteFiles: string[] }> {
     const timestamp = Date.now();
     const tempDir = path.join(process.cwd(), 'temp', `video-${timestamp}`);
@@ -191,7 +193,7 @@ async function renderVideoWithRemotion(
                 audioFilePaths.push(audioPath);
 
                 // Upload audio to Supabase
-                const { url } = await uploadToStorage('audio', audioPath, userId, audioFilename);
+                const { url } = await uploadToStorage('audio', audioPath, userId, audioFilename, supabase);
 
                 scenesWithAudio.push({
                     ...scene,
@@ -214,7 +216,7 @@ async function renderVideoWithRemotion(
                 const fullPath = path.join(process.cwd(), 'public', localPath);
                 if (await fs.access(fullPath).then(() => true).catch(() => false)) {
                     const spriteName = path.basename(localPath);
-                    const { url } = await uploadToStorage('sprites', fullPath, 'shared', spriteName);
+                    const { url } = await uploadToStorage('sprites', fullPath, 'shared', spriteName, supabase);
                     spriteUrlsSupabase[element] = url;
                     spriteFilePaths.push(fullPath);
                 }
@@ -257,7 +259,12 @@ async function renderVideoWithRemotion(
         // 6. Upload video to Supabase
         console.log('[generate-video] Uploading video to Supabase...');
         const videoFilename = `video-${timestamp}.mp4`;
-        const { url: videoUrl } = await uploadToStorage('videos', outputPath, userId, videoFilename);
+        const { url: videoUrl, error: uploadError } = await uploadToStorage('videos', outputPath, userId, videoFilename, supabase);
+        if (uploadError) {
+            console.error('[generate-video] Video upload failed:', uploadError);
+        } else {
+            console.log('[generate-video] Video uploaded successfully:', videoUrl);
+        }
 
         // 7. Clean up temp files
         await fs.rm(tempDir, { recursive: true, force: true }).catch(err => {
@@ -287,7 +294,9 @@ const GEMINI_MODELS = [
 
 async function generateVideoWithGemini(
     lessonData: any,
-    userId: string
+    userId: string,
+    supabase: SupabaseClient,
+    gameDesignDoc?: string | null
 ): Promise<VideoResponse> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -557,7 +566,24 @@ Return JSON (NO markdown fences, ONLY raw JSON):
   "keyTakeaways": ["takeaway 1", "takeaway 2", "takeaway 3"]
 }
 
-CRITICAL: beats[0].startSec must be 0. palette.bg lightness MUST be < 15%. Generate 2-5 scenes based on topic complexity. For math/science: ALWAYS use "equation" layout when showing a formula. Set "text" and "subtitle" on equation/graph/diagram beats. For humanities: stick to focus/process/list/comparison layouts.`;
+CRITICAL: beats[0].startSec must be 0. palette.bg lightness MUST be < 15%. Generate 2-5 scenes based on topic complexity. For math/science: ALWAYS use "equation" layout when showing a formula. Set "text" and "subtitle" on equation/graph/diagram beats. For humanities: stick to focus/process/list/comparison layouts.${gameDesignDoc ? `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GAME TUTORIAL — Add ONE final scene as a brief game tutorial
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+An interactive game has been generated for this lesson. After all educational content scenes, add ONE additional scene that serves as a quick game tutorial. This scene should:
+- Briefly explain what the game is and how to play it
+- Mention the key controls or mechanics
+- Encourage the student to try the game after watching the video
+- Use "focus" or "list" layout — keep it simple and inviting
+- 60-80 words of narration
+
+Here is the game's design document for reference:
+${gameDesignDoc}
+
+IMPORTANT: This tutorial scene is the LAST scene. All educational content comes first.` : ''}`;
+
 
     for (const model of GEMINI_MODELS) {
         try {
@@ -679,7 +705,7 @@ CRITICAL: beats[0].startSec must be 0. palette.bg lightness MUST be < 15%. Gener
             // Generate video with Remotion (includes audio generation and Supabase upload)
             let videoUrl = null;
             try {
-                const result = await renderVideoWithRemotion(videoData, userId);
+                const result = await renderVideoWithRemotion(videoData, userId, supabase);
                 videoUrl = result.videoUrl;
             } catch (renderError) {
                 console.error('Video rendering failed:', renderError);
@@ -712,10 +738,9 @@ CRITICAL: beats[0].startSec must be 0. palette.bg lightness MUST be < 15%. Gener
 // ── API Route Handler ─────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
     try {
-        const supabase = await createClient();
-
-        // Get authenticated user
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        // SSR client reads cookies → verifies the logged-in user
+        const authClient = await createServerClient();
+        const { data: { user }, error: authError } = await authClient.auth.getUser();
 
         if (authError || !user) {
             return NextResponse.json(
@@ -724,8 +749,15 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        // Service role client bypasses RLS and survives after the response is sent
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+            process.env.SERVICE_ROLE_KEY || '',
+            { auth: { autoRefreshToken: false, persistSession: false } }
+        );
+
         const body = await req.json();
-        const { lessonData } = body;
+        const { lessonData, lessonId: providedLessonId, gameDesignDoc } = body;
 
         if (!lessonData) {
             return NextResponse.json(
@@ -734,60 +766,109 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // 1. Save lesson to database
-        console.log('[generate-video] Saving lesson to database...');
-        const { data: savedLesson, error: lessonError } = await supabase
-            .from('lessons')
-            .insert({
-                user_id: user.id,
-                title: lessonData.lessonPlan?.title || 'Untitled Lesson',
-                subject: lessonData.lessonPlan?.subject,
-                grade_level: lessonData.lessonPlan?.gradeLevel,
-                objectives: lessonData.lessonPlan?.objectives || [],
-                content: lessonData.lessonPlan?.content || {},
-            })
-            .select()
-            .single();
-
-        if (lessonError) {
-            // Best-effort — table may not be set up yet, don't block video generation
-            console.warn('[generate-video] Could not save lesson to DB (table may not exist yet):', lessonError.message);
+        // 1. Use existing lesson or save a new one
+        let savedLesson: { id: string } | null = null;
+        if (providedLessonId) {
+            console.log('[generate-video] Using existing lesson:', providedLessonId);
+            savedLesson = { id: providedLessonId };
         } else {
-            console.log('[generate-video] Lesson saved:', savedLesson.id);
+            console.log('[generate-video] Saving lesson to database...');
+            const { data: newLesson, error: lessonError } = await supabase
+                .from('lessons')
+                .insert({
+                    user_id: user.id,
+                    title: lessonData.lessonPlan?.title || 'Untitled Lesson',
+                    subject: lessonData.lessonPlan?.subject,
+                    grade_level: lessonData.lessonPlan?.gradeLevel,
+                    objectives: lessonData.lessonPlan?.objectives || [],
+                    content: lessonData.lessonPlan?.content || {},
+                })
+                .select()
+                .single();
+
+            if (lessonError) {
+                console.warn('[generate-video] Could not save lesson to DB:', lessonError.message);
+            } else {
+                savedLesson = newLesson;
+                console.log('[generate-video] Lesson saved:', newLesson.id);
+            }
         }
 
-        // 2. Generate video
-        const videoData = await generateVideoWithGemini(lessonData, user.id);
-
-        // 3. Save video to database (best-effort)
+        // 2. Create a "pending" video record so the UI can show progress immediately
+        let videoRowId: string | null = null;
         if (savedLesson) {
-            console.log('[generate-video] Saving video to database...');
-            const { error: videoError } = await supabase
+            console.log('[generate-video] Creating pending video record...');
+            const { data: videoRow, error: insertError } = await supabase
                 .from('videos')
                 .insert({
                     lesson_id: savedLesson.id,
                     user_id: user.id,
-                    title: videoData.title,
-                    target_audience: videoData.targetAudience,
-                    scenes: videoData.scenes,
-                    key_takeaways: videoData.keyTakeaways || [],
-                    video_url: videoData.videoUrl,
-                    thumbnail_url: videoData.thumbnailUrl,
-                    status: videoData.videoUrl ? 'completed' : 'failed',
-                    error_message: videoData.videoUrl ? null : 'Video rendering failed',
-                });
+                    title: lessonData.lessonPlan?.title || 'Educational Video',
+                    status: 'processing',
+                    scenes: [],
+                })
+                .select('id')
+                .single();
 
-            if (videoError) {
-                console.warn('[generate-video] Could not save video to DB:', videoError.message);
+            if (insertError) {
+                console.warn('[generate-video] Could not create pending video:', insertError.message, insertError);
+            } else {
+                videoRowId = videoRow.id;
+                console.log('[generate-video] Pending video record created:', videoRowId);
             }
         }
 
-        return NextResponse.json({
+        // Return immediately so the client can redirect
+        // Then continue generating in the background
+        const responsePayload = {
             success: true,
             lessonId: savedLesson?.id ?? null,
-            videoId: null,
-            ...videoData,
-        });
+            videoId: videoRowId,
+            status: 'processing',
+        };
+
+        // Fire-and-forget: generate video and update the DB record when done
+        (async () => {
+            try {
+                const videoData = await generateVideoWithGemini(lessonData, user.id, supabase, gameDesignDoc);
+
+                if (videoRowId) {
+                    const { error: updateError } = await supabase
+                        .from('videos')
+                        .update({
+                            title: videoData.title,
+                            target_audience: videoData.targetAudience,
+                            scenes: videoData.scenes,
+                            key_takeaways: videoData.keyTakeaways || [],
+                            video_url: videoData.videoUrl,
+                            thumbnail_url: videoData.thumbnailUrl,
+                            status: videoData.videoUrl ? 'completed' : 'failed',
+                            error_message: videoData.videoUrl ? null : 'Video rendering failed',
+                        })
+                        .eq('id', videoRowId);
+
+                    if (updateError) {
+                        console.warn('[generate-video] Could not update video record:', updateError.message);
+                    } else {
+                        console.log('[generate-video] Video record updated successfully');
+                    }
+                }
+            } catch (err: any) {
+                console.error('[generate-video] Background generation failed:', err);
+                if (videoRowId) {
+                    await supabase
+                        .from('videos')
+                        .update({
+                            status: 'failed',
+                            error_message: err.message || 'Video generation failed',
+                        })
+                        .eq('id', videoRowId)
+                        .catch(() => {});
+                }
+            }
+        })();
+
+        return NextResponse.json(responsePayload);
     } catch (error: any) {
         console.error('Error in video generation:', error);
         return NextResponse.json(

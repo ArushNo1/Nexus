@@ -1,18 +1,22 @@
 import { createClient } from '@/lib/supabase/server';
+import { SupabaseClient } from '@supabase/supabase-js';
 import fs from 'fs/promises';
 import path from 'path';
 
 /**
  * Upload a file to Supabase Storage
+ * @param supabaseClient - Optional pre-configured Supabase client (e.g. service-role).
+ *                         When omitted, a cookie-based server client is created.
  */
 export async function uploadToStorage(
     bucket: 'videos' | 'audio' | 'sprites',
     filePath: string,
     userId: string,
-    filename?: string
+    filename?: string,
+    supabaseClient?: SupabaseClient
 ): Promise<{ url: string | null; error: Error | null }> {
     try {
-        const supabase = await createClient();
+        const supabase = supabaseClient ?? await createClient();
 
         // Read the file
         const fileBuffer = await fs.readFile(filePath);

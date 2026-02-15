@@ -32,8 +32,9 @@ const jersey10 = Jersey_10({
 const fredericka = Fredericka_the_Great({
   weight: "400",
   variable: "--font-fredericka",
-  display: "swap",
+  preload: false,
   subsets: ["latin"],
+  display: "swap",
   adjustFontFallback: false,
 });
 
@@ -44,7 +45,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.className} ${jersey10.variable} ${fredericka.variable} antialiased`}>
+      <body
+        className={`${geistSans.className} ${jersey10.variable} ${fredericka.variable} antialiased`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
