@@ -9,6 +9,7 @@ from utils.llm import get_llm, extract_text
 from utils.logger import get_logger
 from utils.debug import dump_debug_state
 from utils.prompts import load_prompt, render_template
+from utils.supabase import update_game
 
 log = get_logger("design_evaluator")
 
@@ -47,5 +48,11 @@ async def design_evaluator_node(state: AgentState) -> dict:
     verdict = "PASS" if approved else "REVISE"
     log.info(f"[bold yellow]Node 2 — Design Evaluator[/bold yellow] | done → verdict: {verdict}")
     dump_debug_state("design_evaluator", {**state, **result})
+
+    # Push status to Supabase
+    game_id = state.get("game_id")
+    if game_id:
+        status = "implementation_planning" if approved else "evaluating"
+        update_game(game_id, {"status": status})
 
     return result
