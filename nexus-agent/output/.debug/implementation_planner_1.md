@@ -1,97 +1,92 @@
-This technical plan transforms the standard shoot 'em up into **"Chloroplast Command,"** an educational game where students manage the inputs of photosynthesis while defending a leaf cell from pollution.
-
----
+This technical plan outlines the visual transformation of the platformer template into a Civil War-themed educational game and the implementation of the "Fact-Check Bridge" mechanic.
 
 ### 1. Visual Reskin Plan
 
-#### Environment & Background
-*   **Background Color**: Change `C.bg` from `[6, 6, 18]` (dark blue) to **`[10, 35, 15]`** (deep forest green) to represent the interior of a plant cell.
-*   **Starfield (Cytoplasmic Flow)**: Rename `makeStars()` to `makeCellFlow()`.
-    *   **Change**: Change star color from `[255, 255, 255]` to `[120, 200, 100]` (light green).
-    *   **Change**: Change `circle(s)` to `rect(s, s)` to look like microscopic cell debris.
-*   **HUD Text**: Change `hpTxt` color to `[150, 255, 150]`. Change heart symbol `@` to a leaf symbol `☘`.
+The goal is to move from a generic neon platformer to a "historical parchment" aesthetic.
 
-#### Game Objects
-*   **Player (Super Chloroplast)**: 
-    *   **Now**: `sprite("bean")` with blue tint.
-    *   **Become**: `sprite("bean")` with **`color(50, 200, 50)`** (bright green).
-    *   **Scale**: Increase to `1.5` to look like a sturdy organelle.
-*   **Enemies (Pollution & Pests)**:
-    *   **Basic (Smog Cloud)**: Change color to `[100, 100, 100]` (Grey).
-    *   **Fast (Pest/Aphid)**: Change color to `[200, 50, 50]` (Red).
-    *   **Tank (Industrial Soot)**: Change color to `[40, 40, 40]` (Near-black) and increase size to `40x40`.
-*   **Projectiles**:
-    *   **Player Bullets (Energy)**: Change `C.bulletCol` to `[200, 255, 0]` (Bright Lime).
-    *   **Enemy Bullets (Toxins)**: Change `C.enemyBulletCol` to `[180, 0, 255]` (Purple).
+#### **Global Visuals (CONFIG Object)**
+*   **Background Color**: Change `CONFIG.bgColor` from dark blue to `[245, 235, 205]` (Parchment).
+*   **Palette Swap**:
+    *   `floorColor`: Level 1 (North) `[80, 50, 40]` (Industrial Brick); Level 2 (South) `[130, 90, 60]` (Southern Soil).
+    *   `hazardColor`: `[80, 80, 80]` (Iron/Grey for Barbed Wire or Cannonballs).
+    *   `coinColor`: `[184, 134, 11]` (Aged Gold for "Telegraph Keys").
+
+#### **Character & Object Reskin**
+*   **The Scout (Player)**: In `scene("game")`, modify the player creation. Instead of the default bean, add a `color(0, 50, 150)` (Union Blue) and `outline(2, rgb(0, 0, 0))` to signify the Union uniform.
+*   **Telegraph Keys (Coins)**: Change "Coins" to "Messages" in `scoreLabel`. Replace the `circle(10)` in `buildLevel` (case `$`) with a `rect(16, 12)` to look like a telegraph key or a folded letter.
+*   **Barbed Wire (Hazards)**: The `polygon` in `buildLevel` (case `^`) will remain, but the color change to metallic grey and the parchment background will make them look like sharp fortifications.
+*   **The Peace Treaty (Portal)**: Change `CONFIG.portalColor` to `[255, 255, 255]` with a dark outline to represent an official document.
+
+#### **HUD & UI Updates**
+*   `hpLabel`: Change text to "Morale: ${hp}".
+*   `scoreLabel`: Change text to "Messages: ${score}".
+*   `levelLabel`: Level 1 becomes "The Industrial North"; Level 2 becomes "The Agrarian South".
 
 ---
 
-### 2. Addon Mechanic Implementation Plan: Photosynthesis Recipe Meter
+### 2. Addon Mechanic Implementation Plan: Fact-Check Bridge
 
-#### A. State Management
-In the `scene("game")`, initialize a state object to track the three inputs:
+This mechanic will be implemented using a new tile symbol and a dynamic question-spawner.
+
+#### **Step 1: Data Structure**
+Define the historical content at the top of the script:
 ```javascript
-let recipe = { sun: false, water: false, co2: false };
-const recipeTotal = 3;
+const BRIDGES = [
+  { 
+    q: "Who was the President of the Union?", 
+    a: { text: "Abraham Lincoln", isCorrect: true }, 
+    b: { text: "Jefferson Davis", isCorrect: false } 
+  },
+  // Add more questions corresponding to the '?' symbols in map
+];
 ```
 
-#### B. New Game Objects: Inputs & Outputs
-Create a new function `spawnMolecules()` that triggers on a separate timer (similar to `spawnEnemy`).
-*   **Inputs**:
-    *   `Sunlight`: `circle(12)`, `color(255, 255, 0)`, tag: `"input"`, `{ type: "sun" }`
-    *   `Water`: `circle(10)`, `color(0, 150, 255)`, tag: `"input"`, `{ type: "water" }`
-    *   `CO2`: `circle(10)`, `color(150, 150, 150)`, tag: `"input"`, `{ type: "co2" }`
-*   **Outputs (Hazards)**:
-    *   `Oxygen`: `circle(12)`, `outline(2, [255, 255, 255])`, `opacity(0.6)`, tag: `"output"`
-    *   `Glucose`: `polygon(...)` or `rect(15, 15)`, `color(255, 150, 0)`, tag: `"output"`
+#### **Step 2: Update Level Mapping**
+*   Add two new symbols to the `LEVELS` array:
+    *   `?`: The bridge trigger location.
+    *   `S`: The "History Scroll" checkpoint.
+*   Update `buildLevel` switch statement:
+    *   **Case `S`**: Spawn a "History Scroll" object (rect with tag `"checkpoint"`).
+    *   **Case `?`**: Spawn an invisible trigger area (rect with tag `"bridgeTrigger"`). Store an index `bridgeIdx` in the object.
 
-#### C. Collision Handlers (Player + Molecules)
-Add these logic blocks to the `game` scene:
-1.  **On Collide ("player", "input")**:
-    *   Identify the type (e.g., `if (item.type === "sun") recipe.sun = true`).
-    *   Play a "ding" sound effect.
-    *   `destroy(item)`.
-    *   Call `checkRecipe()`.
-2.  **On Collide ("player", "output")**:
-    *   **Penalty**: Briefly reduce player speed or trigger a 1-second "clogged" state where they cannot shoot.
-    *   `destroy(item)`.
+#### **Step 3: Modify Scene Logic (scene "game")**
+*   **Checkpoint System**:
+    Add a collision handler for the scroll:
+    ```javascript
+    let currentSpawnPos = spawnPos; // Initialize with default
+    player.onCollide("checkpoint", (s) => {
+        currentSpawnPos = s.pos;
+        // Visual feedback: Change scroll color or pop text
+    });
+    ```
+    Update the `hazard` and `death plane` logic to use `player.pos = currentSpawnPos.clone()` instead of the original `spawnPos`.
 
-#### D. The Growth Pulse (The Addon Reward)
-In the `checkRecipe()` function:
-*   If `sun`, `water`, and `co2` are all `true`:
-    1.  **Reset State**: Set all `recipe` keys back to `false`.
-    2.  **Spawn Pulse**: Add a new object at the player's position:
-        ```javascript
-        const pulse = add([
-            circle(10),
-            pos(player.pos),
-            area(),
-            anchor("center"),
-            color(255, 255, 255),
-            opacity(1),
-            "pulse"
-        ]);
-        // Animation: Expand to 1000px and fade out over 0.8 seconds
-        pulse.tween(10, 1000, 0.8, (v) => pulse.radius = v, easings.easeOutExpo);
-        pulse.animate("opacity", [1, 0], { duration: 0.8 });
-        wait(0.8, () => destroy(pulse));
-        ```
-    3.  **Clear Screen**: `onCollide("pulse", "enemy", (p, e) => { destroy(e); score += 500; });`
+*   **Bridge Trigger Logic**:
+    When the player hits the `?`:
+    1.  Spawn two platforms ahead of the trigger.
+    2.  Use `platform.add([text(...)])` to attach the labels (Choice A and Choice B) to the physical platforms.
+    3.  Tag them `"choice-correct"` and `"choice-wrong"` based on the `BRIDGES` data.
 
-#### E. Recipe UI Meter
-Add three static icons at the top right of the screen:
-*   Add a background "Meter Box" using `rect()`.
-*   Add 3 icons (Yellow circle, Blue circle, Grey circle).
-*   **Logic**: In the `updateHUD` function, update the `opacity` of these icons:
-    *   `sunIcon.opacity = recipe.sun ? 1 : 0.2;` (Dim if not collected).
+#### **Step 4: Collision Handling for Choices**
+```javascript
+player.onCollide("choice-wrong", (p) => {
+    shake(10);
+    destroy(p); // Platform vanishes
+    // Player falls to the checkpoint below
+});
+
+player.onCollide("choice-correct", (p) => {
+    p.color = rgb(0, 200, 0); // Turn green to show success
+    // Platform stays solid (standard behavior)
+});
+```
 
 ---
 
 ### 3. Integration Checklist
 
-*   **Scoring Integration**: Every "Growth Pulse" kill awards 500 points (higher than standard kills) to encourage recipe completion.
-*   **Win/Lose Adjustments**: 
-    *   The "Output" molecules (Oxygen/Glucose) do not damage HP, but they act as obstacles that make it harder to dodge enemies.
-    *   The "Growth Pulse" provides a brief moment of safety, allowing the player to recover if overwhelmed by smog clouds.
-*   **Difficulty Scaling**: As `difficulty` increases, the speed of falling `Oxygen` and `Glucose` molecules increases, making it harder to maintain a clean "recipe."
-*   **Edge Case**: If the player collects a duplicate input (e.g., two Sunlights), the second one should just grant a small score bonus without affecting the meter.
+*   **Scoring**: Landing on a correct platform should award +5 "Messages" (Score) to reward historical knowledge.
+*   **Win/Lose**: If the player falls through an incorrect platform, they lose 1 Morale (HP). If Morale hits 0, they go to Game Over.
+*   **Map Design**: The level designer must ensure a "History Scroll" checkpoint (`S`) is placed directly below every Fact-Check Bridge (`?`) so the player can recover and re-read the facts.
+*   **Z-Index**: Ensure Choice labels (text) have `z(100)` so they are visible over the platforms.
+*   **Scale**: Use `fixed()` for question prompts if you want them to appear as UI, or `pos()` relative to the bridge trigger to make them part of the world. For this lesson, floating text above the bridge is more immersive.

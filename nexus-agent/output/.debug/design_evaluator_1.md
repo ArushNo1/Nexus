@@ -1,7 +1,7 @@
-1. **Genre Fit** (4/5) — The shootemup genre effectively captures the dynamic exchange of molecules, though the "avoidance" of outputs is a slightly artificial game constraint compared to the real biological process.
-2. **Pedagogical Alignment** (5/5) — The "Recipe Meter" perfectly reinforces the lesson's goal of distinguishing specific inputs (Sun, Water, CO2) from outputs by making the player actively select one and reject the other.
-3. **Addon Feasibility** (5/5) — Implementing a collection-based UI meter and a screen-clearing "Growth Pulse" effect is a standard mechanic that is highly feasible within the Kaplay engine.
-4. **Visual Theme Coherence** (4/5) — Using a chloroplast pilot and molecular collectibles creates a strong mental link to cellular biology, though labeling Oxygen as an obstacle to avoid may require a brief explanation to ensure students don't think it's "bad."
-5. **Fun Factor** (5/5) — The mechanic turns a core learning objective into a high-stakes "super move" charge-up, making the science feel like an empowering gameplay reward rather than an interruption.
+1. **Genre Fit**: 5/5 - The platformer's linear progression perfectly mirrors a historical timeline, moving students physically through the chronological events of the war.
+2. **Pedagogical Alignment**: 4/5 - The bridge mechanic effectively tests the lesson's specific objectives regarding the differences between the Union and Confederacy through binary choice-making.
+3. **Addon Feasibility**: 5/5 - Implementing label-based collision logic in Kaplay.js is a straightforward modification of standard platformer mechanics and fits within a manageable scope.
+4. **Visual Theme Coherence**: 5/5 - The parchment aesthetic and the transition from industrial North to agrarian South provide strong visual reinforcement of the lesson's content on economic differences.
+5. **Fun Factor**: 4/5 - While the fall-back mechanic is punitive, it ensures players engage with the educational content without breaking the core platforming loop.
 
-**DECISION: PASS**
+DECISION: PASS

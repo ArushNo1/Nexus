@@ -40,6 +40,7 @@ You have access to a `search_kaplay_docs` tool that queries the Kaplay.js docume
 - Each call must use a **new, distinct query** — do NOT repeat the same query
 - Ask **one question per call** — do NOT bundle multiple topics into a single query
 - Use it when you're unsure about an API, need to verify method signatures, or want to check how a component works
+- For every builtin Kaplay.js function or type/interface you plan to use, assert that it actually exists using `search_kaplay_docs`, and make sure that you're calling with the proper types.
 
 ## Rules:
 - Use `search_kaplay_docs` to verify Kaplay.js APIs before referencing them in the plan
@@ -47,3 +48,4 @@ You have access to a `search_kaplay_docs` tool that queries the Kaplay.js docume
 - The addon feature should layer on top of existing code, not replace the core game loop
 - Do NOT write the actual game code — only the plan
 - Keep the plan concise but actionable
+- For every builtin Kaplay.js function or type/interface you plan to use, assert that it actually exists using `search_kaplay_docs`, and make sure that you're calling with the proper types.

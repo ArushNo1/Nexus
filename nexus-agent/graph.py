@@ -26,7 +26,7 @@ def ship_gate(state: AgentState) -> str:
     """Route after playtesting: approve → done, or loop back to coder for fixes."""
     if state["ship_approved"]:
         return END
-    if state["code_iteration"] >= 2:
+    if state["code_iteration"] >= 5:
         print("Warning: Max code iterations reached, shipping best effort")
         return END
     return "game_coder"

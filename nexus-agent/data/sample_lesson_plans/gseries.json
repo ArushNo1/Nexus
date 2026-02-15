@@ -1,0 +1,43 @@
+{
+  "lessonPlan": {
+    "title": "Introduction to Geometric Series",
+    "duration": "60 minutes",
+    "gradeLevel": "Level: 10th-11th Grade",
+    "subject": "Mathematics",
+    "objectives": [
+      "Students will be able to define a geometric series and distinguish it from arithmetic series.",
+      "Students will identify the common ratio and first term in a geometric series.",
+      "Students will apply the formula for the sum of a finite geometric series: S_n = a₁(1-rⁿ)/(1-r).",
+      "Students will solve real-world problems involving geometric series."
+    ],
+    "standards": [
+      "CCSS.MATH.CONTENT.HSA.SSE.B.4: Derive the formula for the sum of a finite geometric series and use the formula to solve problems."
+    ],
+    "materials": [
+      "Could not extract materials"
+    ],
+    "content": {
+      "introduction": "Could not extract introduction",
+      "procedure": "Could not extract procedure",
+      "closure": "Could not extract closure"
+    }
+  },
+  "rubrics": {
+    "title": "Extracted Rubric",
+    "criteria": []
+  },
+  "assessments": [
+    {
+      "type": "Extracted Assessment",
+      "title": "Assessment",
+      "questions": [
+        {
+          "questionText": "- Formative: participation in guided practice examples.\n- Summative: Geometric series problem set accuracy.\n- Quiz (to be given next class):\n  1. What is the common ratio in the series 2, 6, 18, 54...? (3)\n  2. What is the formula for the sum of a finite geometric series? (S_n = a₁(1-rⁿ)/(1-r))\n  3. Find the sum of the first 5 terms of the series 3 + 6 + 12 + 24 + ... (93)",
+          "options": [],
+          "correctAnswer": "",
+          "points": 0
+        }
+      ]
+    }
+  ]
+}

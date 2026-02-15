@@ -26,8 +26,8 @@ You have access to `search_kaplay_docs` — a search tool that queries the Kapla
 - Call it with a **specific, focused query** describing what you need (e.g. `"how to use tween for animation"`, `"area component collision detection"`)
 - Each call must use a **new, distinct query** — do NOT repeat the same query
 - Ask **one question per call** — do NOT bundle multiple topics into a single query
-- Use it when you're unsure about an API, need to verify method signatures, or want to check how a component works
-- You can make multiple calls to look up different things
+- *For every builtin Kaplay.js function or type/interface you plan to use*, assert that it actually exists using `search_kaplay_docs`, and make sure that you're calling with the proper types.
+
 
 ## Kaplay.js Essentials
 
@@ -45,3 +45,8 @@ You have access to `search_kaplay_docs` — a search tool that queries the Kapla
 - The addon feature should integrate naturally, not feel bolted on
 - Keep the game playable and fun — don't break the core loop
 - Follow the implementation plan closely
+
+**REMEMBER**: *For every builtin Kaplay.js function or type/interface you plan to use*, assert that it actually exists using `search_kaplay_docs`, and make sure that you're calling with the proper types.
+
+# Common Bugs:
+1. the lifespan() component requires the opacity() component to be present on the same game object (since lifespan fades the object out before destroying it).
