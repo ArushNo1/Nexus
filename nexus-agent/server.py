@@ -33,7 +33,7 @@ app.add_middleware(
 )
 
 # Simple API key authentication
-API_KEY = os.getenv("API_KEY", "your-secret-key")
+API_KEY = os.getenv("API_KEY", "PranavDivichenchuIsABum")
 
 class LessonPlanRequest(BaseModel):
     lesson_plan: dict
