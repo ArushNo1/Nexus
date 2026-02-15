@@ -235,6 +235,35 @@ export async function getRecentLessons(supabase: SupabaseClient, teacherId: stri
     return recentLessons;
 }
 
+export async function getTeacherLessons(supabase: SupabaseClient, teacherId: string): Promise<Lesson[]> {
+    const { data, error } = await supabase
+        .from('lessons')
+        .select('*')
+        .eq('user_id', teacherId)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+}
+
+export async function assignLessonToClassroom(
+    supabase: SupabaseClient,
+    lessonId: string,
+    classroomId: string,
+    assignedBy: string
+): Promise<void> {
+    const { error } = await supabase
+        .from('lesson_assignments')
+        .insert({
+            lesson_id: lessonId,
+            classroom_id: classroomId,
+            assigned_by: assignedBy,
+            is_published: true,
+        });
+
+    if (error) throw error;
+}
+
 // Student-specific dashboard stats
 export async function getStudentDashboardStats(supabase: SupabaseClient, studentId: string) {
     // 1. Get classrooms the student is in
