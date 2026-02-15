@@ -90,22 +90,31 @@ function validateParsedData(data: any): data is ParsedLessonData {
 async function extractText(file: File): Promise<string> {
     const fileName = file.name.toLowerCase();
 
-    // PDF
+    // PDF (using pdf-parse v1 — server-safe, no canvas/DOMMatrix needed)
     if (file.type === 'application/pdf' || fileName.endsWith('.pdf')) {
+        // Import the lib directly to skip pdf-parse's test-file auto-run in index.js
         // @ts-ignore
-        const { PDFParse } = require('pdf-parse');
+        const pdfParse = require('pdf-parse/lib/pdf-parse.js');
         const buffer = Buffer.from(await file.arrayBuffer());
-        const parser = new PDFParse({ data: buffer, verbosity: 0 });
-        const result = await parser.getText();
+        const result = await pdfParse(buffer);
+        if (!result.text || result.text.trim().length === 0) {
+            throw new Error('PDF appears to contain no extractable text (it may be image-based).');
+        }
         return result.text;
     }
 
     // PPTX / DOCX (Office formats)
     if (fileName.endsWith('.pptx') || fileName.endsWith('.docx') || fileName.endsWith('.xlsx')) {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
         // @ts-ignore
-        const { parseOffice } = require('officeparser');
-        const buffer = Buffer.from(await file.arrayBuffer());
-        return await parseOffice(buffer);
+        const officeparser = require('officeparser');
+        const parseOfficeFn = officeparser.parseOffice || officeparser.default?.parseOffice || officeparser;
+        const text = await parseOfficeFn(buffer);
+        if (!text || (typeof text === 'string' && text.trim().length === 0)) {
+            throw new Error('No text could be extracted from the Office document.');
+        }
+        return typeof text === 'string' ? text : String(text);
     }
 
     // Plain text fallback: TXT, MD, JSON, CSV, etc.
@@ -254,10 +263,13 @@ export async function POST(req: NextRequest) {
         let text = '';
         try {
             text = await extractText(file);
-        } catch (extractError) {
+        } catch (extractError: any) {
             console.error('Text extraction error:', extractError);
             return NextResponse.json(
-                { error: `Failed to extract text from ${file.name}. Is the file format supported?` },
+                {
+                    error: `Failed to extract text from ${file.name}. Is the file format supported?`,
+                    details: extractError?.message || String(extractError)
+                },
                 { status: 422 }
             );
         }
