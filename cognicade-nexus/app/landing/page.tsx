@@ -10,9 +10,9 @@ import { createClient } from "@/lib/supabase/client";
 /* --- DATA CONSTANTS --- */
 const GAME_MODES = [
   {
-    label: "RPG MODE",
-    subject: "History",
-    title: "The Timekeeper",
+    label: "BATTLE",
+    subject: "Geometry",
+    title: "The Pythagorean",
     color: "text-emerald-300",
     bg: "bg-emerald-900/40",
     border: "border-emerald-500/20",
@@ -34,20 +34,28 @@ const GAME_MODES = [
     border: "border-blue-500/20",
   },
   {
-    label: "PUZZLE",
-    subject: "Logic",
-    title: "Code Breaker",
+    label: "TYPING",
+    subject: "Science",
+    title: "Save Earth!",
     color: "text-purple-300",
     bg: "bg-purple-900/40",
     border: "border-purple-500/20",
   },
   {
-    label: "RACING",
-    subject: "Vocab",
-    title: "Speed Reader",
+    label: "SIMULATION",
+    subject: "History",
+    title: "The Civil War",
     color: "text-yellow-300",
     bg: "bg-yellow-900/40",
     border: "border-yellow-500/20",
+  },
+  {
+    label: "TOWER DEFENSE",
+    subject: "Revolutions",
+    title: "Rebel Tower",
+    color: "text-cyan-300",
+    bg: "bg-cyan-900/40",
+    border: "border-cyan-500/20",
   },
 ];
 
@@ -838,7 +846,8 @@ export default function NexusLanding() {
             </h1>
 
             <p className="text-slate-300 text-lg leading-relaxed mb-10 max-w-md font-sans-clean font-medium">
-              This Valentine&apos;s, fall in love with learning.
+              Nexus lets you agentically create engaging mini-games, videos, and
+              interactive content for your students.
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -945,33 +954,49 @@ export default function NexusLanding() {
               background: "linear-gradient(to right, #0a1f18 30%, transparent)",
             }}
           />
+          {/* Right fade */}
+          <div
+            className="absolute right-0 top-0 h-full w-32 z-10 pointer-events-none"
+            style={{
+              background: "linear-gradient(to left, #0a1f18 30%, transparent)",
+            }}
+          />
           <div className="flex gap-6 w-max animate-marquee hover:[animation-play-state:paused] py-4">
-            {[...GAME_MODES, ...GAME_MODES, ...GAME_MODES].map((game, i) => (
-              <div
-                key={i}
-                className={`
-                                group relative w-72 h-44 rounded-xl border ${game.border} ${game.bg}
-                                backdrop-blur-sm p-5 flex flex-col justify-between hover:scale-105 hover:bg-opacity-50 transition-all cursor-pointer shadow-lg shrink-0
-                            `}
-              >
-                <div className="flex justify-between items-start">
-                  <span
-                    className={`text-[10px] font-mono font-bold px-2 py-1 rounded bg-black/20 ${game.color}`}
-                  >
-                    {game.label}
-                  </span>
-                  <Gamepad2 size={16} className={game.color} />
+            {[
+              ...[1, 2, 3, 4, 5, 6],
+              ...[1, 2, 3, 4, 5, 6],
+              ...[1, 2, 3, 4, 5, 6],
+            ].map((num, i) => {
+              const game = GAME_MODES[num - 1];
+              return (
+                <div
+                  key={i}
+                  className="group relative w-80 h-48 rounded-xl border border-white/10 overflow-hidden hover:scale-105 transition-all cursor-pointer shadow-lg shrink-0"
+                >
+                  <img
+                    src={`/game_samples/${num}.png`}
+                    alt={`Game sample ${num}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/50 group-hover:via-black/10 transition-all" />
+                  <div className="absolute top-3 left-3">
+                    <span
+                      className={`text-[10px] font-mono font-bold px-2 py-1 rounded bg-black/40 backdrop-blur-sm ${game.color}`}
+                    >
+                      {game.label}
+                    </span>
+                  </div>
+                  <div className="absolute bottom-3 left-4 right-4">
+                    <h3 className="font-bold text-white text-lg leading-tight font-sans-clean drop-shadow-md">
+                      {game.title}
+                    </h3>
+                    <p className="text-xs text-slate-300/80 mt-0.5">
+                      {game.subject} Module
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-white text-lg leading-tight group-hover:text-white transition-colors font-sans-clean">
-                    {game.title}
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {game.subject} Module
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
